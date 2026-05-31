@@ -212,6 +212,8 @@
     .photo-item.featured { grid-column: span 2; grid-row: span 2; aspect-ratio: auto; }
     .photo-ph { width: 100%; height: 100%; min-height: 180px; transition: transform 0.6s cubic-bezier(0.16,1,0.3,1); background: linear-gradient(135deg, var(--blush), var(--champagne)); display: flex; align-items: center; justify-content: center; font-size: 3rem; }
     .photo-item:hover .photo-ph { transform: scale(1.06); }
+    .photo-item img { width:100%; height:100%; object-fit:cover; object-position:center top; display:block; transition:transform 0.6s cubic-bezier(0.16,1,0.3,1); }
+    .photo-item:hover img { transform: scale(1.06); }
     .photo-overlay { position: absolute; inset: 0; background: rgba(44,24,16,0); display: flex; flex-direction: column; align-items: center; justify-content: center; transition: background 0.3s; }
     .photo-item:hover .photo-overlay { background: rgba(44,24,16,0.42); }
     .photo-overlay-txt { opacity: 0; font-family: 'Playfair Display', serif; font-style: italic; font-size: 1rem; color: var(--white); transition: opacity 0.3s, transform 0.3s; transform: translateY(8px); text-align: center; padding: 0.5rem; }
@@ -693,37 +695,37 @@
       <div class="photo-item featured" data-cat="bridal" data-title="Bridal Glam" data-desc="Soft, long-wear bridal look" onclick="openLightbox(this)">
         <div class="photo-ph">👰<div style="font-size:0.7rem;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;color:var(--text-light);margin-top:0.5rem;">Coming Soon</div></div>
         <div class="photo-overlay"><div class="photo-overlay-txt">Bridal Glam<br><small>Soft & Romantic</small></div></div>
-        <button class="photo-heart">♡</button>
+        <button class="photo-heart" onclick="event.stopPropagation()">♡</button>
       </div>
       <div class="photo-item" data-cat="glam" data-title="Full Glam" data-desc="Party-ready full glam" onclick="openLightbox(this)">
         <div class="photo-ph">💄<div style="font-size:0.7rem;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;color:var(--text-light);margin-top:0.5rem;">Coming Soon</div></div>
         <div class="photo-overlay"><div class="photo-overlay-txt">Full Glam</div></div>
-        <button class="photo-heart">♡</button>
+        <button class="photo-heart" onclick="event.stopPropagation()">♡</button>
       </div>
       <div class="photo-item" data-cat="editorial" data-title="Editorial Look" data-desc="Creative editorial makeup" onclick="openLightbox(this)">
         <div class="photo-ph">🎨<div style="font-size:0.7rem;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;color:var(--text-light);margin-top:0.5rem;">Coming Soon</div></div>
         <div class="photo-overlay"><div class="photo-overlay-txt">Editorial</div></div>
-        <button class="photo-heart">♡</button>
+        <button class="photo-heart" onclick="event.stopPropagation()">♡</button>
       </div>
       <div class="photo-item" data-cat="festival" data-title="Festival Vibes" data-desc="Festival glitter and glow" onclick="openLightbox(this)">
         <div class="photo-ph">✨<div style="font-size:0.7rem;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;color:var(--text-light);margin-top:0.5rem;">Coming Soon</div></div>
         <div class="photo-overlay"><div class="photo-overlay-txt">Festival Vibes</div></div>
-        <button class="photo-heart">♡</button>
+        <button class="photo-heart" onclick="event.stopPropagation()">♡</button>
       </div>
       <div class="photo-item" data-cat="glam" data-title="Soft Glam" data-desc="Everyday soft glam look" onclick="openLightbox(this)">
-        <img src="/soft-glam-1.jpeg" alt="Soft Glam" style="width:100%;height:100%;object-fit:cover;object-position:center top;transition:transform 0.6s cubic-bezier(0.16,1,0.3,1);">
+        <img src="/soft-glam-1.jpeg" alt="Soft Glam">
         <div class="photo-overlay"><div class="photo-overlay-txt">Soft Glam</div></div>
-        <button class="photo-heart">♡</button>
+        <button class="photo-heart" onclick="event.stopPropagation()">♡</button>
       </div>
       <div class="photo-item" data-cat="bridal" data-title="Bridal Party" data-desc="Coordinated bridal party looks" onclick="openLightbox(this)">
         <div class="photo-ph">💐<div style="font-size:0.7rem;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;color:var(--text-light);margin-top:0.5rem;">Coming Soon</div></div>
         <div class="photo-overlay"><div class="photo-overlay-txt">Bridal Party</div></div>
-        <button class="photo-heart">♡</button>
+        <button class="photo-heart" onclick="event.stopPropagation()">♡</button>
       </div>
       <div class="photo-item" data-cat="editorial" data-title="Bold Editorial" data-desc="Avant-garde creative look" onclick="openLightbox(this)">
         <div class="photo-ph">🎭<div style="font-size:0.7rem;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;color:var(--text-light);margin-top:0.5rem;">Coming Soon</div></div>
         <div class="photo-overlay"><div class="photo-overlay-txt">Bold Editorial</div></div>
-        <button class="photo-heart">♡</button>
+        <button class="photo-heart" onclick="event.stopPropagation()">♡</button>
       </div>
     </div>
 
@@ -755,6 +757,7 @@
         <div class="ig-step"><div class="ig-step-n">1</div><span>Open Instagram and search <code>@theglambyankita</code></span></div>
         <div class="ig-step"><div class="ig-step-n">2</div><span>Hit Follow to stay updated with new work</span></div>
       </div>
+      <a href="https://www.instagram.com/theglambyankita" target="_blank" rel="noopener" style="display:inline-flex;align-items:center;gap:0.5rem;background:linear-gradient(135deg,#f09433,#e6683c,#dc2743,#cc2366,#bc1888);color:white;border-radius:4px;padding:0.6rem 1.4rem;font-family:'Nunito',sans-serif;font-weight:700;font-size:0.85rem;text-decoration:none;margin-top:1rem;transition:opacity 0.2s,transform 0.2s;" onmouseover="this.style.opacity='0.88';this.style.transform='translateY(-2px)'" onmouseout="this.style.opacity='1';this.style.transform=''">Follow @theglambyankita →</a>
     </div>
   </div>
 </div>
@@ -1147,7 +1150,7 @@
       }
     }
     if (data.phone) {
-      const digits = data.phone.replace(/\s/g, '');
+      const digits = data.phone.replace(/[\s\-\(\)\.]/g, '');
       if (!/^0[0-9]{9}$/.test(digits)) {
         showToast('⚠️ Invalid phone number — please enter a valid Australian number (e.g. 0400 000 000).');
         return false;
@@ -1209,6 +1212,12 @@
       // Reset form fields
       document.querySelectorAll('#' + tab + ' input:not([type=file]):not([type=checkbox]), #' + tab + ' textarea, #' + tab + ' select').forEach(el => { el.value = ''; });
       document.querySelectorAll('#' + tab + ' input[type=checkbox]').forEach(el => { el.checked = false; });
+      // Reset file inputs and labels
+      document.querySelectorAll('#' + tab + ' input[type=file]').forEach(el => { try { el.value = ''; } catch(e) {} });
+      const fileLblId = isBooking ? 'book-file-lbl' : 'collab-file-lbl';
+      const fileLblDefault = isBooking ? '<strong>Click to upload inspo photos or references</strong>' : '<strong>Click to upload mood board, brief or product images</strong>';
+      const fileLbl = document.getElementById(fileLblId);
+      if (fileLbl) fileLbl.innerHTML = fileLblDefault;
     } catch (err) {
       console.error('Email send error:', err);
       showToast('❌ Something went wrong. Please DM on Instagram instead.');
