@@ -223,11 +223,12 @@
     .photo-heart:hover { transform: scale(1.2); }
 
     /* LIGHTBOX */
-    .lightbox { position: fixed; inset: 0; background: rgba(20,8,4,0.94); z-index: 1000; display: none; align-items: center; justify-content: center; padding: 2rem; }
+    .lightbox { position: fixed; inset: 0; background: rgba(20,8,4,0.94); z-index: 1000; display: none; align-items: center; justify-content: center; padding: 1.5rem; overflow-y: auto; }
     .lightbox.open { display: flex; }
-    .lightbox-inner { max-width: 680px; width: 100%; background: var(--cream); position: relative; overflow: hidden; animation: lightboxIn 0.4s cubic-bezier(0.16,1,0.3,1); }
+    .lightbox-inner { max-width: 680px; width: 100%; background: var(--cream); position: relative; overflow: hidden; animation: lightboxIn 0.4s cubic-bezier(0.16,1,0.3,1); max-height: 92vh; display: flex; flex-direction: column; }
     @keyframes lightboxIn { from { opacity: 0; transform: scale(0.9) translateY(20px); } to { opacity: 1; transform: none; } }
-    .lightbox-ph { width: 100%; height: 380px; background: linear-gradient(135deg, var(--blush), var(--champagne)); display: flex; align-items: center; justify-content: center; font-size: 5rem; }
+    .lightbox-ph { width: 100%; height: 340px; background: linear-gradient(135deg, var(--blush), var(--champagne)); display: flex; align-items: center; justify-content: center; font-size: 5rem; flex-shrink: 0; }
+    .lightbox-ph.has-image { height: auto; max-height: 65vh; background: #1a0a04; flex-shrink: 1; overflow: hidden; }
     .lightbox-info { padding: 1.5rem 2rem; }
     .lightbox-info h3 { font-family: 'Playfair Display', serif; font-size: 1.3rem; font-weight: 600; color: var(--text-dark); margin-bottom: 0.3rem; }
     .lightbox-info p { font-size: 0.88rem; color: var(--text-light); line-height: 1.7; }
@@ -461,7 +462,7 @@
       <h3 id="lbTitle">Look Title</h3>
       <p id="lbDesc">Description of the look.</p>
     </div>
-    <button class="lightbox-close" onclick="document.getElementById('lightbox').classList.remove('open')">✕</button>
+    <button class="lightbox-close" onclick="closeLightbox()">✕</button>
   </div>
 </div>
 
@@ -1063,14 +1064,16 @@
     if (imgEl) {
       lbPh.innerHTML = '';
       lbPh.style.padding = '0';
+      lbPh.classList.add('has-image');
       const img = document.createElement('img');
       img.src = imgEl.src;
       img.alt = el.dataset.title || '';
-      img.style.cssText = 'width:100%;height:100%;object-fit:cover;object-position:center top;display:block;';
+      img.style.cssText = 'width:100%;height:auto;display:block;object-fit:contain;';
       lbPh.appendChild(img);
     } else {
       lbPh.innerHTML = '';
       lbPh.style.padding = '';
+      lbPh.classList.remove('has-image');
       lbPh.textContent = emojis[el.dataset.cat] || '💄';
     }
     document.getElementById('lbTitle').textContent = el.dataset.title || '';
@@ -1078,10 +1081,16 @@
     document.getElementById('lightbox').classList.add('open');
   }
   function closeLightbox(e) {
-    if (e.target === document.getElementById('lightbox')) {
-      document.getElementById('lightbox').classList.remove('open');
+    if (!e || e.target === document.getElementById('lightbox')) {
+      const lb = document.getElementById('lightbox');
+      lb.classList.remove('open');
+      const lbPh = document.getElementById('lbEmoji');
+      lbPh.classList.remove('has-image');
     }
   }
+  document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') closeLightbox();
+  });
 
   // FORM TABS
   function switchTab(btn, tabId) {
