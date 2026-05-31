@@ -1,1 +1,2 @@
 - [Glam by Ankita — preserve credits](glam-credits.md) — footer credits must never be removed or modified; standing user rule.
+- [Replit pnpm bootstrap SIGABRT fix](pnpm-bootstrap-fix.md) — removing `packageManager` from root package.json prevents Replit from crashing on workflow start.
