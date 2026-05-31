@@ -9,6 +9,10 @@
     "preview": "vite preview"
   },
   "private": true,
+  "dependencies": {
+    "formidable": "^3.5.1",
+    "nodemailer": "^6.9.0"
+  },
   "devDependencies": {
     "prettier": "^3.8.3",
     "typescript": "~5.9.3"
