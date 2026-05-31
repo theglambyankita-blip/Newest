@@ -3,14 +3,14 @@
   "version": "0.0.0",
   "license": "MIT",
   "scripts": {
-  "build": "tsc --noEmit && vite build",
-  "typecheck": "tsc --noEmit",
-  "dev": "vite",
-  "preview": "vite preview"
-},
+    "build": "tsc --noEmit && vite build",
+    "typecheck": "tsc --noEmit",
+    "dev": "vite",
+    "preview": "vite preview"
+  },
   "private": true,
   "devDependencies": {
     "prettier": "^3.8.3",
     "typescript": "~5.9.3"
-  },
+  }
 }

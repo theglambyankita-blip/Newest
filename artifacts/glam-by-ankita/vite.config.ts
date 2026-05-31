@@ -14,6 +14,11 @@ export default defineConfig({
     dedupe: ["react", "react-dom"],
   },
   root: path.resolve(__dirname),
+  server: {
+    port: parseInt(process.env.PORT || "5173"),
+    host: "0.0.0.0",
+    allowedHosts: true,
+  },
   build: {
     outDir: path.resolve(__dirname, "dist"),
     emptyOutDir: true,
