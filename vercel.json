@@ -1,0 +1,6 @@
+{
+  "buildCommand": "pnpm --filter @workspace/glam-by-ankita build",
+  "outputDirectory": "artifacts/glam-by-ankita/dist",
+  "installCommand": "pnpm install",
+  "framework": null
+}
