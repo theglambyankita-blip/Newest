@@ -1023,7 +1023,10 @@
 <script>
 
   // PAGE NAVIGATION
-  function showPage(pageId, btn) {
+  const validPages = ['home','about','services','gallery','contact'];
+
+  function showPage(pageId, btn, pushState) {
+    if (!validPages.includes(pageId)) pageId = 'home';
     document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
     document.getElementById('page-' + pageId).classList.add('active');
     document.querySelectorAll('.sitenav-tabs button').forEach(b => b.classList.remove('active'));
@@ -1035,7 +1038,24 @@
     }
     window.scrollTo({top:0, behavior:'smooth'});
     setTimeout(() => triggerAnims(), 100);
+    if (pushState !== false) {
+      const path = pageId === 'home' ? '/' : '/' + pageId;
+      history.pushState({ page: pageId }, '', path);
+    }
   }
+
+  // Handle browser back / forward buttons
+  window.addEventListener('popstate', (e) => {
+    const pageId = (e.state && e.state.page) || 'home';
+    showPage(pageId, null, false);
+  });
+
+  // Navigate to correct page on direct URL visit
+  (function () {
+    const path = window.location.pathname.replace(/^\//, '') || 'home';
+    const pageId = validPages.includes(path) ? path : 'home';
+    showPage(pageId, null, false);
+  })();
 
   // SCROLL PROGRESS BAR
   window.addEventListener('scroll', () => {
