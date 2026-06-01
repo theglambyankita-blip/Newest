@@ -1217,7 +1217,7 @@
     const imgEl = document.createElement('img');
     imgEl.src = img.src;
     imgEl.alt = img.caption;
-    imgEl.style.cssText = 'width:100%;height:auto;display:block;object-fit:contain;';
+    imgEl.style.cssText = 'max-width:100%;max-height:62vh;width:auto;height:auto;display:block;margin:0 auto;';
     lbPh.appendChild(imgEl);
     document.getElementById('lbTitle').textContent = img.caption;
     document.getElementById('lbDesc').textContent = 'Behind the scenes with Ankita';
