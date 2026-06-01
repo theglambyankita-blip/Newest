@@ -3,7 +3,16 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>The Glam by Ankita | Makeup Artist Melbourne</title>
+  <title>Ankita Awasthi | Melbourne Makeup Artist</title>
+  <meta name="description" content="Ankita Awasthi is a professional Melbourne makeup artist specialising in bridal, soft glam, editorial and festival makeup. Book your appointment today.">
+  <meta name="keywords" content="Melbourne makeup artist, bridal makeup Melbourne, soft glam Melbourne, Ankita Awasthi, The Glam by Ankita, wedding makeup Melbourne, makeup artist near me">
+  <meta property="og:title" content="Ankita Awasthi | Melbourne Makeup Artist">
+  <meta property="og:description" content="Professional makeup artistry tailored to you — from soft everyday glam to full bridal transformations. Based in Melbourne.">
+  <meta property="og:type" content="website">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="Ankita Awasthi | Melbourne Makeup Artist">
+  <meta name="twitter:description" content="Professional makeup artistry tailored to you — from soft everyday glam to full bridal transformations. Based in Melbourne.">
+  <link rel="canonical" href="https://theglambyankita.com">
   <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400;1,600&family=Nunito:wght@300;400;500;600;700&family=Dancing+Script:wght@600&display=swap" rel="stylesheet">
   <style>
     :root {
@@ -820,6 +829,16 @@
             </div>
             <div class="fgroup"><label>Email *</label><input id="book-email" type="email" placeholder="your@email.com" oninput="clearEmailError('book-email-error')"><span class="field-error" id="book-email-error"></span></div>
             <div class="fgroup"><label>Phone *</label><input id="book-phone" type="tel" placeholder="0400 000 000"></div>
+            <div class="fgroup"><label>Preferred Contact Method</label>
+              <select id="book-contact-method">
+                <option value="">Select...</option>
+                <option>Phone Call</option>
+                <option>SMS / Text</option>
+                <option>Email</option>
+                <option>Instagram DM</option>
+                <option>WhatsApp</option>
+              </select>
+            </div>
             <div class="fgroup"><label>Preferred Date *</label>
               <input id="book-date" type="date">
             </div>
@@ -955,7 +974,6 @@
       <ul>
         <li><a href="https://www.instagram.com/theglambyankita" target="_blank" rel="noopener">Instagram</a></li>
         <li><a href="https://www.threads.net/@theglambyankita" target="_blank" rel="noopener">Threads</a></li>
-        <li><a href="https://linktr.ee/theglambyankita" target="_blank" rel="noopener">Linktree</a></li>
         <li><a href="mailto:theglambyankita@gmail.com">Email Me</a></li>
         <li><a href="https://docs.google.com/forms/d/e/1FAIpQLScf2z_0zt-d6lOl0jYAY8WQjZZSi--IAGgHJoUCNB8DHx_zoQ/viewform?usp=publish-editor" target="_blank" rel="noopener">Leave a Review</a></li>
       </ul>
@@ -1115,6 +1133,7 @@
       last_name:     document.getElementById('book-last').value.trim(),
       client_email:  document.getElementById('book-email').value.trim(),
       phone:         document.getElementById('book-phone').value.trim(),
+      contact_method: document.getElementById('book-contact-method').value,
       preferred_date: document.getElementById('book-date').value,
       num_people:    document.getElementById('book-people').value,
       services:      services || 'Not specified',
