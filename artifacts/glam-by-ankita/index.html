@@ -1025,6 +1025,31 @@
   </div>
 </div>
 
+<!-- SEND THANK YOU (hidden admin page) -->
+<div class="page" id="page-send">
+  <div class="section" style="max-width:480px;margin:0 auto;padding:3rem 1.5rem;">
+    <p class="eyebrow">Admin</p>
+    <h2 class="section-h2">Send <em class="draw-underline">Thank You</em></h2>
+    <div class="divider"></div>
+    <p style="font-size:0.95rem;color:var(--text-mid);margin:1rem 0 2rem;">Send the branded thank-you email to a client after their session.</p>
+
+    <div style="display:flex;flex-direction:column;gap:1rem;">
+      <div>
+        <label style="display:block;font-size:0.82rem;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:var(--text-mid);margin-bottom:0.4rem;">Client First Name</label>
+        <input id="ty-name" type="text" placeholder="e.g. Sarah" style="width:100%;padding:0.75rem 1rem;border:1.5px solid var(--gold-light);border-radius:6px;font-family:'Nunito',sans-serif;font-size:1rem;background:var(--cream);color:var(--text-dark);box-sizing:border-box;">
+      </div>
+      <div>
+        <label style="display:block;font-size:0.82rem;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:var(--text-mid);margin-bottom:0.4rem;">Client Email</label>
+        <input id="ty-email" type="email" placeholder="e.g. sarah@gmail.com" style="width:100%;padding:0.75rem 1rem;border:1.5px solid var(--gold-light);border-radius:6px;font-family:'Nunito',sans-serif;font-size:1rem;background:var(--cream);color:var(--text-dark);box-sizing:border-box;">
+      </div>
+      <button id="ty-btn" onclick="sendThankYou()" style="margin-top:0.5rem;padding:0.9rem 2rem;background:linear-gradient(135deg,#c9a96e,#b8934a);color:#fff;border:none;border-radius:6px;font-family:'Nunito',sans-serif;font-size:1rem;font-weight:700;cursor:pointer;letter-spacing:0.05em;transition:opacity 0.2s;">
+        💄 Send Thank You Email
+      </button>
+      <p id="ty-status" style="text-align:center;font-size:0.95rem;min-height:1.4rem;color:var(--gold-dark);"></p>
+    </div>
+  </div>
+</div>
+
 <!-- FOOTER -->
 <footer>
   <div class="footer-inner">
@@ -1061,7 +1086,7 @@
 <script>
 
   // PAGE NAVIGATION
-  const validPages = ['home','about','services','gallery','contact'];
+  const validPages = ['home','about','services','gallery','contact','send'];
 
   function showPage(pageId, btn, pushState) {
     if (!validPages.includes(pageId)) pageId = 'home';
@@ -1401,6 +1426,40 @@
     document.getElementById('form-success-screen').classList.remove('show');
     document.getElementById('form-container').style.display = '';
     history.pushState({ page: 'contact' }, '', '/contact');
+  }
+
+  // SEND THANK YOU (admin)
+  async function sendThankYou() {
+    const name = document.getElementById('ty-name').value.trim();
+    const email = document.getElementById('ty-email').value.trim();
+    const status = document.getElementById('ty-status');
+    const btn = document.getElementById('ty-btn');
+    if (!name || !email) { status.textContent = '⚠️ Please enter both name and email.'; return; }
+    btn.disabled = true;
+    btn.textContent = 'Sending…';
+    status.textContent = '';
+    try {
+      const res = await fetch('/api/send-thankyou', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ clientName: name, clientEmail: email })
+      });
+      if (res.ok) {
+        status.style.color = 'var(--gold-dark)';
+        status.textContent = '✅ Thank you email sent to ' + email + '!';
+        document.getElementById('ty-name').value = '';
+        document.getElementById('ty-email').value = '';
+      } else {
+        status.style.color = '#c0392b';
+        status.textContent = '❌ Something went wrong. Try again.';
+      }
+    } catch {
+      status.style.color = '#c0392b';
+      status.textContent = '❌ Could not connect. Check your internet.';
+    } finally {
+      btn.disabled = false;
+      btn.textContent = '💄 Send Thank You Email';
+    }
   }
 
   // TOAST
