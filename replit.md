@@ -24,4 +24,4 @@ A professional makeup artist website for Ankita, a Melbourne-based MUA. Multi-pa
 ## User preferences
 
 - **Preserve credits** — always keep the footer credits intact: `© 2026 The Glam by Ankita · Ankita Awasthi. All rights reserved.` and `Made with ♥ in Melbourne`. Never remove or alter these lines.
-- **Admin / Send Thank You page** — hidden page at `theglambyankita.com/send` (not in nav). Ankita uses this to send branded post-session thank-you emails with Google Review link to clients. API endpoint: `api/send-thankyou.js`.
+- **Thank you emails** — Ankita sends post-session thank-you emails manually by telling the agent the client's name and email. The agent runs the nodemailer script directly from `artifacts/api-server` using saved Gmail credentials. No public-facing send page (removed for security).
