@@ -1089,17 +1089,7 @@
 
   // Navigate to correct page on direct URL visit
   (function () {
-    const pathname = window.location.pathname;
-    if (pathname === '/contact/confirmation') {
-      showPage('contact', null, false);
-      const successScreen = document.getElementById('form-success-screen');
-      if (successScreen) {
-        document.getElementById('form-container').style.display = 'none';
-        successScreen.classList.add('show');
-      }
-      return;
-    }
-    const path = pathname.replace(/^\//, '') || 'home';
+    const path = window.location.pathname.replace(/^\//, '') || 'home';
     const pageId = validPages.includes(path) ? path : 'home';
     showPage(pageId, null, false);
   })();
@@ -1376,7 +1366,6 @@
       const successScreen = document.getElementById('form-success-screen');
       successScreen.classList.add('show');
       successScreen.scrollIntoView({ behavior: 'smooth', block: 'start' });
-      history.pushState({ page: 'contact' }, '', '/contact/confirmation');
       // Reset form fields
       document.querySelectorAll('#' + tab + ' input:not([type=file]):not([type=checkbox]), #' + tab + ' textarea, #' + tab + ' select').forEach(el => { el.value = ''; });
       document.querySelectorAll('#' + tab + ' input[type=checkbox]').forEach(el => { el.checked = false; });
