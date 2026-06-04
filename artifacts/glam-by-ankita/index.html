@@ -1148,10 +1148,7 @@
       </div>
       <div class="sp-card">
         <h3>Payment</h3>
-        <div class="sp-row">
-          <div class="sp-field"><label>Deposit Amount (AUD $)</label><input type="number" id="rv-deposit" min="0" step="0.01" placeholder="e.g. 100"></div>
-          <div class="sp-field"><label>Total Amount (AUD $)</label><input type="number" id="rv-total" min="0" step="0.01" placeholder="e.g. 350"></div>
-        </div>
+        <div class="sp-field"><label>Amount to Charge (AUD $)</label><input type="number" id="rv-total" min="0" step="0.01" placeholder="e.g. 350"></div>
       </div>
       <div class="sp-card">
         <h3>Personal Note to Client <span style="font-family:'Nunito',sans-serif;font-weight:400;font-size:0.8rem;color:var(--text-light);">(optional)</span></h3>
@@ -1187,25 +1184,26 @@
       </div>
       <div id="booking-notes-wrap" class="sp-note" style="display:none;"></div>
       <div class="sp-card" id="payment-card">
-        <h3>Deposit Payment</h3>
+        <h3>Payment</h3>
         <div style="margin-bottom:16px;">
-          <p style="margin:0 0 4px;font-size:0.85rem;color:var(--text-light);">Amount due today</p>
+          <p style="margin:0 0 4px;font-size:0.85rem;color:var(--text-light);">Total amount due</p>
           <span class="sp-amount" id="deposit-display">—</span>
+          <p style="margin:6px 0 0;font-size:0.8rem;color:var(--text-light);">Pay securely by card, Apple Pay, Google Pay &amp; more</p>
         </div>
         <div id="payment-ready">
           <div id="stripe-element"></div>
           <div id="payment-error" class="sp-error-msg" style="display:none;"></div>
-          <button class="sp-btn" id="pay-btn" onclick="submitPayment()">Pay Deposit ✦</button>
+          <button class="sp-btn" id="pay-btn" onclick="submitPayment()">Pay Now ✦</button>
         </div>
         <div id="payment-no-stripe" style="display:none;">
-          <p style="color:var(--text-mid);font-size:0.9rem;">Online payment coming soon. Please contact Ankita directly to pay your deposit.</p>
+          <p style="color:var(--text-mid);font-size:0.9rem;">Online payment coming soon. Please contact Ankita directly to complete your payment.</p>
           <a href="mailto:theglambyankita@gmail.com" class="sp-btn" style="display:block;text-align:center;text-decoration:none;margin-top:8px;">Contact Ankita</a>
         </div>
       </div>
       <div id="payment-success-card" class="sp-card" style="display:none;text-align:center;padding:40px 24px;">
         <div class="sp-success-icon">💄</div>
-        <h3 style="font-family:'Playfair Display',serif;color:var(--text-dark);margin:0 0 8px;">Deposit Paid — You're Booked!</h3>
-        <p style="color:var(--text-mid);font-size:0.9rem;line-height:1.7;">Your deposit has been received. I'll be in touch with all the details closer to your appointment. So excited to work with you! ✨</p>
+        <h3 style="font-family:'Playfair Display',serif;color:var(--text-dark);margin:0 0 8px;">Payment Complete — You're Booked!</h3>
+        <p style="color:var(--text-mid);font-size:0.9rem;line-height:1.7;">Your payment has been received. I'll be in touch with all the details closer to your appointment. So excited to work with you! ✨</p>
         <span class="sp-badge" style="margin-top:12px;">Confirmed ✓</span>
       </div>
     </div>
@@ -1330,9 +1328,9 @@
     const err = document.getElementById('review-error');
     err.style.display = 'none';
 
-    const deposit = parseFloat(document.getElementById('rv-deposit').value);
-    if (!deposit || deposit <= 0) {
-      err.textContent = 'Please enter a deposit amount.';
+    const total = parseFloat(document.getElementById('rv-total').value);
+    if (!total || total <= 0) {
+      err.textContent = 'Please enter the amount to charge.';
       err.style.display = 'block';
       return;
     }
@@ -1361,8 +1359,7 @@
           session_token: _reviewToken,
           confirmed_data,
           notes: document.getElementById('rv-notes').value,
-          deposit_aud: deposit,
-          total_aud: parseFloat(document.getElementById('rv-total').value) || null
+          total_aud: total
         })
       });
       const json = await res.json();
@@ -1398,8 +1395,8 @@
 
       renderBookingDetails(data);
 
-      if (data.deposit_aud) {
-        document.getElementById('deposit-display').textContent = 'AUD $' + parseFloat(data.deposit_aud).toFixed(2);
+      if (data.total_aud) {
+        document.getElementById('deposit-display').textContent = 'AUD $' + parseFloat(data.total_aud).toFixed(2);
       }
 
       if (data.notes) {

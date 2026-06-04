@@ -31,14 +31,22 @@ module.exports = async function handler(req, res) {
     const booking = result.rows[0];
     if (booking.status === 'paid') return res.status(400).json({ error: 'Already paid' });
 
-    const amountCents = Math.round(parseFloat(booking.deposit_aud) * 100);
-    if (!amountCents || amountCents < 50) return res.status(400).json({ error: 'Invalid deposit amount' });
+    const amount = parseFloat(booking.total_aud);
+    if (!amount || amount < 0.5) return res.status(400).json({ error: 'Invalid payment amount' });
+
+    const amountCents = Math.round(amount * 100);
 
     const paymentIntent = await stripe.paymentIntents.create({
       amount: amountCents,
       currency: 'aud',
-      metadata: { booking_token: token, client_name: booking.client_name || '' },
-      receipt_email: booking.client_email || undefined
+      automatic_payment_methods: { enabled: true },
+      metadata: {
+        booking_token: token,
+        client_name: booking.client_name || '',
+        client_email: booking.client_email || ''
+      },
+      receipt_email: booking.client_email || undefined,
+      description: `The Glam by Ankita — ${booking.client_name || 'Client'}`
     });
 
     await db.query(

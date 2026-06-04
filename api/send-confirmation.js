@@ -9,7 +9,7 @@ module.exports = async function handler(req, res) {
   if (req.method === 'OPTIONS') return res.status(200).end();
   if (req.method !== 'POST') return res.status(405).end();
 
-  const { session_token, confirmed_data, notes, total_aud, deposit_aud } = req.body;
+  const { session_token, confirmed_data, notes, total_aud } = req.body;
   if (!session_token) return res.status(400).json({ error: 'session_token required' });
 
   try {
@@ -25,7 +25,7 @@ module.exports = async function handler(req, res) {
     await db.query(
       `INSERT INTO booking_confirmations (token, session_id, confirmed_data, notes, total_aud, deposit_aud)
        VALUES ($1, $2, $3, $4, $5, $6)`,
-      [clientToken, session.id, JSON.stringify(confirmed_data || {}), notes || '', total_aud || null, deposit_aud || null]
+      [clientToken, session.id, JSON.stringify(confirmed_data || {}), notes || '', total_aud || null, null]
     );
     await db.query("UPDATE booking_sessions SET status = 'confirmed' WHERE id = $1", [session.id]);
 
@@ -40,9 +40,7 @@ module.exports = async function handler(req, res) {
 
       const data = confirmed_data || {};
       const firstName = data['First Name'] || session.client_name || 'there';
-
-      const depositDisplay = deposit_aud ? `AUD $${parseFloat(deposit_aud).toFixed(2)}` : null;
-      const totalDisplay   = total_aud   ? `AUD $${parseFloat(total_aud).toFixed(2)}`   : null;
+      const amountDisplay = total_aud ? `AUD $${parseFloat(total_aud).toFixed(2)}` : null;
 
       const detailRows = Object.entries(data)
         .filter(([, v]) => v)
@@ -76,11 +74,10 @@ module.exports = async function handler(req, res) {
                   <h1 style="margin:0;font-size:1.7rem;font-weight:700;color:#fff;line-height:1.2;">Your Booking is<br>Confirmed! ✨</h1>
                 </td>
               </tr>
-              <!-- Decorative gold bar -->
               <tr><td style="background:rgba(255,255,255,0.18);height:4px;"></td></tr>
               <tr>
                 <td style="padding:14px 36px 28px;">
-                  <p style="margin:0;font-size:0.88rem;color:rgba(255,255,255,0.9);line-height:1.6;">One last step — confirm your details and pay your deposit to lock in your date 💄</p>
+                  <p style="margin:0;font-size:0.88rem;color:rgba(255,255,255,0.9);line-height:1.6;">One last step — confirm your details and complete your payment to lock in your date 💄</p>
                 </td>
               </tr>
             </table>
@@ -91,7 +88,7 @@ module.exports = async function handler(req, res) {
         <tr>
           <td style="padding:28px 36px 0;">
             <p style="margin:0;font-size:1rem;color:#2c1810;line-height:1.7;">Hi <strong>${firstName}</strong>,</p>
-            <p style="margin:10px 0 0;font-size:0.95rem;color:#4a2e22;line-height:1.8;">I am so excited to work with you! Please review your booking details below, then click the button to confirm and pay your deposit. Once that's done your date is officially locked in 🎉</p>
+            <p style="margin:10px 0 0;font-size:0.95rem;color:#4a2e22;line-height:1.8;">I am so excited to work with you! Please review your booking details below, then click the button to confirm and complete your payment. Once that's done your date is officially locked in 🎉</p>
           </td>
         </tr>
 
@@ -120,23 +117,18 @@ module.exports = async function handler(req, res) {
           </td>
         </tr>` : ''}
 
-        <!-- PAYMENT SUMMARY -->
-        ${depositDisplay ? `
+        <!-- PAYMENT AMOUNT -->
+        ${amountDisplay ? `
         <tr>
           <td style="padding:20px 36px 0;">
             <table width="100%" cellpadding="0" cellspacing="0" style="background:#fdf8f4;border:1px solid #f0ddd8;border-radius:6px;overflow:hidden;">
               <tr>
-                <td style="padding:16px 20px;border-bottom:1px solid #f0ddd8;">
-                  <p style="margin:0;font-size:0.75rem;font-weight:700;color:#9a7060;text-transform:uppercase;letter-spacing:0.1em;">Amount Due Today</p>
-                  <p style="margin:4px 0 0;font-size:1.6rem;font-weight:700;color:#9e7c4a;">${depositDisplay}</p>
+                <td style="padding:16px 20px;">
+                  <p style="margin:0;font-size:0.75rem;font-weight:700;color:#9a7060;text-transform:uppercase;letter-spacing:0.1em;">Total Amount Due</p>
+                  <p style="margin:4px 0 0;font-size:1.8rem;font-weight:700;color:#9e7c4a;">${amountDisplay}</p>
+                  <p style="margin:6px 0 0;font-size:0.8rem;color:#b09080;">Pay securely by card, Apple Pay, Google Pay &amp; more</p>
                 </td>
               </tr>
-              ${totalDisplay ? `
-              <tr>
-                <td style="padding:10px 20px;">
-                  <p style="margin:0;font-size:0.82rem;color:#9a7060;">Total booking cost: <strong style="color:#4a2e22;">${totalDisplay}</strong></p>
-                </td>
-              </tr>` : ''}
             </table>
           </td>
         </tr>` : ''}
@@ -146,7 +138,7 @@ module.exports = async function handler(req, res) {
           <td style="padding:28px 36px 8px;text-align:center;">
             <a href="${clientLink}"
                style="display:inline-block;background:linear-gradient(135deg,#c9a96e,#9e7c4a);color:#fff;text-decoration:none;padding:16px 40px;border-radius:5px;font-size:1rem;font-weight:700;letter-spacing:0.05em;box-shadow:0 4px 14px rgba(158,124,74,0.35);">
-              Confirm Booking &amp; Pay Deposit ✦
+              Confirm Booking &amp; Pay ✦
             </a>
           </td>
         </tr>
@@ -182,7 +174,7 @@ module.exports = async function handler(req, res) {
       await transporter.sendMail({
         from: `"The Glam by Ankita" <${user}>`,
         to: session.client_email,
-        subject: `✨ Confirm Your Booking & Pay Deposit — The Glam by Ankita`,
+        subject: `✨ Confirm Your Booking & Complete Payment — The Glam by Ankita`,
         html: clientHtml
       });
     }
