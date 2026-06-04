@@ -9,25 +9,34 @@ module.exports = async function handler(req, res) {
   if (req.method === 'OPTIONS') return res.status(200).end();
   if (req.method !== 'POST') return res.status(405).end();
 
-  const { session_token, confirmed_data, notes, total_aud } = req.body;
-  if (!session_token) return res.status(400).json({ error: 'session_token required' });
+  const { booking_data, client_name, client_email, confirmed_data, notes, total_aud } = req.body;
+  if (!confirmed_data) return res.status(400).json({ error: 'confirmed_data required' });
+
+  const resolvedClientName = client_name || confirmed_data['First Name'] || 'Client';
+  const resolvedClientEmail = client_email || confirmed_data['Email'] || '';
 
   try {
-    await initDb();
-    const db = getPool();
-
-    const sessionResult = await db.query('SELECT * FROM booking_sessions WHERE token = $1', [session_token]);
-    if (!sessionResult.rows[0]) return res.status(404).json({ error: 'Session not found' });
-    const session = sessionResult.rows[0];
-
     const clientToken = crypto.randomBytes(32).toString('hex');
 
-    await db.query(
-      `INSERT INTO booking_confirmations (token, session_id, confirmed_data, notes, total_aud, deposit_aud)
-       VALUES ($1, $2, $3, $4, $5, $6)`,
-      [clientToken, session.id, JSON.stringify(confirmed_data || {}), notes || '', total_aud || null, null]
-    );
-    await db.query("UPDATE booking_sessions SET status = 'confirmed' WHERE id = $1", [session.id]);
+    // Save to DB if available — non-fatal if it fails
+    try {
+      await initDb();
+      const db = getPool();
+      const sessionResult = await db.query(
+        `INSERT INTO booking_sessions (token, booking_data, client_name, client_email, status)
+         VALUES ($1, $2, $3, $4, 'confirmed') RETURNING id`,
+        [crypto.randomBytes(12).toString('hex'), JSON.stringify(booking_data || {}), resolvedClientName, resolvedClientEmail]
+      );
+      const sessionId = sessionResult.rows[0].id;
+      await db.query(
+        `INSERT INTO booking_confirmations (token, session_id, confirmed_data, notes, total_aud, deposit_aud)
+         VALUES ($1, $2, $3, $4, $5, $6)`,
+        [clientToken, sessionId, JSON.stringify(confirmed_data), notes || '', total_aud || null, null]
+      );
+    } catch (dbErr) {
+      console.error('DB save failed (non-fatal):', dbErr.message);
+      // Continue — still send the email even if DB is down
+    }
 
     const siteUrl = 'https://www.theglambyankita.com';
     const clientLink = `${siteUrl}/p/${clientToken}`;
@@ -35,14 +44,13 @@ module.exports = async function handler(req, res) {
     const user = process.env.GMAIL_USER;
     const pass = process.env.GMAIL_APP_PASSWORD;
 
-    if (user && pass && session.client_email) {
+    if (user && pass && resolvedClientEmail) {
       const transporter = nodemailer.createTransport({ service: 'gmail', auth: { user, pass } });
 
-      const data = confirmed_data || {};
-      const firstName = data['First Name'] || session.client_name || 'there';
+      const firstName = confirmed_data['First Name'] || resolvedClientName;
       const amountDisplay = total_aud ? `AUD $${parseFloat(total_aud).toFixed(2)}` : null;
 
-      const detailRows = Object.entries(data)
+      const detailRows = Object.entries(confirmed_data)
         .filter(([, v]) => v)
         .map(([k, v]) => `
           <tr>
@@ -64,7 +72,6 @@ module.exports = async function handler(req, res) {
     <tr><td align="center">
       <table width="600" cellpadding="0" cellspacing="0" style="max-width:600px;width:100%;background:#fff;border-radius:10px;overflow:hidden;box-shadow:0 4px 24px rgba(0,0,0,0.07);">
 
-        <!-- HEADER -->
         <tr>
           <td style="background:linear-gradient(135deg,#c9a96e 0%,#9e7c4a 100%);padding:0;">
             <table width="100%" cellpadding="0" cellspacing="0">
@@ -84,7 +91,6 @@ module.exports = async function handler(req, res) {
           </td>
         </tr>
 
-        <!-- GREETING -->
         <tr>
           <td style="padding:28px 36px 0;">
             <p style="margin:0;font-size:1rem;color:#2c1810;line-height:1.7;">Hi <strong>${firstName}</strong>,</p>
@@ -92,7 +98,6 @@ module.exports = async function handler(req, res) {
           </td>
         </tr>
 
-        <!-- BOOKING DETAILS -->
         <tr>
           <td style="padding:24px 36px 0;">
             <p style="margin:0 0 10px;font-size:0.75rem;font-weight:700;color:#9a7060;text-transform:uppercase;letter-spacing:0.12em;">Booking Details</p>
@@ -103,7 +108,6 @@ module.exports = async function handler(req, res) {
         </tr>
 
         ${notes ? `
-        <!-- PERSONAL NOTE -->
         <tr>
           <td style="padding:20px 36px 0;">
             <table width="100%" cellpadding="0" cellspacing="0">
@@ -117,7 +121,6 @@ module.exports = async function handler(req, res) {
           </td>
         </tr>` : ''}
 
-        <!-- PAYMENT AMOUNT -->
         ${amountDisplay ? `
         <tr>
           <td style="padding:20px 36px 0;">
@@ -133,17 +136,14 @@ module.exports = async function handler(req, res) {
           </td>
         </tr>` : ''}
 
-        <!-- CTA BUTTON -->
         <tr>
           <td style="padding:28px 36px 8px;text-align:center;">
-            <a href="${clientLink}"
-               style="display:inline-block;background:linear-gradient(135deg,#c9a96e,#9e7c4a);color:#fff;text-decoration:none;padding:16px 40px;border-radius:5px;font-size:1rem;font-weight:700;letter-spacing:0.05em;box-shadow:0 4px 14px rgba(158,124,74,0.35);">
+            <a href="${clientLink}" style="display:inline-block;background:linear-gradient(135deg,#c9a96e,#9e7c4a);color:#fff;text-decoration:none;padding:16px 40px;border-radius:5px;font-size:1rem;font-weight:700;letter-spacing:0.05em;box-shadow:0 4px 14px rgba(158,124,74,0.35);">
               Confirm Booking &amp; Pay ✦
             </a>
           </td>
         </tr>
 
-        <!-- FALLBACK LINK -->
         <tr>
           <td style="padding:10px 36px 0;text-align:center;">
             <p style="margin:0;font-size:0.78rem;color:#b09080;">Button not working? Copy and paste this link into your browser:</p>
@@ -151,14 +151,12 @@ module.exports = async function handler(req, res) {
           </td>
         </tr>
 
-        <!-- SIGN OFF -->
         <tr>
           <td style="padding:28px 36px 32px;">
             <p style="margin:0;font-size:0.92rem;color:#4a2e22;line-height:1.8;">Can't wait to make you look and feel absolutely stunning 💛<br><br>With love,<br><strong style="color:#9e7c4a;">Ankita</strong><br><span style="font-size:0.85rem;color:#9a7060;">The Glam by Ankita</span></p>
           </td>
         </tr>
 
-        <!-- FOOTER -->
         <tr>
           <td style="background:#fdf0ee;padding:16px 36px;border-top:1px solid #f0ddd8;text-align:center;">
             <p style="margin:0;font-size:0.75rem;color:#b09080;line-height:1.6;">This link is unique to you and expires once used.<br>Questions? Reply to this email or visit <a href="https://www.theglambyankita.com" style="color:#c9a96e;">theglambyankita.com</a></p>
@@ -173,7 +171,7 @@ module.exports = async function handler(req, res) {
 
       await transporter.sendMail({
         from: `"The Glam by Ankita" <${user}>`,
-        to: session.client_email,
+        to: resolvedClientEmail,
         subject: `✨ Confirm Your Booking & Complete Payment — The Glam by Ankita`,
         html: clientHtml
       });

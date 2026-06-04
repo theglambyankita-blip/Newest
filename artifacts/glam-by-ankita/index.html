@@ -1292,7 +1292,7 @@
   // Navigate to correct page on direct URL visit
   (function () {
     const path = window.location.pathname.replace(/^\//, '') || 'home';
-    const reviewMatch = path.match(/^r\/([a-f0-9]{48})$/);
+    const reviewMatch = path.match(/^r\/([A-Za-z0-9_-]{20,})$/);
     if (reviewMatch) { showSpecialPage('review', reviewMatch[1]); return; }
     const bookingMatch = path.match(/^p\/([a-f0-9]{64})$/);
     if (bookingMatch) { showSpecialPage('booking', bookingMatch[1]); return; }
@@ -1302,14 +1302,16 @@
 
   // ── REVIEW PAGE ──────────────────────────────────────────────
   let _reviewToken = null;
+  let _reviewBookingData = null;
 
   async function loadReviewPage(token) {
     _reviewToken = token;
     try {
-      const res = await fetch('/api/get-review?token=' + token);
+      const res = await fetch('/api/get-review?d=' + encodeURIComponent(token));
       if (!res.ok) throw new Error('Not found');
       const data = await res.json();
-      const d = data.booking_data || {};
+      _reviewBookingData = data.booking_data || {};
+      const d = _reviewBookingData;
 
       const set = (id, val) => { const el = document.getElementById(id); if (el && val) el.value = val; };
       set('rv-first-name', d.first_name);
@@ -1361,7 +1363,9 @@
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          session_token: _reviewToken,
+          booking_data: _reviewBookingData,
+          client_name: (_reviewBookingData && (_reviewBookingData._client_name || _reviewBookingData.first_name)) || '',
+          client_email: (_reviewBookingData && (_reviewBookingData._client_email || _reviewBookingData.client_email)) || '',
           confirmed_data,
           notes: document.getElementById('rv-notes').value,
           total_aud: total

@@ -1,21 +1,6 @@
 const { formidable } = require('formidable');
 const nodemailer = require('nodemailer');
 const fs = require('fs');
-const crypto = require('crypto');
-
-let db;
-async function getDb() {
-  if (!db) {
-    try {
-      const { getPool, initDb } = require('./db');
-      await initDb();
-      db = getPool();
-    } catch (e) {
-      console.error('DB init failed (non-fatal):', e.message);
-    }
-  }
-  return db;
-}
 
 module.exports = async function handler(req, res) {
   if (req.method !== 'POST') {
@@ -58,32 +43,21 @@ module.exports = async function handler(req, res) {
 
     const fileList = Object.values(files).flat();
 
-    // Store booking in DB and generate review link
+    // Build review link by encoding booking data directly — no DB needed
     let reviewButtonHtml = '';
     if (isBooking) {
-      try {
-        const pool = await getDb();
-        if (pool) {
-          const token = crypto.randomBytes(24).toString('hex');
-          const bookingData = {};
-          Object.entries(fields).forEach(([k, v]) => {
-            bookingData[k] = Array.isArray(v) ? v[0] : v;
-          });
-          await pool.query(
-            `INSERT INTO booking_sessions (token, booking_data, client_name, client_email) VALUES ($1, $2, $3, $4)`,
-            [token, JSON.stringify(bookingData), clientName, clientEmail]
-          );
-          const siteUrl = 'https://www.theglambyankita.com';
-          const reviewLink = `${siteUrl}/r/${token}`;
-          reviewButtonHtml = `
-            <div style="text-align:center;padding:20px 32px;background:#fff8f0;border-top:1px solid #e8c4bc;">
-              <a href="${reviewLink}" style="background:linear-gradient(135deg,#c9a96e,#9e7c4a);color:#fff;text-decoration:none;padding:12px 28px;border-radius:4px;font-weight:700;font-size:0.9rem;display:inline-block;">✦ Review & Send Confirmation Link</a>
-              <p style="margin:8px 0 0;font-size:0.78rem;color:#9a7060;">Click to review details, set deposit, and send the client their confirmation link</p>
-            </div>`;
-        }
-      } catch (dbErr) {
-        console.error('DB store failed (non-fatal):', dbErr.message);
-      }
+      const bookingData = { _client_name: clientName, _client_email: clientEmail };
+      Object.entries(fields).forEach(([k, v]) => {
+        bookingData[k] = Array.isArray(v) ? v[0] : v;
+      });
+      const encoded = Buffer.from(JSON.stringify(bookingData)).toString('base64url');
+      const reviewLink = `https://www.theglambyankita.com/r/${encoded}`;
+      reviewButtonHtml = `
+        <div style="text-align:center;padding:24px 32px 28px;background:#fff8f0;border-top:2px solid #e8c4bc;">
+          <p style="margin:0 0 14px;font-size:0.88rem;color:#6b3d2e;font-weight:600;">Ready to confirm this booking?</p>
+          <a href="${reviewLink}" style="background:linear-gradient(135deg,#c9a96e,#9e7c4a);color:#fff;text-decoration:none;padding:14px 32px;border-radius:5px;font-weight:700;font-size:0.95rem;display:inline-block;letter-spacing:0.03em;">✦ Review &amp; Send Confirmation to Client</a>
+          <p style="margin:10px 0 0;font-size:0.78rem;color:#9a7060;">Click to edit details, set the price, and send the client their payment link</p>
+        </div>`;
     }
 
     const ownerHtml = `
@@ -114,10 +88,7 @@ module.exports = async function handler(req, res) {
         </div>
       </div>`;
 
-    const transporter = nodemailer.createTransport({
-      service: 'gmail',
-      auth: { user, pass },
-    });
+    const transporter = nodemailer.createTransport({ service: 'gmail', auth: { user, pass } });
 
     const attachments = fileList.map((f) => ({
       filename: f.originalFilename,
