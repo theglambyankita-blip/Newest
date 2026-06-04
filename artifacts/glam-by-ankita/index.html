@@ -1307,26 +1307,26 @@
   async function loadReviewPage(token) {
     _reviewToken = token;
     try {
-      const res = await fetch('/api/get-review?d=' + encodeURIComponent(token));
-      if (!res.ok) throw new Error('Not found');
-      const data = await res.json();
-      _reviewBookingData = data.booking_data || {};
+      // Decode booking data directly in the browser — no API call needed
+      const b64 = token.replace(/-/g, '+').replace(/_/g, '/');
+      const padded = b64 + '=='.slice(0, (4 - b64.length % 4) % 4);
+      _reviewBookingData = JSON.parse(decodeURIComponent(escape(atob(padded))));
       const d = _reviewBookingData;
 
-      const set = (id, val) => { const el = document.getElementById(id); if (el && val) el.value = val; };
+      const set = (id, val) => { const el = document.getElementById(id); if (el && val !== undefined && val !== null) el.value = val; };
       set('rv-first-name', d.first_name);
       set('rv-last-name', d.last_name);
-      set('rv-email', d.client_email || d.collab_email);
+      set('rv-email', d._client_email || d.client_email || d.collab_email);
       set('rv-phone', d.phone);
       set('rv-service', d.services || d.service);
       set('rv-num-people', d.num_people);
       set('rv-location', d.location);
-      if (d.preferred_date) set('rv-date', d.preferred_date);
+      set('rv-date', d.preferred_date);
 
       document.getElementById('review-loading').style.display = 'none';
       document.getElementById('review-content').style.display = 'block';
     } catch (e) {
-      document.getElementById('review-loading').textContent = 'Booking not found or link has expired.';
+      document.getElementById('review-loading').textContent = 'This link is invalid or has expired. Please use the link from the booking email.';
     }
   }
 
