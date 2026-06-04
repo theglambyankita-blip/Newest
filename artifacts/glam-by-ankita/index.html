@@ -1199,6 +1199,11 @@
           <p style="color:var(--text-mid);font-size:0.9rem;">Online payment coming soon. Please contact Ankita directly to complete your payment.</p>
           <a href="mailto:theglambyankita@gmail.com" class="sp-btn" style="display:block;text-align:center;text-decoration:none;margin-top:8px;">Contact Ankita</a>
         </div>
+        <div style="margin-top:20px;padding-top:18px;border-top:1px solid #f5ddd8;text-align:center;">
+          <p style="margin:0 0 10px;font-size:0.8rem;color:var(--text-light);text-transform:uppercase;letter-spacing:0.1em;font-weight:700;">Or pay on the day</p>
+          <button class="sp-btn sp-btn-outline" onclick="selectCash()" id="cash-btn" style="width:100%;margin-top:0;">💵 Pay by Cash on the Day</button>
+          <p id="cash-note" style="display:none;margin:10px 0 0;font-size:0.82rem;color:var(--text-mid);line-height:1.6;">✓ Cash noted! Please bring exact change on the day. Ankita will be in touch shortly to confirm your appointment.</p>
+        </div>
       </div>
       <div id="payment-success-card" class="sp-card" style="display:none;text-align:center;padding:40px 24px;">
         <div class="sp-success-icon">💄</div>
@@ -1457,6 +1462,22 @@
       document.getElementById('payment-ready').style.display = 'none';
       document.getElementById('payment-no-stripe').style.display = 'block';
     }
+  }
+
+  async function selectCash() {
+    const btn = document.getElementById('cash-btn');
+    btn.disabled = true;
+    btn.textContent = 'Confirming…';
+    try {
+      await fetch('/api/select-cash', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ token: _bookingToken })
+      });
+    } catch (e) { /* best effort */ }
+    btn.style.display = 'none';
+    document.getElementById('payment-ready').style.display = 'none';
+    document.getElementById('cash-note').style.display = 'block';
   }
 
   async function submitPayment() {
