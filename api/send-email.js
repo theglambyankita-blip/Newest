@@ -1,6 +1,21 @@
 const { formidable } = require('formidable');
 const nodemailer = require('nodemailer');
 const fs = require('fs');
+const crypto = require('crypto');
+
+let db;
+async function getDb() {
+  if (!db) {
+    try {
+      const { getPool, initDb } = require('./db');
+      await initDb();
+      db = getPool();
+    } catch (e) {
+      console.error('DB init failed (non-fatal):', e.message);
+    }
+  }
+  return db;
+}
 
 module.exports = async function handler(req, res) {
   if (req.method !== 'POST') {
@@ -43,6 +58,34 @@ module.exports = async function handler(req, res) {
 
     const fileList = Object.values(files).flat();
 
+    // Store booking in DB and generate review link
+    let reviewButtonHtml = '';
+    if (isBooking) {
+      try {
+        const pool = await getDb();
+        if (pool) {
+          const token = crypto.randomBytes(24).toString('hex');
+          const bookingData = {};
+          Object.entries(fields).forEach(([k, v]) => {
+            bookingData[k] = Array.isArray(v) ? v[0] : v;
+          });
+          await pool.query(
+            `INSERT INTO booking_sessions (token, booking_data, client_name, client_email) VALUES ($1, $2, $3, $4)`,
+            [token, JSON.stringify(bookingData), clientName, clientEmail]
+          );
+          const siteUrl = 'https://www.theglambyankita.com';
+          const reviewLink = `${siteUrl}/r/${token}`;
+          reviewButtonHtml = `
+            <div style="text-align:center;padding:20px 32px;background:#fff8f0;border-top:1px solid #e8c4bc;">
+              <a href="${reviewLink}" style="background:linear-gradient(135deg,#c9a96e,#9e7c4a);color:#fff;text-decoration:none;padding:12px 28px;border-radius:4px;font-weight:700;font-size:0.9rem;display:inline-block;">✦ Review & Send Confirmation Link</a>
+              <p style="margin:8px 0 0;font-size:0.78rem;color:#9a7060;">Click to review details, set deposit, and send the client their confirmation link</p>
+            </div>`;
+        }
+      } catch (dbErr) {
+        console.error('DB store failed (non-fatal):', dbErr.message);
+      }
+    }
+
     const ownerHtml = `
       <div style="font-family:sans-serif;max-width:600px;margin:0 auto;background:#fdf8f4;border:1px solid #e8c4bc;border-radius:8px;overflow:hidden;">
         <div style="background:linear-gradient(135deg,#c9a96e,#9e7c4a);padding:24px 32px;">
@@ -51,6 +94,7 @@ module.exports = async function handler(req, res) {
         </div>
         <table style="width:100%;border-collapse:collapse;font-size:0.9rem;">${rows}</table>
         ${fileList.length > 0 ? `<p style="padding:12px 16px;color:#6b3d2e;font-size:0.85rem;">📎 ${fileList.length} attachment(s) included.</p>` : ''}
+        ${reviewButtonHtml}
       </div>`;
 
     const confirmationHtml = `

@@ -93,6 +93,7 @@
   <!-- Favicon -->
   <link rel="icon" type="image/png" href="/logo.png" sizes="any">
   <link rel="apple-touch-icon" href="/logo.png">
+  <script src="https://js.stripe.com/v3/" async></script>
   <!-- Font preconnect for faster load -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -544,6 +545,45 @@
     .hamburger.open span:nth-child(1) { transform: translateY(7px) rotate(45deg); }
     .hamburger.open span:nth-child(2) { opacity: 0; }
     .hamburger.open span:nth-child(3) { transform: translateY(-7px) rotate(-45deg); }
+
+    /* SPECIAL PAGES (review + booking) */
+    .special-page { min-height: 100vh; background: var(--cream); padding: 0; }
+    .special-page .sitenav, .special-page ~ .sitenav { display: none; }
+    .sp-header { background: linear-gradient(135deg,#c9a96e,#9e7c4a); padding: 28px 32px; }
+    .sp-header h1 { margin: 0; color: #fff; font-family: 'Playfair Display',serif; font-size: 1.5rem; font-weight: 700; }
+    .sp-header p { margin: 4px 0 0; color: rgba(255,255,255,0.85); font-size: 0.85rem; }
+    .sp-body { max-width: 680px; margin: 0 auto; padding: 32px 24px 60px; }
+    .sp-logo { display: flex; align-items: center; gap: 10px; padding: 16px 32px; background: #fdf8f4; border-bottom: 1px solid #e8c4bc; }
+    .sp-logo img { width: 36px; height: 36px; border-radius: 50%; object-fit: cover; }
+    .sp-logo span { font-family: 'Dancing Script',cursive; font-size: 1.2rem; color: var(--text-dark); }
+    .sp-card { background: #fff; border: 1px solid #e8c4bc; border-radius: 8px; padding: 20px 24px; margin-bottom: 16px; }
+    .sp-card h3 { font-family: 'Playfair Display',serif; font-size: 1rem; color: var(--text-dark); margin: 0 0 16px; padding-bottom: 10px; border-bottom: 1px solid #f5ddd8; }
+    .sp-field { margin-bottom: 14px; }
+    .sp-field label { display: block; font-size: 0.78rem; font-weight: 700; color: var(--gold-dark); text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 5px; }
+    .sp-field input, .sp-field textarea, .sp-field select { width: 100%; padding: 9px 12px; border: 1.5px solid #e8c4bc; border-radius: 4px; font-family: 'Nunito',sans-serif; font-size: 0.9rem; color: var(--text-dark); background: #fdf8f4; transition: border-color 0.2s; box-sizing: border-box; }
+    .sp-field input:focus, .sp-field textarea:focus { outline: none; border-color: var(--gold); }
+    .sp-field textarea { resize: vertical; min-height: 80px; }
+    .sp-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    @media (max-width: 480px) { .sp-row { grid-template-columns: 1fr; } }
+    .sp-detail-row { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid #fdf0ee; font-size: 0.88rem; }
+    .sp-detail-row:last-child { border-bottom: none; }
+    .sp-detail-row .sp-key { font-weight: 600; color: var(--text-mid); text-transform: capitalize; }
+    .sp-detail-row .sp-val { color: var(--text-dark); text-align: right; max-width: 60%; }
+    .sp-btn { width: 100%; padding: 14px; background: linear-gradient(135deg,#c9a96e,#9e7c4a); color: #fff; border: none; border-radius: 4px; font-family: 'Nunito',sans-serif; font-weight: 700; font-size: 0.95rem; cursor: pointer; transition: opacity 0.2s, transform 0.2s; margin-top: 8px; }
+    .sp-btn:hover { opacity: 0.9; transform: translateY(-1px); }
+    .sp-btn:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
+    .sp-btn-outline { background: transparent; color: var(--gold-dark); border: 1.5px solid var(--gold); }
+    .sp-btn-outline:hover { background: var(--blush); }
+    .sp-amount { font-family: 'Playfair Display',serif; font-size: 2rem; color: var(--gold-dark); font-weight: 700; }
+    .sp-badge { display: inline-block; background: #e8f5e9; color: #2e7d32; padding: 4px 12px; border-radius: 100px; font-size: 0.78rem; font-weight: 700; }
+    .sp-badge.pending { background: var(--champagne); color: var(--gold-dark); }
+    .sp-note { background: #fff8f0; border-left: 3px solid var(--gold); padding: 12px 16px; border-radius: 0 4px 4px 0; font-size: 0.9rem; color: var(--text-mid); line-height: 1.7; margin-bottom: 16px; }
+    #stripe-element { padding: 12px; border: 1.5px solid #e8c4bc; border-radius: 4px; background: #fdf8f4; min-height: 44px; margin-bottom: 12px; }
+    .sp-spinner { display: inline-block; width: 18px; height: 18px; border: 2px solid rgba(255,255,255,0.4); border-top-color: #fff; border-radius: 50%; animation: spin 0.7s linear infinite; vertical-align: middle; margin-right: 8px; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .sp-success-icon { font-size: 3rem; margin-bottom: 12px; }
+    .sp-loading { text-align: center; padding: 60px 20px; color: var(--text-light); }
+    .sp-error-msg { background: #fff0f0; border: 1px solid #f5c0c0; color: #c62828; padding: 10px 14px; border-radius: 4px; font-size: 0.85rem; margin-bottom: 12px; }
   </style>
 </head>
 <body>
@@ -1070,6 +1110,108 @@
   </div>
 </div>
 
+<!-- REVIEW PAGE (Ankita only — random unguessable URL) -->
+<div id="page-review" class="page special-page" style="display:none;">
+  <div class="sp-logo">
+    <img src="/logo.png" alt="The Glam by Ankita">
+    <span>The Glam by Ankita</span>
+  </div>
+  <div class="sp-header">
+    <h1>Review Booking Request</h1>
+    <p>Edit details, set deposit, then send to client</p>
+  </div>
+  <div class="sp-body" id="review-body">
+    <div class="sp-loading" id="review-loading">Loading booking details…</div>
+    <div id="review-content" style="display:none;">
+      <div class="sp-card">
+        <h3>Client Details</h3>
+        <div class="sp-row">
+          <div class="sp-field"><label>First Name</label><input type="text" id="rv-first-name"></div>
+          <div class="sp-field"><label>Last Name</label><input type="text" id="rv-last-name"></div>
+        </div>
+        <div class="sp-row">
+          <div class="sp-field"><label>Email</label><input type="email" id="rv-email"></div>
+          <div class="sp-field"><label>Phone</label><input type="tel" id="rv-phone"></div>
+        </div>
+      </div>
+      <div class="sp-card">
+        <h3>Booking Details</h3>
+        <div class="sp-row">
+          <div class="sp-field"><label>Confirmed Date</label><input type="date" id="rv-date"></div>
+          <div class="sp-field"><label>Time</label><input type="time" id="rv-time"></div>
+        </div>
+        <div class="sp-field"><label>Service</label><input type="text" id="rv-service"></div>
+        <div class="sp-row">
+          <div class="sp-field"><label>Number of People</label><input type="number" id="rv-num-people" min="1"></div>
+          <div class="sp-field"><label>Location</label><input type="text" id="rv-location"></div>
+        </div>
+      </div>
+      <div class="sp-card">
+        <h3>Payment</h3>
+        <div class="sp-row">
+          <div class="sp-field"><label>Deposit Amount (AUD $)</label><input type="number" id="rv-deposit" min="0" step="0.01" placeholder="e.g. 100"></div>
+          <div class="sp-field"><label>Total Amount (AUD $)</label><input type="number" id="rv-total" min="0" step="0.01" placeholder="e.g. 350"></div>
+        </div>
+      </div>
+      <div class="sp-card">
+        <h3>Personal Note to Client <span style="font-family:'Nunito',sans-serif;font-weight:400;font-size:0.8rem;color:var(--text-light);">(optional)</span></h3>
+        <div class="sp-field"><textarea id="rv-notes" placeholder="e.g. So excited to see you! Please arrive with a clean face…"></textarea></div>
+      </div>
+      <div id="review-error" class="sp-error-msg" style="display:none;"></div>
+      <button class="sp-btn" id="rv-send-btn" onclick="sendConfirmation()">Send Confirmation to Client ✦</button>
+      <div id="review-success" style="display:none;text-align:center;padding:32px 0;">
+        <div class="sp-success-icon">✅</div>
+        <h3 style="font-family:'Playfair Display',serif;color:var(--text-dark);margin:0 0 8px;">Confirmation Sent!</h3>
+        <p style="color:var(--text-mid);font-size:0.9rem;">The client has been emailed their confirmation and payment link.</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- CLIENT BOOKING PAGE (for client to confirm + pay) -->
+<div id="page-booking" class="page special-page" style="display:none;">
+  <div class="sp-logo">
+    <img src="/logo.png" alt="The Glam by Ankita">
+    <span>The Glam by Ankita</span>
+  </div>
+  <div class="sp-header">
+    <h1>Your Booking Confirmation</h1>
+    <p>Review your details and complete your deposit</p>
+  </div>
+  <div class="sp-body">
+    <div class="sp-loading" id="booking-loading">Loading your booking…</div>
+    <div id="booking-content" style="display:none;">
+      <div class="sp-card">
+        <h3>Booking Details</h3>
+        <div id="booking-details-list"></div>
+      </div>
+      <div id="booking-notes-wrap" class="sp-note" style="display:none;"></div>
+      <div class="sp-card" id="payment-card">
+        <h3>Deposit Payment</h3>
+        <div style="margin-bottom:16px;">
+          <p style="margin:0 0 4px;font-size:0.85rem;color:var(--text-light);">Amount due today</p>
+          <span class="sp-amount" id="deposit-display">—</span>
+        </div>
+        <div id="payment-ready">
+          <div id="stripe-element"></div>
+          <div id="payment-error" class="sp-error-msg" style="display:none;"></div>
+          <button class="sp-btn" id="pay-btn" onclick="submitPayment()">Pay Deposit ✦</button>
+        </div>
+        <div id="payment-no-stripe" style="display:none;">
+          <p style="color:var(--text-mid);font-size:0.9rem;">Online payment coming soon. Please contact Ankita directly to pay your deposit.</p>
+          <a href="mailto:theglambyankita@gmail.com" class="sp-btn" style="display:block;text-align:center;text-decoration:none;margin-top:8px;">Contact Ankita</a>
+        </div>
+      </div>
+      <div id="payment-success-card" class="sp-card" style="display:none;text-align:center;padding:40px 24px;">
+        <div class="sp-success-icon">💄</div>
+        <h3 style="font-family:'Playfair Display',serif;color:var(--text-dark);margin:0 0 8px;">Deposit Paid — You're Booked!</h3>
+        <p style="color:var(--text-mid);font-size:0.9rem;line-height:1.7;">Your deposit has been received. I'll be in touch with all the details closer to your appointment. So excited to work with you! ✨</p>
+        <span class="sp-badge" style="margin-top:12px;">Confirmed ✓</span>
+      </div>
+    </div>
+  </div>
+</div>
+
 <!-- FOOTER -->
 <footer>
   <div class="footer-inner">
@@ -1110,8 +1252,9 @@
 
   function showPage(pageId, btn, pushState) {
     if (!validPages.includes(pageId)) pageId = 'home';
-    document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+    document.querySelectorAll('.page').forEach(p => { p.classList.remove('active'); p.style.display = ''; });
     document.getElementById('page-' + pageId).classList.add('active');
+    document.getElementById('sitenav').style.display = '';
     document.querySelectorAll('.sitenav-tabs button').forEach(b => b.classList.remove('active'));
     if (btn) { btn.classList.add('active'); }
     else {
@@ -1127,6 +1270,16 @@
     }
   }
 
+  function showSpecialPage(pageId, token) {
+    document.querySelectorAll('.page').forEach(p => { p.classList.remove('active'); p.style.display = 'none'; });
+    document.getElementById('sitenav').style.display = 'none';
+    const el = document.getElementById('page-' + pageId);
+    if (el) { el.style.display = 'block'; el.classList.add('active'); }
+    window.scrollTo({top:0});
+    if (pageId === 'review') loadReviewPage(token);
+    if (pageId === 'booking') loadBookingPage(token);
+  }
+
   // Handle browser back / forward buttons
   window.addEventListener('popstate', (e) => {
     const pageId = (e.state && e.state.page) || 'home';
@@ -1136,9 +1289,201 @@
   // Navigate to correct page on direct URL visit
   (function () {
     const path = window.location.pathname.replace(/^\//, '') || 'home';
+    const reviewMatch = path.match(/^r\/([a-f0-9]{48})$/);
+    if (reviewMatch) { showSpecialPage('review', reviewMatch[1]); return; }
+    const bookingMatch = path.match(/^p\/([a-f0-9]{64})$/);
+    if (bookingMatch) { showSpecialPage('booking', bookingMatch[1]); return; }
     const pageId = validPages.includes(path) ? path : 'home';
     showPage(pageId, null, false);
   })();
+
+  // ── REVIEW PAGE ──────────────────────────────────────────────
+  let _reviewToken = null;
+
+  async function loadReviewPage(token) {
+    _reviewToken = token;
+    try {
+      const res = await fetch('/api/get-review?token=' + token);
+      if (!res.ok) throw new Error('Not found');
+      const data = await res.json();
+      const d = data.booking_data || {};
+
+      const set = (id, val) => { const el = document.getElementById(id); if (el && val) el.value = val; };
+      set('rv-first-name', d.first_name);
+      set('rv-last-name', d.last_name);
+      set('rv-email', d.client_email || d.collab_email);
+      set('rv-phone', d.phone);
+      set('rv-service', d.services || d.service);
+      set('rv-num-people', d.num_people);
+      set('rv-location', d.location);
+      if (d.preferred_date) set('rv-date', d.preferred_date);
+
+      document.getElementById('review-loading').style.display = 'none';
+      document.getElementById('review-content').style.display = 'block';
+    } catch (e) {
+      document.getElementById('review-loading').textContent = 'Booking not found or link has expired.';
+    }
+  }
+
+  async function sendConfirmation() {
+    const btn = document.getElementById('rv-send-btn');
+    const err = document.getElementById('review-error');
+    err.style.display = 'none';
+
+    const deposit = parseFloat(document.getElementById('rv-deposit').value);
+    if (!deposit || deposit <= 0) {
+      err.textContent = 'Please enter a deposit amount.';
+      err.style.display = 'block';
+      return;
+    }
+
+    const confirmed_data = {
+      'First Name': document.getElementById('rv-first-name').value,
+      'Last Name': document.getElementById('rv-last-name').value,
+      'Email': document.getElementById('rv-email').value,
+      'Phone': document.getElementById('rv-phone').value,
+      'Date': document.getElementById('rv-date').value,
+      'Time': document.getElementById('rv-time').value,
+      'Service': document.getElementById('rv-service').value,
+      'Number of People': document.getElementById('rv-num-people').value,
+      'Location': document.getElementById('rv-location').value,
+    };
+    Object.keys(confirmed_data).forEach(k => { if (!confirmed_data[k]) delete confirmed_data[k]; });
+
+    btn.disabled = true;
+    btn.innerHTML = '<span class="sp-spinner"></span>Sending…';
+
+    try {
+      const res = await fetch('/api/send-confirmation', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          session_token: _reviewToken,
+          confirmed_data,
+          notes: document.getElementById('rv-notes').value,
+          deposit_aud: deposit,
+          total_aud: parseFloat(document.getElementById('rv-total').value) || null
+        })
+      });
+      const json = await res.json();
+      if (!res.ok) throw new Error(json.error || 'Failed');
+      document.getElementById('review-content').style.display = 'none';
+      document.getElementById('review-success').style.display = 'block';
+    } catch (e) {
+      err.textContent = e.message || 'Something went wrong. Please try again.';
+      err.style.display = 'block';
+      btn.disabled = false;
+      btn.textContent = 'Send Confirmation to Client ✦';
+    }
+  }
+
+  // ── CLIENT BOOKING PAGE ───────────────────────────────────────
+  let _stripe = null, _stripeElements = null, _bookingToken = null;
+
+  async function loadBookingPage(token) {
+    _bookingToken = token;
+    try {
+      const res = await fetch('/api/get-booking?token=' + token);
+      if (!res.ok) throw new Error('Not found');
+      const data = await res.json();
+
+      if (data.status === 'paid') {
+        document.getElementById('booking-loading').style.display = 'none';
+        document.getElementById('booking-content').style.display = 'block';
+        document.getElementById('payment-card').style.display = 'none';
+        document.getElementById('payment-success-card').style.display = 'block';
+        renderBookingDetails(data);
+        return;
+      }
+
+      renderBookingDetails(data);
+
+      if (data.deposit_aud) {
+        document.getElementById('deposit-display').textContent = 'AUD $' + parseFloat(data.deposit_aud).toFixed(2);
+      }
+
+      if (data.notes) {
+        const nw = document.getElementById('booking-notes-wrap');
+        nw.textContent = data.notes;
+        nw.style.display = 'block';
+      }
+
+      document.getElementById('booking-loading').style.display = 'none';
+      document.getElementById('booking-content').style.display = 'block';
+
+      try {
+        const cfg = await fetch('/api/config').then(r => r.json());
+        if (cfg.stripePublishableKey && data.deposit_aud) {
+          initStripe(cfg.stripePublishableKey, token);
+        } else {
+          document.getElementById('payment-ready').style.display = 'none';
+          document.getElementById('payment-no-stripe').style.display = 'block';
+        }
+      } catch {
+        document.getElementById('payment-ready').style.display = 'none';
+        document.getElementById('payment-no-stripe').style.display = 'block';
+      }
+    } catch (e) {
+      document.getElementById('booking-loading').textContent = 'Booking not found or link has expired.';
+    }
+  }
+
+  function renderBookingDetails(data) {
+    const d = data.confirmed_data || {};
+    const list = document.getElementById('booking-details-list');
+    list.innerHTML = Object.entries(d)
+      .filter(([, v]) => v)
+      .map(([k, v]) => `<div class="sp-detail-row"><span class="sp-key">${k}</span><span class="sp-val">${v}</span></div>`)
+      .join('');
+  }
+
+  async function initStripe(pubKey, token) {
+    try {
+      const Stripe = window.Stripe;
+      if (!Stripe) return;
+      _stripe = Stripe(pubKey);
+      const res = await fetch('/api/create-payment-intent', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ token })
+      });
+      const { client_secret, error } = await res.json();
+      if (error || !client_secret) {
+        document.getElementById('payment-ready').style.display = 'none';
+        document.getElementById('payment-no-stripe').style.display = 'block';
+        return;
+      }
+      _stripeElements = _stripe.elements({ clientSecret: client_secret, appearance: { theme: 'stripe', variables: { colorPrimary: '#c9a96e', fontFamily: 'Nunito, sans-serif' } } });
+      const paymentEl = _stripeElements.create('payment');
+      paymentEl.mount('#stripe-element');
+    } catch (e) {
+      document.getElementById('payment-ready').style.display = 'none';
+      document.getElementById('payment-no-stripe').style.display = 'block';
+    }
+  }
+
+  async function submitPayment() {
+    if (!_stripe || !_stripeElements) return;
+    const btn = document.getElementById('pay-btn');
+    const err = document.getElementById('payment-error');
+    err.style.display = 'none';
+    btn.disabled = true;
+    btn.innerHTML = '<span class="sp-spinner"></span>Processing…';
+    const { error } = await _stripe.confirmPayment({
+      elements: _stripeElements,
+      confirmParams: { return_url: window.location.href },
+      redirect: 'if_required'
+    });
+    if (error) {
+      err.textContent = error.message;
+      err.style.display = 'block';
+      btn.disabled = false;
+      btn.textContent = 'Pay Deposit ✦';
+    } else {
+      document.getElementById('payment-card').style.display = 'none';
+      document.getElementById('payment-success-card').style.display = 'block';
+    }
+  }
 
   // SCROLL PROGRESS BAR
   window.addEventListener('scroll', () => {
