@@ -1292,8 +1292,11 @@
   // Navigate to correct page on direct URL visit
   (function () {
     const path = window.location.pathname.replace(/^\//, '') || 'home';
-    const reviewMatch = path.match(/^r\/([A-Za-z0-9_-]{20,})$/);
-    if (reviewMatch) { showSpecialPage('review', reviewMatch[1]); return; }
+    if (path === 'r') {
+      const b = new URLSearchParams(window.location.search).get('b');
+      showSpecialPage('review', b || '');
+      return;
+    }
     const bookingMatch = path.match(/^p\/([a-f0-9]{64})$/);
     if (bookingMatch) { showSpecialPage('booking', bookingMatch[1]); return; }
     const pageId = validPages.includes(path) ? path : 'home';

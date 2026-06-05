@@ -51,7 +51,7 @@ module.exports = async function handler(req, res) {
         bookingData[k] = Array.isArray(v) ? v[0] : v;
       });
       const encoded = Buffer.from(JSON.stringify(bookingData)).toString('base64url');
-      const reviewLink = `https://www.theglambyankita.com/r/${encoded}`;
+      const reviewLink = `https://www.theglambyankita.com/r?b=${encoded}`;
       reviewButtonHtml = `
         <div style="text-align:center;padding:24px 32px 28px;background:#fff8f0;border-top:2px solid #e8c4bc;">
           <p style="margin:0 0 14px;font-size:0.88rem;color:#6b3d2e;font-weight:600;">Ready to confirm this booking?</p>
