@@ -2,10 +2,21 @@ const { Pool } = require('pg');
 
 let pool;
 
+function getDbUrl() {
+  return (
+    process.env.DATABASE_URL ||
+    process.env.DATABASE_URL_POSTGRES_URL_NON_POOLING ||
+    process.env.DATABASE_URL_POSTGRES_URL ||
+    process.env.POSTGRES_URL_NON_POOLING ||
+    process.env.POSTGRES_URL ||
+    null
+  );
+}
+
 function getPool() {
   if (!pool) {
     pool = new Pool({
-      connectionString: process.env.DATABASE_URL,
+      connectionString: getDbUrl(),
       ssl: { rejectUnauthorized: false }
     });
   }
@@ -39,4 +50,4 @@ async function initDb() {
   `);
 }
 
-module.exports = { getPool, initDb };
+module.exports = { getPool, initDb, getDbUrl };

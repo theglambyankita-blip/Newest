@@ -1,4 +1,4 @@
-const { getPool, initDb } = require('./db');
+const { getPool, initDb, getDbUrl } = require('./db');
 
 const withTimeout = (promise, ms) =>
   Promise.race([promise, new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), ms))]);
@@ -14,7 +14,7 @@ module.exports = async function handler(req, res) {
     return res.status(503).json({ error: 'Payments not configured yet.' });
   }
 
-  if (!process.env.DATABASE_URL) {
+  if (!getDbUrl()) {
     return res.status(503).json({ error: 'Booking system not configured.' });
   }
 

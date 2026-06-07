@@ -1,4 +1,4 @@
-const { getPool, initDb } = require('./db');
+const { getPool, initDb, getDbUrl } = require('./db');
 const nodemailer = require('nodemailer');
 const crypto = require('crypto');
 
@@ -55,8 +55,8 @@ module.exports = async function handler(req, res) {
   const resolvedClientName = client_name || confirmed_data['First Name'] || 'Client';
   const resolvedClientEmail = client_email || confirmed_data['Email'] || '';
 
-  if (!process.env.DATABASE_URL) {
-    return res.status(503).json({ error: 'Booking system not configured — DATABASE_URL is missing.' });
+  if (!getDbUrl()) {
+    return res.status(503).json({ error: 'Booking system not configured — no database URL found.' });
   }
 
   try {
