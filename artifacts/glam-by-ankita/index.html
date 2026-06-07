@@ -837,7 +837,7 @@
 
       </div>
       <div class="photo-item" data-cat="glam" data-title="Full Glam" data-desc="Bold red lip & city sunset vibes" onclick="openLightbox(this)">
-        <img src="/full-glam-city.png" alt="Full Glam — Melbourne city sunset">
+        <img src="/full-glam-city.png" alt="Full Glam — Melbourne city sunset" style="object-position: center 70%;">
         <div class="photo-overlay"><div class="photo-overlay-txt">Full Glam<br><small>City Sunset ✦</small></div></div>
       </div>
       <div class="photo-item" data-cat="editorial" data-title="Editorial Look" data-desc="Creative editorial makeup" onclick="openLightbox(this)">
@@ -1517,7 +1517,7 @@
     const nav = document.getElementById('sitenav');
     nav.classList.toggle('scrolled', window.scrollY > 20);
     const tabs = document.getElementById('sitenav-tabs');
-    if (tabs && window.innerWidth > 600) tabs.classList.toggle('tabs-hidden', window.scrollY > 60);
+    if (tabs && window.innerWidth > 600) tabs.classList.toggle('tabs-hidden', window.scrollY > 10);
   });
 
   // ANIMATION TRIGGER
