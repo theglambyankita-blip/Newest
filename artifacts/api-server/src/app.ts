@@ -9,7 +9,7 @@ import { logger } from "./lib/logger";
 const app: Express = express();
 
 // ── STRIPE WEBHOOK (must be before express.json()) ───────────────
-app.post("/api/stripe/webhook", express.raw({ type: "application/json" }), async (req, res) => {
+app.post("/api/webhook", express.raw({ type: "application/json" }), async (req, res) => {
   const secretKey = process.env["STRIPE_SECRET_KEY"];
   const webhookSecret = process.env["STRIPE_WEBHOOK_SECRET"];
   const sig = req.headers["stripe-signature"];
