@@ -2,6 +2,46 @@ const { getPool, initDb } = require('./db');
 const nodemailer = require('nodemailer');
 const crypto = require('crypto');
 
+function buildCalendarSection(confirmedData, token, siteUrl) {
+  const date = confirmedData['Date'] || '';
+  const time = confirmedData['Time'] || '';
+  if (!date) return '';
+
+  const [year, month, day] = date.split('-').map(Number);
+  const [hour, minute] = (time || '09:00').split(':').map(Number);
+  const pad = n => String(n || 0).padStart(2, '0');
+
+  const startDT = `${year}${pad(month)}${pad(day)}T${pad(hour)}${pad(minute)}00`;
+  const endH = (hour + 2) % 24;
+  const endDT = `${year}${pad(month)}${pad(day)}T${pad(endH)}${pad(minute)}00`;
+
+  const loc = confirmedData['Location'] || '';
+  const service = confirmedData['Service'] || 'Makeup Appointment';
+  const numPeople = confirmedData['Number of People'] || '';
+  const title = `${service} — The Glam by Ankita`;
+  const desc = `Appointment with Ankita from The Glam by Ankita.\nService: ${service}${numPeople ? `\nNumber of people: ${numPeople}` : ''}${loc ? `\nLocation: ${loc}` : ''}`;
+
+  const gCal = `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${encodeURIComponent(title)}&dates=${startDT}/${endDT}&details=${encodeURIComponent(desc)}&location=${encodeURIComponent(loc)}`;
+  const outlook = `https://outlook.live.com/calendar/0/deeplink/compose?subject=${encodeURIComponent(title)}&startdt=${date}T${pad(hour)}:${pad(minute)}:00&enddt=${date}T${pad(endH)}:${pad(minute)}:00&body=${encodeURIComponent(desc)}&location=${encodeURIComponent(loc)}`;
+  const ics = `${siteUrl}/api/calendar?${new URLSearchParams({ title, date, time: time || '09:00', location: loc, description: desc, uid: `${token}@theglambyankita.com` })}`;
+
+  return `
+    <tr>
+      <td style="padding:20px 36px 4px;">
+        <table width="100%" cellpadding="0" cellspacing="0" style="background:#f5f9ff;border:1px solid #d0e4f7;border-radius:6px;">
+          <tr>
+            <td style="padding:14px 20px;text-align:center;">
+              <p style="margin:0 0 10px;font-size:0.75rem;font-weight:700;color:#4a6fa5;text-transform:uppercase;letter-spacing:0.1em;">📅 Save the date to your calendar</p>
+              <a href="${gCal}" target="_blank" style="display:inline-block;margin:3px;background:#4285f4;color:#fff;text-decoration:none;padding:8px 16px;border-radius:4px;font-size:0.8rem;font-weight:700;">Google Calendar</a>
+              <a href="${outlook}" target="_blank" style="display:inline-block;margin:3px;background:#0078d4;color:#fff;text-decoration:none;padding:8px 16px;border-radius:4px;font-size:0.8rem;font-weight:700;">Outlook</a>
+              <a href="${ics}" style="display:inline-block;margin:3px;background:#555;color:#fff;text-decoration:none;padding:8px 16px;border-radius:4px;font-size:0.8rem;font-weight:700;">Apple Calendar</a>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>`;
+}
+
 module.exports = async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
@@ -62,6 +102,9 @@ module.exports = async function handler(req, res) {
 
       const firstName = confirmed_data['First Name'] || resolvedClientName;
       const amountDisplay = total_aud ? `AUD $${parseFloat(total_aud).toFixed(2)}` : null;
+
+      // Build calendar links if date is available
+      const calendarHtml = buildCalendarSection(confirmed_data, clientToken, siteUrl);
 
       const detailRows = Object.entries(confirmed_data)
         .filter(([, v]) => v)
@@ -163,6 +206,8 @@ module.exports = async function handler(req, res) {
             <p style="margin:4px 0 0;font-size:0.78rem;"><a href="${clientLink}" style="color:#c9a96e;word-break:break-all;">${clientLink}</a></p>
           </td>
         </tr>
+
+        ${calendarHtml}
 
         <tr>
           <td style="padding:28px 36px 32px;">
