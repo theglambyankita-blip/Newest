@@ -29,6 +29,21 @@ app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
+// Redirect old /r?b=TOKEN links → /api/review?token=TOKEN
+app.get("/r", (req, res) => {
+  const b = req.query.b as string;
+  if (b) {
+    res.redirect(302, `/api/review?token=${encodeURIComponent(b)}`);
+  } else {
+    res.redirect(302, "/");
+  }
+});
+
+// Redirect /p?b=TOKEN → serve via frontend (already handled there)
+app.get("/p", (req, res) => {
+  res.redirect(302, `/?page=booking&b=${req.query.b || ""}`);
+});
+
 app.use("/api", router);
 
 export default app;
