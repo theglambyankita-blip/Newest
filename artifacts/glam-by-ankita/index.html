@@ -1517,7 +1517,7 @@
     const nav = document.getElementById('sitenav');
     nav.classList.toggle('scrolled', window.scrollY > 20);
     const tabs = document.getElementById('sitenav-tabs');
-    if (tabs && window.innerWidth > 600) tabs.classList.toggle('tabs-hidden', window.scrollY > 60);
+    
   });
 
   // ANIMATION TRIGGER
@@ -1590,7 +1590,7 @@
       const img = document.createElement('img');
       img.src = imgEl.src;
       img.alt = el.dataset.title || '';
-      img.style.cssText = 'width:100%;height:400px;display:block;object-fit:cover;object-position:center 70%;';
+      img.style.cssText = 'width:100%;height:400px;display:block;object-fit:cover;object-position:center 25%;';
       lbPh.appendChild(img);
     } else {
       lbPh.innerHTML = '';
