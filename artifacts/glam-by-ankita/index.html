@@ -1122,8 +1122,12 @@
   <div class="sp-body" id="review-body">
     <div class="sp-loading" id="review-loading">Loading booking details…</div>
     <div id="review-content" style="display:none;">
+      <div class="sp-card" style="background:#fff9f0;border:1.5px solid #e8d5a3;">
+        <h3 style="color:var(--gold-dark);">📋 Client's Full Submission</h3>
+        <div id="rv-raw-data" style="font-size:0.88rem;line-height:2;color:var(--text-dark);"></div>
+      </div>
       <div class="sp-card">
-        <h3>Client Details</h3>
+        <h3>Confirm Client Details <span style="font-family:'Nunito',sans-serif;font-weight:400;font-size:0.75rem;color:var(--text-light);">edit if needed</span></h3>
         <div class="sp-row">
           <div class="sp-field"><label>First Name</label><input type="text" id="rv-first-name"></div>
           <div class="sp-field"><label>Last Name</label><input type="text" id="rv-last-name"></div>
@@ -1134,7 +1138,7 @@
         </div>
       </div>
       <div class="sp-card">
-        <h3>Booking Details</h3>
+        <h3>Confirm Booking Details <span style="font-family:'Nunito',sans-serif;font-weight:400;font-size:0.75rem;color:var(--text-light);">edit if needed</span></h3>
         <div class="sp-row">
           <div class="sp-field"><label>Confirmed Date</label><input type="date" id="rv-date"></div>
           <div class="sp-field"><label>Time</label><input type="time" id="rv-time"></div>
@@ -1142,16 +1146,16 @@
         <div class="sp-field"><label>Service</label><input type="text" id="rv-service"></div>
         <div class="sp-row">
           <div class="sp-field"><label>Number of People</label><input type="number" id="rv-num-people" min="1"></div>
-          <div class="sp-field"><label>Location</label><input type="text" id="rv-location"></div>
+          <div class="sp-field"><label>Location / Address</label><input type="text" id="rv-location"></div>
         </div>
       </div>
-      <div class="sp-card">
-        <h3>Payment</h3>
-        <div class="sp-field"><label>Amount to Charge (AUD $)</label><input type="number" id="rv-total" min="0" step="0.01" placeholder="e.g. 350"></div>
+      <div class="sp-card" style="border:2px solid var(--gold);background:linear-gradient(135deg,#fdf8f4,#fdf0ee);">
+        <h3>💰 Set Deposit Amount</h3>
+        <div class="sp-field"><label>Amount to Charge (AUD $)</label><input type="number" id="rv-total" min="0" step="0.01" placeholder="e.g. 150" style="font-size:1.1rem;font-weight:700;"></div>
       </div>
       <div class="sp-card">
         <h3>Personal Note to Client <span style="font-family:'Nunito',sans-serif;font-weight:400;font-size:0.8rem;color:var(--text-light);">(optional)</span></h3>
-        <div class="sp-field"><textarea id="rv-notes" placeholder="e.g. So excited to see you! Please arrive with a clean face…"></textarea></div>
+        <div class="sp-field"><textarea id="rv-notes" placeholder="e.g. So excited to see you! Please arrive with a clean face and no eye makeup on…"></textarea></div>
       </div>
       <div id="review-error" class="sp-error-msg" style="display:none;"></div>
       <button class="sp-btn" id="rv-send-btn" onclick="sendConfirmation()">Send Confirmation to Client ✦</button>
@@ -1310,29 +1314,67 @@
   let _reviewToken = null;
   let _reviewBookingData = null;
 
+  function _b64Decode(token) {
+    const b64 = token.replace(/-/g, '+').replace(/_/g, '/');
+    const pad = (4 - b64.length % 4) % 4;
+    const padded = b64 + '='.repeat(pad);
+    try {
+      const bytes = Uint8Array.from(atob(padded), c => c.charCodeAt(0));
+      return JSON.parse(new TextDecoder().decode(bytes));
+    } catch {
+      return JSON.parse(atob(padded));
+    }
+  }
+
+  function _populateReview(d) {
+    const skip = new Set(['owner_email','from_email','_client_email','_client_name','type']);
+    const labels = {
+      first_name:'First Name', last_name:'Last Name', client_email:'Email',
+      phone:'Phone', contact_method:'Preferred Contact', preferred_date:'Requested Date',
+      num_people:'Number of People', services:'Services Requested', location:'Location / Suburb',
+      postcode:'Postcode', referral:'How They Found You', vision:'Look / Vision / Inspo'
+    };
+    const rawEl = document.getElementById('rv-raw-data');
+    if (rawEl) {
+      rawEl.innerHTML = Object.entries(d)
+        .filter(([k, v]) => !skip.has(k) && v)
+        .map(([k, v]) => `<div style="display:flex;gap:12px;padding:6px 0;border-bottom:1px solid #f5ddd8;"><span style="min-width:165px;font-weight:700;color:#6b3d2e;flex-shrink:0;">${labels[k] || k.replace(/_/g,' ')}</span><span style="color:#2c1810;">${v}</span></div>`)
+        .join('');
+    }
+    const set = (id, val) => { const el = document.getElementById(id); if (el && val != null && val !== '') el.value = val; };
+    set('rv-first-name', d.first_name);
+    set('rv-last-name', d.last_name);
+    set('rv-email', d._client_email || d.client_email);
+    set('rv-phone', d.phone);
+    set('rv-service', d.services || d.service);
+    set('rv-num-people', d.num_people);
+    set('rv-location', d.location);
+    set('rv-date', d.preferred_date);
+    document.getElementById('review-loading').style.display = 'none';
+    document.getElementById('review-content').style.display = 'block';
+  }
+
   async function loadReviewPage(token) {
     _reviewToken = token;
+    const errEl = document.getElementById('review-loading');
+    if (!token) {
+      errEl.textContent = 'No booking token found. Please use the link from your email.';
+      return;
+    }
+    // Try client-side decode first (instant, no network)
     try {
-      // Decode booking data directly in the browser — no API call needed
-      const b64 = token.replace(/-/g, '+').replace(/_/g, '/');
-      const padded = b64 + '=='.slice(0, (4 - b64.length % 4) % 4);
-      _reviewBookingData = JSON.parse(decodeURIComponent(escape(atob(padded))));
-      const d = _reviewBookingData;
-
-      const set = (id, val) => { const el = document.getElementById(id); if (el && val !== undefined && val !== null) el.value = val; };
-      set('rv-first-name', d.first_name);
-      set('rv-last-name', d.last_name);
-      set('rv-email', d._client_email || d.client_email || d.collab_email);
-      set('rv-phone', d.phone);
-      set('rv-service', d.services || d.service);
-      set('rv-num-people', d.num_people);
-      set('rv-location', d.location);
-      set('rv-date', d.preferred_date);
-
-      document.getElementById('review-loading').style.display = 'none';
-      document.getElementById('review-content').style.display = 'block';
+      _reviewBookingData = _b64Decode(token);
+      _populateReview(_reviewBookingData);
+      return;
+    } catch (_) {}
+    // Fallback: ask the server to decode (handles any encoding edge cases)
+    try {
+      const res = await fetch('/api/get-booking?token=' + encodeURIComponent(token));
+      if (!res.ok) throw new Error('Server error');
+      _reviewBookingData = await res.json();
+      _populateReview(_reviewBookingData);
     } catch (e) {
-      document.getElementById('review-loading').textContent = 'This link is invalid or has expired. Please use the link from the booking email.';
+      errEl.textContent = 'Could not load booking details. Please use the link from your email, or contact Ankita directly.';
     }
   }
 
