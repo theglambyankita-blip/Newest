@@ -1473,7 +1473,7 @@
 
       try {
         const cfg = await fetch('/api/config').then(r => r.json());
-        if (cfg.stripePublishableKey && data.deposit_aud) {
+        if (cfg.stripePublishableKey && data.total_aud) {
           initStripe(cfg.stripePublishableKey, token);
         } else {
           document.getElementById('payment-ready').style.display = 'none';
