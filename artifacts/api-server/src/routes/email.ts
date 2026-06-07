@@ -292,9 +292,9 @@ router.post("/send-email", upload.array("files", 5), async (req, res) => {
 
   let reviewSection = "";
   if (isBooking) {
-    const tokenData = { ...fields, _client_email: clientEmail, _client_name: clientName };
+    const tokenData = { ...fields, type, _client_email: clientEmail, _client_name: clientName, owner_email, from_email };
     const token = toUrlSafeBase64(tokenData);
-    const reviewUrl = `${API_BASE}/review?token=${token}`;
+    const reviewUrl = `${SITE_URL}/r?b=${token}`;
     reviewSection = `
       <div style="padding:22px 32px;background:#f7e9d0;border-top:1px solid #e8c4bc;text-align:center;">
         <p style="margin:0 0 8px;font-size:0.95rem;font-weight:700;color:#6b3d2e;">📋 Review this booking request</p>

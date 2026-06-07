@@ -18,24 +18,29 @@ module.exports = async function handler(req, res) {
   try {
     const clientToken = crypto.randomBytes(32).toString('hex');
 
-    // Save to DB if available — non-fatal if it fails
-    try {
-      await initDb();
-      const db = getPool();
-      const sessionResult = await db.query(
-        `INSERT INTO booking_sessions (token, booking_data, client_name, client_email, status)
-         VALUES ($1, $2, $3, $4, 'confirmed') RETURNING id`,
-        [crypto.randomBytes(12).toString('hex'), JSON.stringify(booking_data || {}), resolvedClientName, resolvedClientEmail]
-      );
-      const sessionId = sessionResult.rows[0].id;
-      await db.query(
-        `INSERT INTO booking_confirmations (token, session_id, confirmed_data, notes, total_aud, deposit_aud)
-         VALUES ($1, $2, $3, $4, $5, $6)`,
-        [clientToken, sessionId, JSON.stringify(confirmed_data), notes || '', total_aud || null, null]
-      );
-    } catch (dbErr) {
-      console.error('DB save failed (non-fatal):', dbErr.message);
-      // Continue — still send the email even if DB is down
+    // Save to DB if available — non-fatal if it fails or times out
+    if (process.env.DATABASE_URL) {
+      try {
+        await Promise.race([
+          initDb(),
+          new Promise((_, reject) => setTimeout(() => reject(new Error('DB timeout')), 5000))
+        ]);
+        const db = getPool();
+        const sessionResult = await db.query(
+          `INSERT INTO booking_sessions (token, booking_data, client_name, client_email, status)
+           VALUES ($1, $2, $3, $4, 'confirmed') RETURNING id`,
+          [crypto.randomBytes(12).toString('hex'), JSON.stringify(booking_data || {}), resolvedClientName, resolvedClientEmail]
+        );
+        const sessionId = sessionResult.rows[0].id;
+        await db.query(
+          `INSERT INTO booking_confirmations (token, session_id, confirmed_data, notes, total_aud, deposit_aud)
+           VALUES ($1, $2, $3, $4, $5, $6)`,
+          [clientToken, sessionId, JSON.stringify(confirmed_data), notes || '', total_aud || null, null]
+        );
+      } catch (dbErr) {
+        console.error('DB save failed (non-fatal):', dbErr.message);
+        // Continue — still send the email even if DB is down or times out
+      }
     }
 
     const siteUrl = 'https://www.theglambyankita.com';

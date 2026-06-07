@@ -1364,14 +1364,20 @@
     // Try client-side decode first (instant, no network)
     try {
       _reviewBookingData = _b64Decode(token);
-      _populateReview(_reviewBookingData);
-      return;
+      if (_reviewBookingData && typeof _reviewBookingData === 'object') {
+        _populateReview(_reviewBookingData);
+        return;
+      }
     } catch (_) {}
-    // Fallback: ask the server to decode (handles any encoding edge cases)
+    // Fallback: server-side decode (no DB required — pure base64 decode)
     try {
-      const res = await fetch('/api/get-booking?token=' + encodeURIComponent(token));
+      const controller = new AbortController();
+      const tid = setTimeout(() => controller.abort(), 8000);
+      const res = await fetch('/api/get-review?d=' + encodeURIComponent(token), { signal: controller.signal });
+      clearTimeout(tid);
       if (!res.ok) throw new Error('Server error');
-      _reviewBookingData = await res.json();
+      const json = await res.json();
+      _reviewBookingData = json.booking_data || json;
       _populateReview(_reviewBookingData);
     } catch (e) {
       errEl.textContent = 'Could not load booking details. Please use the link from your email, or contact Ankita directly.';
