@@ -119,7 +119,7 @@
     body { font-family: 'Nunito', sans-serif; background: var(--cream); color: var(--text-dark); overflow-x: hidden; }
 
     /* SCROLL PROGRESS */
-    #progress-bar { position: fixed; top: 0; left: 0; height: 3px; width: 0%; background: linear-gradient(90deg, var(--gold-dark), var(--gold), var(--gold-light)); z-index: 9999; transition: width 0.1s; }
+    #progress-bar { display: none; }
 
     /* NAV */
     .sitenav { position: fixed; top: 0; left: 0; right: 0; z-index: 500; transition: background 0.4s, backdrop-filter 0.4s, box-shadow 0.4s; }
@@ -1517,7 +1517,7 @@
     const nav = document.getElementById('sitenav');
     nav.classList.toggle('scrolled', window.scrollY > 20);
     const tabs = document.getElementById('sitenav-tabs');
-    if (tabs && window.innerWidth > 600) tabs.classList.toggle('tabs-hidden', window.scrollY > 10);
+    if (tabs && window.innerWidth > 600) tabs.classList.toggle('tabs-hidden', window.scrollY > 60);
   });
 
   // ANIMATION TRIGGER
@@ -1590,7 +1590,7 @@
       const img = document.createElement('img');
       img.src = imgEl.src;
       img.alt = el.dataset.title || '';
-      img.style.cssText = 'width:100%;height:auto;display:block;object-fit:contain;';
+      img.style.cssText = 'width:100%;height:400px;display:block;object-fit:cover;object-position:center 70%;';
       lbPh.appendChild(img);
     } else {
       lbPh.innerHTML = '';
