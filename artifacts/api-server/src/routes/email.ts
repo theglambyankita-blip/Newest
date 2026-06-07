@@ -100,7 +100,7 @@ router.get("/review", (req, res) => {
 </head>
 <body>
 <div class="logo">
-  <img src="${SITE_URL}/logo.png" width="36" height="36" style="border-radius:50%;object-fit:cover;" alt="">
+  <img src="${SITE_URL}/logo-original.png" width="36" height="36" style="border-radius:50%;object-fit:cover;" alt="">
   <span class="logo-text">The Glam by Ankita</span>
 </div>
 <div class="header">

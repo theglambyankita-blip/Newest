@@ -1112,7 +1112,7 @@
 <!-- REVIEW PAGE (Ankita only — random unguessable URL) -->
 <div id="page-review" class="page special-page" style="display:none;">
   <div class="sp-logo">
-    <img src="/logo.png" alt="The Glam by Ankita">
+    <img src="/logo-original.png" alt="The Glam by Ankita">
     <span>The Glam by Ankita</span>
   </div>
   <div class="sp-header">
@@ -1171,7 +1171,7 @@
 <!-- CLIENT BOOKING PAGE (for client to confirm + pay) -->
 <div id="page-booking" class="page special-page" style="display:none;">
   <div class="sp-logo">
-    <img src="/logo.png" alt="The Glam by Ankita">
+    <img src="/logo-original.png" alt="The Glam by Ankita">
     <span>The Glam by Ankita</span>
   </div>
   <div class="sp-header">
@@ -1442,6 +1442,10 @@
 
   async function loadBookingPage(token) {
     _bookingToken = token;
+    if (/^[a-f0-9]{64}$/.test(token)) {
+      document.getElementById('booking-loading').textContent = 'This link has expired. Please contact Ankita for a new booking link.';
+      return;
+    }
     try {
       const res = await fetch('/api/get-booking?token=' + token);
       if (!res.ok) throw new Error('Not found');
