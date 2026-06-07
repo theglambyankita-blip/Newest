@@ -25,14 +25,16 @@ module.exports = async function handler(req, res) {
     const intent = event.data.object;
     const bookingToken = intent.metadata && intent.metadata.booking_token;
 
+    const withTimeout = (p, ms) => Promise.race([p, new Promise((_, r) => setTimeout(() => r(new Error('timeout')), ms))]);
+
     try {
-      await initDb();
+      await withTimeout(initDb(), 8000);
       const db = getPool();
 
       if (bookingToken) {
-        await db.query(
-          "UPDATE booking_confirmations SET status = 'paid' WHERE token = $1",
-          [bookingToken]
+        await withTimeout(
+          db.query("UPDATE booking_confirmations SET status = 'paid' WHERE token = $1", [bookingToken]),
+          8000
         );
       }
 
@@ -48,9 +50,9 @@ module.exports = async function handler(req, res) {
 
         let bookingDetails = '';
         if (bookingToken) {
-          const result = await db.query(
-            'SELECT confirmed_data FROM booking_confirmations WHERE token = $1',
-            [bookingToken]
+          const result = await withTimeout(
+            db.query('SELECT confirmed_data FROM booking_confirmations WHERE token = $1', [bookingToken]),
+            8000
           );
           if (result.rows[0] && result.rows[0].confirmed_data) {
             const data = result.rows[0].confirmed_data;

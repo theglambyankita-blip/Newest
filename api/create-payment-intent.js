@@ -1,5 +1,8 @@
 const { getPool, initDb } = require('./db');
 
+const withTimeout = (promise, ms) =>
+  Promise.race([promise, new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), ms))]);
+
 module.exports = async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
@@ -11,20 +14,27 @@ module.exports = async function handler(req, res) {
     return res.status(503).json({ error: 'Payments not configured yet.' });
   }
 
+  if (!process.env.DATABASE_URL) {
+    return res.status(503).json({ error: 'Booking system not configured.' });
+  }
+
   const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
   const { token } = req.body;
   if (!token) return res.status(400).json({ error: 'Token required' });
 
   try {
-    await initDb();
+    await withTimeout(initDb(), 8000);
     const db = getPool();
 
-    const result = await db.query(
-      `SELECT bc.*, bs.client_name, bs.client_email
-       FROM booking_confirmations bc
-       JOIN booking_sessions bs ON bc.session_id = bs.id
-       WHERE bc.token = $1`,
-      [token]
+    const result = await withTimeout(
+      db.query(
+        `SELECT bc.*, bs.client_name, bs.client_email
+         FROM booking_confirmations bc
+         JOIN booking_sessions bs ON bc.session_id = bs.id
+         WHERE bc.token = $1`,
+        [token]
+      ),
+      8000
     );
     if (!result.rows[0]) return res.status(404).json({ error: 'Booking not found' });
 
@@ -49,14 +59,20 @@ module.exports = async function handler(req, res) {
       description: `The Glam by Ankita — ${booking.client_name || 'Client'}`
     });
 
-    await db.query(
-      'UPDATE booking_confirmations SET stripe_payment_intent_id = $1 WHERE token = $2',
-      [paymentIntent.id, token]
+    await withTimeout(
+      db.query(
+        'UPDATE booking_confirmations SET stripe_payment_intent_id = $1 WHERE token = $2',
+        [paymentIntent.id, token]
+      ),
+      8000
     );
 
     res.json({ client_secret: paymentIntent.client_secret });
   } catch (err) {
-    console.error('create-payment-intent error:', err);
+    console.error('create-payment-intent error:', err.message);
+    if (err.message === 'timeout') {
+      return res.status(503).json({ error: 'Database timeout — please refresh and try again.' });
+    }
     res.status(500).json({ error: 'Server error: ' + err.message });
   }
 };

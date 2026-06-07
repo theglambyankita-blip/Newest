@@ -15,32 +15,40 @@ module.exports = async function handler(req, res) {
   const resolvedClientName = client_name || confirmed_data['First Name'] || 'Client';
   const resolvedClientEmail = client_email || confirmed_data['Email'] || '';
 
+  if (!process.env.DATABASE_URL) {
+    return res.status(503).json({ error: 'Booking system not configured — DATABASE_URL is missing.' });
+  }
+
   try {
     const clientToken = crypto.randomBytes(32).toString('hex');
 
-    // Save to DB if available — non-fatal if it fails or times out
-    if (process.env.DATABASE_URL) {
-      try {
-        await Promise.race([
-          initDb(),
-          new Promise((_, reject) => setTimeout(() => reject(new Error('DB timeout')), 5000))
-        ]);
-        const db = getPool();
-        const sessionResult = await db.query(
+    // DB save is mandatory — if it fails we must NOT send the client a useless link
+    try {
+      await Promise.race([
+        initDb(),
+        new Promise((_, reject) => setTimeout(() => reject(new Error('DB connection timeout')), 8000))
+      ]);
+      const db = getPool();
+      const sessionResult = await Promise.race([
+        db.query(
           `INSERT INTO booking_sessions (token, booking_data, client_name, client_email, status)
            VALUES ($1, $2, $3, $4, 'confirmed') RETURNING id`,
           [crypto.randomBytes(12).toString('hex'), JSON.stringify(booking_data || {}), resolvedClientName, resolvedClientEmail]
-        );
-        const sessionId = sessionResult.rows[0].id;
-        await db.query(
+        ),
+        new Promise((_, reject) => setTimeout(() => reject(new Error('DB query timeout')), 8000))
+      ]);
+      const sessionId = sessionResult.rows[0].id;
+      await Promise.race([
+        db.query(
           `INSERT INTO booking_confirmations (token, session_id, confirmed_data, notes, total_aud, deposit_aud)
            VALUES ($1, $2, $3, $4, $5, $6)`,
           [clientToken, sessionId, JSON.stringify(confirmed_data), notes || '', total_aud || null, null]
-        );
-      } catch (dbErr) {
-        console.error('DB save failed (non-fatal):', dbErr.message);
-        // Continue — still send the email even if DB is down or times out
-      }
+        ),
+        new Promise((_, reject) => setTimeout(() => reject(new Error('DB query timeout')), 8000))
+      ]);
+    } catch (dbErr) {
+      console.error('DB save failed:', dbErr.message);
+      return res.status(500).json({ error: 'Failed to save booking (' + dbErr.message + '). Please try again.' });
     }
 
     const siteUrl = 'https://www.theglambyankita.com';

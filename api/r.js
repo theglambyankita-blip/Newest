@@ -84,7 +84,7 @@ module.exports = async function handler(req, res) {
 </head>
 <body>
 <div class="logo-bar">
-  <img src="https://www.theglambyankita.com/logo.png" alt="The Glam by Ankita">
+  <img src="https://www.theglambyankita.com/logo-original.png" alt="The Glam by Ankita">
   <span>The Glam by Ankita</span>
 </div>
 <div class="header">

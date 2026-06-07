@@ -1442,13 +1442,13 @@
 
   async function loadBookingPage(token) {
     _bookingToken = token;
-    if (/^[a-f0-9]{64}$/.test(token)) {
-      document.getElementById('booking-loading').textContent = 'This link has expired. Please contact Ankita for a new booking link.';
-      return;
-    }
     try {
       const res = await fetch('/api/get-booking?token=' + token);
-      if (!res.ok) throw new Error('Not found');
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({}));
+        if (res.status === 503) throw new Error('try-again');
+        throw new Error(body.error || 'not-found');
+      }
       const data = await res.json();
 
       if (data.status === 'paid') {
@@ -1488,7 +1488,12 @@
         document.getElementById('payment-no-stripe').style.display = 'block';
       }
     } catch (e) {
-      document.getElementById('booking-loading').textContent = 'Booking not found or link has expired.';
+      const el = document.getElementById('booking-loading');
+      if (e.message === 'try-again') {
+        el.textContent = 'Having trouble loading your booking — please refresh the page and try again. If this keeps happening, contact Ankita.';
+      } else {
+        el.textContent = 'Booking not found or this link has expired. Please contact Ankita for a new link.';
+      }
     }
   }
 
