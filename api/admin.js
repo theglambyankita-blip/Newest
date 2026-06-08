@@ -114,10 +114,12 @@ module.exports = async function handler(req, res) {
     if (action === 'request') {
       const newToken = randomUUID();
       let dbSaved = false;
+      let dbError = null;
       try {
         await saveToken(db, newToken);
         dbSaved = true;
       } catch (e) {
+        dbError = e.message || String(e);
         console.error('Save token error:', e);
       }
       const adminUrl = `${SITE_URL}/api/admin?token=${newToken}`;
@@ -131,7 +133,7 @@ module.exports = async function handler(req, res) {
         }
       }
       if (!dbSaved) {
-        return res.status(500).json({ error: 'Database unavailable. Please check server configuration.' });
+        return res.status(500).json({ error: 'Database unavailable. Please check server configuration.', detail: dbError });
       }
       return res.json({ ok: true, emailSent, adminUrl });
     }
