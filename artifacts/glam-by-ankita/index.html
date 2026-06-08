@@ -1301,8 +1301,9 @@
       return;
     }
     if (path === 'p') {
-      const b = new URLSearchParams(window.location.search).get('b');
-      if (b) { showSpecialPage('booking', b); return; }
+      const params = new URLSearchParams(window.location.search);
+      const token = params.get('t') || params.get('b');
+      if (token) { showSpecialPage('booking', token); return; }
     }
     const bookingMatch = path.match(/^p\/([a-f0-9]{64})$/);
     if (bookingMatch) { showSpecialPage('booking', bookingMatch[1]); return; }

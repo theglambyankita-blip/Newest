@@ -1,7 +1,18 @@
-const { getPool, initDb, getDbUrl } = require('./db');
+const crypto = require('crypto');
 
-const withTimeout = (promise, ms) =>
-  Promise.race([promise, new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), ms))]);
+function getTokenSecret() {
+  return process.env.STRIPE_SECRET_KEY || process.env.GMAIL_APP_PASSWORD || 'glam-by-ankita-2026';
+}
+
+function verifyBookingToken(token) {
+  const lastDot = token.lastIndexOf('.');
+  if (lastDot === -1) throw new Error('Invalid token format');
+  const payload = token.substring(0, lastDot);
+  const sig = token.substring(lastDot + 1);
+  const expected = crypto.createHmac('sha256', getTokenSecret()).update(payload).digest('base64url');
+  if (sig !== expected) throw new Error('Invalid or tampered booking link.');
+  return JSON.parse(Buffer.from(payload, 'base64url').toString('utf8'));
+}
 
 module.exports = async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
@@ -14,64 +25,42 @@ module.exports = async function handler(req, res) {
     return res.status(503).json({ error: 'Payments not configured yet.' });
   }
 
-  if (!getDbUrl()) {
-    return res.status(503).json({ error: 'Booking system not configured.' });
-  }
-
   const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
   const { token } = req.body;
   if (!token) return res.status(400).json({ error: 'Token required' });
 
   try {
-    await withTimeout(initDb(), 8000);
-    const db = getPool();
+    const data = verifyBookingToken(token);
 
-    const result = await withTimeout(
-      db.query(
-        `SELECT bc.*, bs.client_name, bs.client_email
-         FROM booking_confirmations bc
-         JOIN booking_sessions bs ON bc.session_id = bs.id
-         WHERE bc.token = $1`,
-        [token]
-      ),
-      8000
-    );
-    if (!result.rows[0]) return res.status(404).json({ error: 'Booking not found' });
-
-    const booking = result.rows[0];
-    if (booking.status === 'paid') return res.status(400).json({ error: 'Already paid' });
-
-    const amount = parseFloat(booking.total_aud);
+    const amount = parseFloat(data.totalAud);
     if (!amount || amount < 0.5) return res.status(400).json({ error: 'Invalid payment amount' });
 
     const amountCents = Math.round(amount * 100);
+    const cd = data.confirmedData || {};
 
     const paymentIntent = await stripe.paymentIntents.create({
       amount: amountCents,
       currency: 'aud',
       automatic_payment_methods: { enabled: true },
       metadata: {
-        booking_token: token,
-        client_name: booking.client_name || '',
-        client_email: booking.client_email || ''
+        client_name: (data.clientName || '').substring(0, 100),
+        client_email: (data.clientEmail || '').substring(0, 200),
+        service: (cd['Service'] || '').substring(0, 100),
+        date: (cd['Date'] || '').substring(0, 20),
+        time: (cd['Time'] || '').substring(0, 20),
+        location: (cd['Location'] || '').substring(0, 200),
+        num_people: String(cd['Number of People'] || '').substring(0, 20),
+        notes: (data.notes || '').substring(0, 300)
       },
-      receipt_email: booking.client_email || undefined,
-      description: `The Glam by Ankita — ${booking.client_name || 'Client'}`
+      receipt_email: data.clientEmail || undefined,
+      description: `The Glam by Ankita — ${data.clientName || 'Client'}`
     });
-
-    await withTimeout(
-      db.query(
-        'UPDATE booking_confirmations SET stripe_payment_intent_id = $1 WHERE token = $2',
-        [paymentIntent.id, token]
-      ),
-      8000
-    );
 
     res.json({ client_secret: paymentIntent.client_secret });
   } catch (err) {
     console.error('create-payment-intent error:', err.message);
-    if (err.message === 'timeout') {
-      return res.status(503).json({ error: 'Database timeout — please refresh and try again.' });
+    if (err.message.includes('tampered') || err.message.includes('Invalid token')) {
+      return res.status(400).json({ error: 'Invalid booking link. Please use the exact link from your email.' });
     }
     res.status(500).json({ error: 'Server error: ' + err.message });
   }

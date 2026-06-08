@@ -1,8 +1,17 @@
-const { getPool, initDb, getDbUrl } = require('./db');
 const nodemailer = require('nodemailer');
 const crypto = require('crypto');
 
-function buildCalendarSection(confirmedData, token, siteUrl) {
+function getTokenSecret() {
+  return process.env.STRIPE_SECRET_KEY || process.env.GMAIL_APP_PASSWORD || 'glam-by-ankita-2026';
+}
+
+function createBookingToken(data) {
+  const payload = Buffer.from(JSON.stringify(data)).toString('base64url');
+  const sig = crypto.createHmac('sha256', getTokenSecret()).update(payload).digest('base64url');
+  return `${payload}.${sig}`;
+}
+
+function buildCalendarSection(confirmedData, uid, siteUrl) {
   const date = confirmedData['Date'] || '';
   const time = confirmedData['Time'] || '';
   if (!date) return '';
@@ -23,7 +32,7 @@ function buildCalendarSection(confirmedData, token, siteUrl) {
 
   const gCal = `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${encodeURIComponent(title)}&dates=${startDT}/${endDT}&details=${encodeURIComponent(desc)}&location=${encodeURIComponent(loc)}`;
   const outlook = `https://outlook.live.com/calendar/0/deeplink/compose?subject=${encodeURIComponent(title)}&startdt=${date}T${pad(hour)}:${pad(minute)}:00&enddt=${date}T${pad(endH)}:${pad(minute)}:00&body=${encodeURIComponent(desc)}&location=${encodeURIComponent(loc)}`;
-  const ics = `${siteUrl}/api/calendar?${new URLSearchParams({ title, date, time: time || '09:00', location: loc, description: desc, uid: `${token}@theglambyankita.com` })}`;
+  const ics = `${siteUrl}/api/calendar?${new URLSearchParams({ title, date, time: time || '09:00', location: loc, description: desc, uid: `${uid}@theglambyankita.com` })}`;
 
   return `
     <tr>
@@ -55,67 +64,44 @@ module.exports = async function handler(req, res) {
   const resolvedClientName = client_name || confirmed_data['First Name'] || 'Client';
   const resolvedClientEmail = client_email || confirmed_data['Email'] || '';
 
-  if (!getDbUrl()) {
-    return res.status(503).json({ error: 'Booking system not configured — no database URL found.' });
+  if (!total_aud || parseFloat(total_aud) <= 0) {
+    return res.status(400).json({ error: 'A deposit amount is required.' });
   }
 
-  try {
-    const clientToken = crypto.randomBytes(32).toString('hex');
+  // Create signed token — no database needed
+  const tokenData = {
+    clientName: resolvedClientName,
+    clientEmail: resolvedClientEmail,
+    confirmedData: confirmed_data,
+    notes: notes || '',
+    totalAud: parseFloat(total_aud),
+    issuedAt: Date.now()
+  };
 
-    // DB save is mandatory — if it fails we must NOT send the client a useless link
-    try {
-      await Promise.race([
-        initDb(),
-        new Promise((_, reject) => setTimeout(() => reject(new Error('DB connection timeout')), 8000))
-      ]);
-      const db = getPool();
-      const sessionResult = await Promise.race([
-        db.query(
-          `INSERT INTO booking_sessions (token, booking_data, client_name, client_email, status)
-           VALUES ($1, $2, $3, $4, 'confirmed') RETURNING id`,
-          [crypto.randomBytes(12).toString('hex'), JSON.stringify(booking_data || {}), resolvedClientName, resolvedClientEmail]
-        ),
-        new Promise((_, reject) => setTimeout(() => reject(new Error('DB query timeout')), 8000))
-      ]);
-      const sessionId = sessionResult.rows[0].id;
-      await Promise.race([
-        db.query(
-          `INSERT INTO booking_confirmations (token, session_id, confirmed_data, notes, total_aud, deposit_aud)
-           VALUES ($1, $2, $3, $4, $5, $6)`,
-          [clientToken, sessionId, JSON.stringify(confirmed_data), notes || '', total_aud || null, null]
-        ),
-        new Promise((_, reject) => setTimeout(() => reject(new Error('DB query timeout')), 8000))
-      ]);
-    } catch (dbErr) {
-      console.error('DB save failed:', dbErr.message);
-      return res.status(500).json({ error: 'Failed to save booking (' + dbErr.message + '). Please try again.' });
-    }
+  const clientToken = createBookingToken(tokenData);
+  const siteUrl = 'https://www.theglambyankita.com';
+  const clientLink = `${siteUrl}/p?t=${clientToken}`;
 
-    const siteUrl = 'https://www.theglambyankita.com';
-    const clientLink = `${siteUrl}/p/${clientToken}`;
+  const user = process.env.GMAIL_USER;
+  const pass = process.env.GMAIL_APP_PASSWORD;
 
-    const user = process.env.GMAIL_USER;
-    const pass = process.env.GMAIL_APP_PASSWORD;
+  if (user && pass && resolvedClientEmail) {
+    const transporter = nodemailer.createTransport({ service: 'gmail', auth: { user, pass } });
 
-    if (user && pass && resolvedClientEmail) {
-      const transporter = nodemailer.createTransport({ service: 'gmail', auth: { user, pass } });
+    const firstName = confirmed_data['First Name'] || resolvedClientName;
+    const amountDisplay = total_aud ? `AUD $${parseFloat(total_aud).toFixed(2)}` : null;
+    const calendarHtml = buildCalendarSection(confirmed_data, Date.now().toString(36), siteUrl);
 
-      const firstName = confirmed_data['First Name'] || resolvedClientName;
-      const amountDisplay = total_aud ? `AUD $${parseFloat(total_aud).toFixed(2)}` : null;
+    const detailRows = Object.entries(confirmed_data)
+      .filter(([, v]) => v)
+      .map(([k, v]) => `
+        <tr>
+          <td style="padding:10px 16px;font-size:0.82rem;font-weight:700;color:#9a7060;text-transform:uppercase;letter-spacing:0.08em;white-space:nowrap;width:38%;border-bottom:1px solid #fdeee8;">${k}</td>
+          <td style="padding:10px 16px;font-size:0.92rem;color:#2c1810;border-bottom:1px solid #fdeee8;">${v}</td>
+        </tr>`)
+      .join('');
 
-      // Build calendar links if date is available
-      const calendarHtml = buildCalendarSection(confirmed_data, clientToken, siteUrl);
-
-      const detailRows = Object.entries(confirmed_data)
-        .filter(([, v]) => v)
-        .map(([k, v]) => `
-          <tr>
-            <td style="padding:10px 16px;font-size:0.82rem;font-weight:700;color:#9a7060;text-transform:uppercase;letter-spacing:0.08em;white-space:nowrap;width:38%;border-bottom:1px solid #fdeee8;">${k}</td>
-            <td style="padding:10px 16px;font-size:0.92rem;color:#2c1810;border-bottom:1px solid #fdeee8;">${v}</td>
-          </tr>`)
-        .join('');
-
-      const clientHtml = `
+    const clientHtml = `
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -217,7 +203,7 @@ module.exports = async function handler(req, res) {
 
         <tr>
           <td style="background:#fdf0ee;padding:16px 36px;border-top:1px solid #f0ddd8;text-align:center;">
-            <p style="margin:0;font-size:0.75rem;color:#b09080;line-height:1.6;">This link is unique to you and expires once used.<br>Questions? Reply to this email or visit <a href="https://www.theglambyankita.com" style="color:#c9a96e;">theglambyankita.com</a></p>
+            <p style="margin:0;font-size:0.75rem;color:#b09080;line-height:1.6;">Questions? Reply to this email or visit <a href="https://www.theglambyankita.com" style="color:#c9a96e;">theglambyankita.com</a></p>
           </td>
         </tr>
 
@@ -227,17 +213,13 @@ module.exports = async function handler(req, res) {
 </body>
 </html>`;
 
-      await transporter.sendMail({
-        from: `"The Glam by Ankita" <${user}>`,
-        to: resolvedClientEmail,
-        subject: `✨ Confirm Your Booking & Complete Payment — The Glam by Ankita`,
-        html: clientHtml
-      });
-    }
-
-    res.json({ ok: true, client_token: clientToken });
-  } catch (err) {
-    console.error('send-confirmation error:', err);
-    res.status(500).json({ error: 'Server error: ' + err.message });
+    await transporter.sendMail({
+      from: `"The Glam by Ankita" <${user}>`,
+      to: resolvedClientEmail,
+      subject: `✨ Confirm Your Booking & Complete Payment — The Glam by Ankita`,
+      html: clientHtml
+    });
   }
+
+  res.json({ ok: true });
 };

@@ -1,7 +1,18 @@
-const { getPool, initDb, getDbUrl } = require('./db');
+const crypto = require('crypto');
 
-const withTimeout = (promise, ms) =>
-  Promise.race([promise, new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), ms))]);
+function getTokenSecret() {
+  return process.env.STRIPE_SECRET_KEY || process.env.GMAIL_APP_PASSWORD || 'glam-by-ankita-2026';
+}
+
+function verifyBookingToken(token) {
+  const lastDot = token.lastIndexOf('.');
+  if (lastDot === -1) throw new Error('Invalid token format');
+  const payload = token.substring(0, lastDot);
+  const sig = token.substring(lastDot + 1);
+  const expected = crypto.createHmac('sha256', getTokenSecret()).update(payload).digest('base64url');
+  if (sig !== expected) throw new Error('This link is invalid or has been tampered with.');
+  return JSON.parse(Buffer.from(payload, 'base64url').toString('utf8'));
+}
 
 module.exports = async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
@@ -12,30 +23,22 @@ module.exports = async function handler(req, res) {
   const { token } = req.query;
   if (!token) return res.status(400).json({ error: 'Token required' });
 
-  if (!getDbUrl()) {
-    return res.status(503).json({ error: 'Booking system not configured' });
+  // Old hex tokens (64 chars) — these were never saved to DB, they expired
+  if (/^[a-f0-9]{64}$/.test(token)) {
+    return res.status(404).json({ error: 'This link has expired. Please contact Ankita for a new one.' });
   }
 
   try {
-    await withTimeout(initDb(), 8000);
-    const db = getPool();
-    const result = await withTimeout(
-      db.query(
-        `SELECT bc.*, bs.client_name, bs.client_email
-         FROM booking_confirmations bc
-         JOIN booking_sessions bs ON bc.session_id = bs.id
-         WHERE bc.token = $1`,
-        [token]
-      ),
-      8000
-    );
-    if (!result.rows[0]) return res.status(404).json({ error: 'Booking not found' });
-    res.json(result.rows[0]);
+    const data = verifyBookingToken(token);
+    res.json({
+      confirmed_data: data.confirmedData || {},
+      client_name: data.clientName || '',
+      client_email: data.clientEmail || '',
+      notes: data.notes || '',
+      total_aud: data.totalAud || null,
+      status: 'pending'
+    });
   } catch (err) {
-    console.error('get-booking error:', err.message);
-    if (err.message === 'timeout') {
-      return res.status(503).json({ error: 'Database is taking too long to respond — please try again in a moment.' });
-    }
-    res.status(500).json({ error: 'Server error' });
+    return res.status(404).json({ error: err.message || 'Invalid or expired link.' });
   }
 };
