@@ -1,8 +1,31 @@
 const nodemailer = require('nodemailer');
+const https = require('https');
 const { getPool } = require('./db');
 
 const SITE_URL = 'https://www.theglambyankita.com';
 const OWNER_EMAIL = 'nishankn.ankita@gmail.com';
+
+function sendPushNotification(title, message, priority) {
+  const topic = process.env.NTFY_TOPIC;
+  if (!topic) return Promise.resolve();
+  return new Promise((resolve) => {
+    const body = JSON.stringify({
+      topic,
+      title,
+      message,
+      priority: priority || 4,
+      tags: ['moneybag'],
+    });
+    const req = https.request(
+      { hostname: 'ntfy.sh', path: '/', method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Content-Length': Buffer.byteLength(body) } },
+      (res) => { res.resume(); res.on('end', resolve); }
+    );
+    req.on('error', (e) => { console.error('ntfy error:', e.message); resolve(); });
+    req.write(body);
+    req.end();
+  });
+}
 
 function buildCalendarLinks(meta) {
   const date = meta.date || '';
