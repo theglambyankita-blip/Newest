@@ -44,40 +44,46 @@ async function ensureTables(db) {
   `);
 }
 
-async function generateNewToken(db) {
-  const token = randomUUID();
+async function saveToken(db, token) {
   const expiresAt = new Date();
   expiresAt.setMonth(expiresAt.getMonth() + 3);
-
   await db.query('DELETE FROM admin_tokens');
   await db.query(
     'INSERT INTO admin_tokens (token, expires_at) VALUES ($1, $2)',
     [token, expiresAt]
   );
+  return expiresAt;
+}
 
+async function sendTokenEmail(token) {
   const adminUrl = `${SITE_URL}/api/admin?token=${token}`;
   const transporter = createTransporter();
-  if (transporter) {
-    transporter.sendMail({
-      from: `"The Glam by Ankita" <${process.env.GMAIL_USER}>`,
-      to: ADMIN_EMAIL,
-      subject: '✦ Your new admin dashboard link — The Glam by Ankita',
-      html: `
-      <div style="font-family:sans-serif;max-width:580px;margin:0 auto;background:#fdf8f4;border:1px solid #e8c4bc;border-radius:8px;overflow:hidden;">
-        <div style="background:linear-gradient(135deg,#c9a96e,#9e7c4a);padding:24px 32px;">
-          <h2 style="margin:0;color:#fff;font-size:1.2rem;">✦ Admin Dashboard Access</h2>
-          <p style="margin:4px 0 0;color:rgba(255,255,255,0.85);font-size:0.85rem;">The Glam by Ankita</p>
-        </div>
-        <div style="padding:28px 32px;">
-          <p style="font-size:0.95rem;color:#2c1810;margin:0 0 16px;">Hi Ankita! Here's your new admin dashboard link. Keep it private.</p>
-          <p style="font-size:0.85rem;color:#6b3d2e;margin:0 0 20px;">This link expires in <strong>3 months</strong>.</p>
-          <a href="${adminUrl}" style="display:inline-block;background:linear-gradient(135deg,#c9a96e,#9e7c4a);color:#fff;text-decoration:none;font-family:Georgia,serif;font-weight:700;font-size:0.95rem;padding:14px 28px;border-radius:6px;">✦ Open Admin Dashboard</a>
-          <p style="margin:20px 0 0;font-size:0.78rem;color:#aaa;word-break:break-all;">${adminUrl}</p>
-        </div>
-      </div>`,
-    }).catch((e) => console.error('Admin token email error:', e));
-  }
+  if (!transporter) return { sent: false, adminUrl };
+  await transporter.sendMail({
+    from: `"The Glam by Ankita" <${process.env.GMAIL_USER}>`,
+    to: ADMIN_EMAIL,
+    subject: '✦ Your new admin dashboard link — The Glam by Ankita',
+    html: `
+    <div style="font-family:sans-serif;max-width:580px;margin:0 auto;background:#fdf8f4;border:1px solid #e8c4bc;border-radius:8px;overflow:hidden;">
+      <div style="background:linear-gradient(135deg,#c9a96e,#9e7c4a);padding:24px 32px;">
+        <h2 style="margin:0;color:#fff;font-size:1.2rem;">✦ Admin Dashboard Access</h2>
+        <p style="margin:4px 0 0;color:rgba(255,255,255,0.85);font-size:0.85rem;">The Glam by Ankita</p>
+      </div>
+      <div style="padding:28px 32px;">
+        <p style="font-size:0.95rem;color:#2c1810;margin:0 0 16px;">Hi Ankita! Here's your new admin dashboard link. Keep it private.</p>
+        <p style="font-size:0.85rem;color:#6b3d2e;margin:0 0 20px;">This link expires in <strong>3 months</strong>.</p>
+        <a href="${adminUrl}" style="display:inline-block;background:linear-gradient(135deg,#c9a96e,#9e7c4a);color:#fff;text-decoration:none;font-family:Georgia,serif;font-weight:700;font-size:0.95rem;padding:14px 28px;border-radius:6px;">✦ Open Admin Dashboard</a>
+        <p style="margin:20px 0 0;font-size:0.78rem;color:#aaa;word-break:break-all;">${adminUrl}</p>
+      </div>
+    </div>`,
+  });
+  return { sent: true, adminUrl };
+}
 
+async function generateNewToken(db) {
+  const token = randomUUID();
+  await saveToken(db, token);
+  sendTokenEmail(token).catch((e) => console.error('Admin token email error:', e));
   return token;
 }
 
@@ -106,20 +112,37 @@ module.exports = async function handler(req, res) {
 
     // Allow force-request with no/expired token via action=request
     if (action === 'request') {
+      const newToken = randomUUID();
+      let dbSaved = false;
       try {
-        await generateNewToken(db);
-        return res.json({ ok: true });
+        await saveToken(db, newToken);
+        dbSaved = true;
       } catch (e) {
-        console.error('Request token error:', e);
-        return res.status(500).json({ error: 'Failed to send link.' });
+        console.error('Save token error:', e);
       }
+      const adminUrl = `${SITE_URL}/api/admin?token=${newToken}`;
+      let emailSent = false;
+      if (dbSaved) {
+        try {
+          const result = await sendTokenEmail(newToken);
+          emailSent = result.sent;
+        } catch (e) {
+          console.error('Send token email error:', e);
+        }
+      }
+      if (!dbSaved) {
+        return res.status(500).json({ error: 'Database unavailable. Please check server configuration.' });
+      }
+      return res.json({ ok: true, emailSent, adminUrl });
     }
 
     const valid = await validateToken(db, token).catch(() => false);
     if (!valid) return res.status(403).json({ error: 'Unauthorized' });
 
     try {
-      await generateNewToken(db);
+      const newToken = randomUUID();
+      await saveToken(db, newToken);
+      sendTokenEmail(newToken).catch((e) => console.error('Regen email error:', e));
       return res.json({ ok: true });
     } catch (e) {
       console.error('Regen error:', e);
@@ -135,33 +158,62 @@ module.exports = async function handler(req, res) {
     res.setHeader('Content-Type', 'text/html; charset=utf-8');
     return res.status(200).send(`
       <!DOCTYPE html><html><head><meta charset="UTF-8"><title>Admin — The Glam by Ankita</title>
-      <style>body{font-family:sans-serif;background:#fdf8f4;display:flex;align-items:center;justify-content:center;min-height:100vh;margin:0;}
-      .box{text-align:center;padding:40px;background:#fff;border:1px solid #e8c4bc;border-radius:10px;max-width:440px;}
+      <style>
+      *{box-sizing:border-box;margin:0;padding:0}
+      body{font-family:sans-serif;background:#fdf8f4;display:flex;align-items:center;justify-content:center;min-height:100vh;padding:20px;}
+      .box{text-align:center;padding:40px 32px;background:#fff;border:1px solid #e8c4bc;border-radius:10px;max-width:480px;width:100%;}
       h2{color:#6b3d2e;font-family:Georgia,serif;margin-bottom:12px;}
       p{color:#4a2e22;font-size:0.9rem;line-height:1.6;margin-bottom:20px;}
       .btn{display:inline-block;padding:13px 28px;background:linear-gradient(135deg,#c9a96e,#9e7c4a);color:#fff;border:none;border-radius:8px;font-size:0.95rem;font-weight:700;font-family:Georgia,serif;cursor:pointer;}
       .btn:disabled{opacity:0.5;cursor:not-allowed;}
       .note{font-size:0.82rem;color:#9e7c4a;margin-top:14px;}
+      .link-box{margin-top:20px;padding:14px 16px;background:#fdf0ee;border:1px solid #e8c4bc;border-radius:8px;text-align:left;display:none;}
+      .link-box p{margin:0 0 8px;font-size:0.82rem;font-weight:700;color:#6b3d2e;}
+      .link-box a{display:block;word-break:break-all;font-size:0.8rem;color:#c9a96e;text-decoration:none;border:1px solid #e8c4bc;padding:8px 10px;border-radius:5px;background:#fff;margin-bottom:10px;}
+      .link-box a:hover{text-decoration:underline;}
+      .open-btn{display:inline-block;padding:10px 22px;background:linear-gradient(135deg,#c9a96e,#9e7c4a);color:#fff;text-decoration:none;border-radius:6px;font-size:0.88rem;font-weight:700;font-family:Georgia,serif;}
+      .err{font-size:0.82rem;color:#c0392b;margin-top:12px;display:none;}
       </style>
       </head><body><div class="box">
       <h2>✦ Admin Access</h2>
-      <p>This link has expired or is invalid.<br>Click below to send a fresh link to <strong>${ADMIN_EMAIL}</strong>.</p>
-      <button class="btn" id="btn" onclick="sendLink()">Send me a new link</button>
+      <p>This link has expired or is invalid.<br>Click below to generate a fresh admin link.</p>
+      <button class="btn" id="btn" onclick="sendLink()">Generate new link</button>
       <p class="note" id="note"></p>
+      <div class="link-box" id="link-box">
+        <p>Your admin link (save this somewhere safe):</p>
+        <a id="link-url" href="#" target="_blank"></a>
+        <a class="open-btn" id="link-open" href="#" target="_blank">✦ Open Admin Dashboard</a>
+      </div>
+      <p class="err" id="err-msg"></p>
       <script>
       async function sendLink() {
         const btn = document.getElementById('btn');
         const note = document.getElementById('note');
-        btn.disabled = true; btn.textContent = 'Sending…';
+        const errMsg = document.getElementById('err-msg');
+        const linkBox = document.getElementById('link-box');
+        btn.disabled = true; btn.textContent = 'Generating…';
+        note.textContent = ''; errMsg.style.display = 'none'; linkBox.style.display = 'none';
         try {
           const res = await fetch('/api/admin?action=request', { method: 'POST' });
           const j = await res.json();
-          if (!res.ok) throw new Error(j.error);
-          btn.textContent = '✅ Link sent!';
-          note.textContent = 'Check your inbox at ${ADMIN_EMAIL}';
+          if (!res.ok) throw new Error(j.error || 'Failed');
+          if (j.emailSent) {
+            btn.textContent = '✅ Link sent!';
+            note.textContent = 'Check your inbox at ${ADMIN_EMAIL}';
+          } else {
+            btn.textContent = '✅ Link generated!';
+            note.textContent = 'Email could not be sent — your link is shown below:';
+          }
+          if (j.adminUrl) {
+            document.getElementById('link-url').textContent = j.adminUrl;
+            document.getElementById('link-url').href = j.adminUrl;
+            document.getElementById('link-open').href = j.adminUrl;
+            linkBox.style.display = 'block';
+          }
         } catch(e) {
-          btn.disabled = false; btn.textContent = 'Send me a new link';
-          note.textContent = '❌ Failed. Please try again.';
+          btn.disabled = false; btn.textContent = 'Generate new link';
+          errMsg.textContent = '❌ ' + (e.message || 'Failed. Please try again.');
+          errMsg.style.display = 'block';
         }
       }
       </script>
