@@ -434,8 +434,8 @@ router.post("/send-email", upload.array("files", 5), async (req, res) => {
   const rows = Object.entries(fields)
     .filter(([k, v]) => !skipEmailFields.has(k) && v !== undefined && v !== "")
     .map(([k, v]) => `<tr>
-      <td style="padding:6px 12px;font-weight:600;color:#6b3d2e;white-space:nowrap;background:#fdf0ee;">${emailLabelMap[k] || toTitleCase(k)}</td>
-      <td style="padding:6px 12px;color:#2c1810;">${v || "—"}</td>
+      <td style="padding:8px 14px;font-weight:700;color:#6b3d2e;white-space:nowrap;background:#fdf0ee;border-bottom:1px solid #f0ddd6;">${emailLabelMap[k] || toTitleCase(k)}</td>
+      <td style="padding:8px 14px;color:#2c1810;border-bottom:1px solid #f0ddd6;">${v || "—"}</td>
     </tr>`).join("");
 
   let reviewSection = "";
