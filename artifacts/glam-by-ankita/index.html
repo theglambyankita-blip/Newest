@@ -1199,7 +1199,7 @@
           <button class="sp-btn" id="pay-btn" onclick="submitPayment()">Pay Now ✦</button>
         </div>
         <div id="payment-no-stripe" style="display:none;">
-          <p style="color:var(--text-mid);font-size:0.9rem;">Online payment coming soon. Please contact Ankita directly to complete your payment.</p>
+          <p style="color:var(--text-mid);font-size:0.9rem;">Card payment is temporarily unavailable. You can pay by cash on the day, or contact Ankita to arrange payment.</p>
           <a href="mailto:theglambyankita@gmail.com" class="sp-btn" style="display:block;text-align:center;text-decoration:none;margin-top:8px;">Contact Ankita</a>
         </div>
         <div style="margin-top:20px;padding-top:18px;border-top:1px solid #f5ddd8;text-align:center;">
@@ -1614,9 +1614,10 @@
         body: JSON.stringify(body)
       });
     } catch (e) { /* best effort */ }
-    btn.style.display = 'none';
-    document.getElementById('payment-ready').style.display = 'none';
-    document.getElementById('cash-note').style.display = 'block';
+    // Show full booking confirmed card
+    document.getElementById('payment-card').style.display = 'none';
+    document.getElementById('payment-success-card').style.display = 'block';
+    document.getElementById('payment-success-card').scrollIntoView({ behavior: 'smooth', block: 'center' });
   }
 
   async function submitPayment() {
