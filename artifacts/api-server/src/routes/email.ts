@@ -258,7 +258,47 @@ router.get("/config", (_req, res) => {
 });
 
 // ── SELECT CASH ─────────────────────────────────────────────────
-router.post("/select-cash", (_req, res) => {
+router.post("/select-cash", async (req, res) => {
+  const { client_name, client_email, total_aud, confirmed_data } = req.body as {
+    client_name?: string;
+    client_email?: string;
+    total_aud?: number;
+    confirmed_data?: Record<string, string>;
+  };
+
+  const transporter = createTransporter();
+  if (transporter && client_name) {
+    const detailRows = Object.entries(confirmed_data || {})
+      .filter(([, v]) => v)
+      .map(([k, v]) => `<tr>
+        <td style="padding:6px 14px;font-weight:600;color:#6b3d2e;white-space:nowrap;background:#fdf0ee;">${k}</td>
+        <td style="padding:6px 14px;color:#2c1810;">${v}</td>
+      </tr>`).join("");
+
+    const html = `
+      <div style="font-family:sans-serif;max-width:560px;margin:0 auto;background:#fdf8f4;border:1px solid #e8c4bc;border-radius:8px;overflow:hidden;">
+        <div style="background:linear-gradient(135deg,#c9a96e,#9e7c4a);padding:18px 24px;">
+          <h2 style="margin:0;color:#fff;font-size:1rem;">💵 Cash Payment Selected — ${client_name}</h2>
+        </div>
+        <div style="padding:18px 24px 8px;">
+          <p style="color:#2c1810;font-size:0.9rem;margin:0 0 6px;"><strong>${client_name}</strong> has chosen to pay the deposit in cash.</p>
+          ${client_email ? `<p style="color:#6b3d2e;font-size:0.85rem;margin:0 0 4px;">Email: ${client_email}</p>` : ""}
+          ${total_aud ? `<p style="color:#4a2e22;font-size:0.85rem;margin:0;">Deposit: <strong>A$${Number(total_aud).toFixed(2)}</strong></p>` : ""}
+        </div>
+        ${detailRows ? `<table style="width:100%;border-collapse:collapse;font-size:0.88rem;margin-top:8px;">${detailRows}</table>` : ""}
+        <div style="padding:14px 24px;background:#fff9f0;border-top:1px solid #e8c4bc;">
+          <p style="margin:0;font-size:0.82rem;color:#9e7c4a;">Remember to collect the cash deposit at the appointment.</p>
+        </div>
+      </div>`;
+
+    transporter.sendMail({
+      from: `"The Glam by Ankita" <${process.env["GMAIL_USER"]}>`,
+      to: process.env["GMAIL_USER"]!,
+      subject: `💵 ${client_name} will pay deposit in cash`,
+      html,
+    }).catch((e) => console.error("Select-cash email error:", e));
+  }
+
   res.json({ ok: true });
 });
 
