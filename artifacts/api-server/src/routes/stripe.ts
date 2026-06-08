@@ -42,6 +42,14 @@ router.post("/create-payment-intent", async (req, res) => {
     return;
   }
 
+  const amountCents = Math.round(totalAud * 100);
+  if (amountCents < 50) {
+    res.status(400).json({
+      error: `The minimum card payment is A$0.50. This booking has a deposit of A$${totalAud.toFixed(2)} — please contact Ankita to arrange payment directly.`,
+    });
+    return;
+  }
+
   const clientEmail = (bookingData.client_email || bookingData.clientEmail || "") as string;
   const clientName  = (bookingData.client_name  || bookingData.clientName  || "") as string;
   const cd = (bookingData.confirmed_data || bookingData.confirmedData || {}) as Record<string, string>;

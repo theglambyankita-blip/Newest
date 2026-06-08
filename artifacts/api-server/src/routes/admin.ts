@@ -117,30 +117,40 @@ router.get("/admin", async (req, res) => {
     (b) => !b.bookingDate || b.bookingDate < today,
   );
 
-  function bookingRow(b: (typeof allBookings)[0]) {
+  function bookingRow(b: (typeof allBookings)[0], idx: number) {
     const badge =
       b.paymentMethod === "cash"
         ? `<span style="background:#f0e8c8;color:#8a6a00;padding:2px 8px;border-radius:20px;font-size:0.75rem;font-weight:700;">Cash</span>`
         : `<span style="background:#e8f4e8;color:#2c6e3f;padding:2px 8px;border-radius:20px;font-size:0.75rem;font-weight:700;">Card</span>`;
-    return `<tr style="border-bottom:1px solid #f0ddd6;">
+    const createdDate = b.createdAt ? new Date(b.createdAt).toLocaleDateString("en-AU", { day:"2-digit", month:"short", year:"numeric" }) : "—";
+    return `<tr class="brow" data-idx="${idx}" style="border-bottom:1px solid #f0ddd6;cursor:pointer;" onclick="toggleDetails(${idx})">
       <td style="padding:10px 12px;color:#2c1810;font-weight:600;">${esc(b.clientName || "—")}</td>
       <td style="padding:10px 12px;color:#4a2e22;font-size:0.85rem;">${esc(b.clientEmail || "—")}</td>
       <td style="padding:10px 12px;color:#4a2e22;font-size:0.85rem;">${esc(b.service || "—")}</td>
       <td style="padding:10px 12px;color:#4a2e22;font-size:0.85rem;white-space:nowrap;">${esc(b.bookingDate || "—")}${b.bookingTime ? ` ${esc(b.bookingTime)}` : ""}</td>
       <td style="padding:10px 12px;color:#4a2e22;font-size:0.85rem;">${b.totalAud ? `A$${Number(b.totalAud).toFixed(2)}` : "—"}</td>
       <td style="padding:10px 12px;">${badge}</td>
+      <td style="padding:10px 12px;color:#aaa;font-size:0.8rem;">${createdDate}</td>
+    </tr>
+    <tr class="brow-detail" id="detail-${idx}" style="display:none;background:#fdf8f4;">
+      <td colspan="7" style="padding:12px 20px 16px;">
+        <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:10px;font-size:0.83rem;">
+          ${b.location ? `<div><span style="font-weight:700;color:#6b3d2e;">Location:</span> ${esc(b.location)}</div>` : ""}
+          ${b.numPeople ? `<div><span style="font-weight:700;color:#6b3d2e;">People:</span> ${esc(b.numPeople)}</div>` : ""}
+          ${b.stripePaymentIntentId ? `<div><span style="font-weight:700;color:#6b3d2e;">Stripe PI:</span> <span style="font-family:monospace;font-size:0.78rem;">${esc(b.stripePaymentIntentId)}</span></div>` : ""}
+          <div><span style="font-weight:700;color:#6b3d2e;">Status:</span> ${esc(b.status || "confirmed")}</div>
+          <div><span style="font-weight:700;color:#6b3d2e;">Created:</span> ${createdDate}</div>
+        </div>
+        <button onclick="prefillEmail('${esc(b.clientEmail || "")}');event.stopPropagation();" style="margin-top:10px;background:none;border:1px solid #c9a96e;color:#9e7c4a;padding:5px 14px;border-radius:5px;font-size:0.8rem;cursor:pointer;">✉️ Email this client</button>
+      </td>
     </tr>`;
   }
 
-  const upcomingRows =
-    upcoming.length > 0
-      ? upcoming.map(bookingRow).join("")
-      : `<tr><td colspan="6" style="padding:18px;color:#aaa;text-align:center;font-size:0.9rem;">No upcoming bookings yet.</td></tr>`;
+  const allBookingRows = allBookings.map((b, i) => bookingRow(b, i)).join("");
 
-  const pastRows =
-    past.length > 0
-      ? past.map(bookingRow).join("")
-      : `<tr><td colspan="6" style="padding:18px;color:#aaa;text-align:center;font-size:0.9rem;">No past bookings yet.</td></tr>`;
+  const totalRevenue = allBookings
+    .filter((b) => b.paymentMethod === "card" && b.totalAud)
+    .reduce((sum, b) => sum + Number(b.totalAud || 0), 0);
 
   const html = `<!DOCTYPE html>
 <html lang="en">
@@ -158,12 +168,22 @@ router.get("/admin", async (req, res) => {
   .header{background:linear-gradient(135deg,#c9a96e,#9e7c4a);padding:28px 32px;color:#fff;}
   .header h1{font-family:Georgia,serif;font-size:1.5rem;margin-bottom:4px;}
   .header p{font-size:0.85rem;opacity:0.88;}
-  .content{max-width:1000px;margin:0 auto;padding:28px 20px 60px;}
+  .stats{display:flex;gap:16px;flex-wrap:wrap;margin-top:20px;}
+  .stat{background:rgba(255,255,255,0.18);border-radius:8px;padding:12px 20px;text-align:center;min-width:100px;}
+  .stat-val{font-family:Georgia,serif;font-size:1.6rem;font-weight:700;}
+  .stat-lbl{font-size:0.75rem;opacity:0.88;margin-top:2px;}
+  .content{max-width:1100px;margin:0 auto;padding:28px 20px 60px;}
   .section{margin-bottom:32px;}
   .section-title{font-family:Georgia,serif;font-size:1rem;color:#6b3d2e;margin-bottom:14px;padding-bottom:8px;border-bottom:2px solid #e8c4bc;display:flex;align-items:center;gap:8px;}
+  .toolbar{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:14px;align-items:center;}
+  .search-input{padding:8px 13px;border:1.5px solid #e0c8c0;border-radius:6px;font-size:0.88rem;color:#2c1810;background:#fff;outline:none;transition:border-color .2s;flex:1;min-width:180px;}
+  .search-input:focus{border-color:#c9a96e;}
+  select.filter-sel{padding:8px 12px;border:1.5px solid #e0c8c0;border-radius:6px;font-size:0.88rem;color:#2c1810;background:#fff;outline:none;cursor:pointer;}
   .card{background:#fff;border:1px solid #e8c4bc;border-radius:10px;overflow:hidden;}
+  .table-wrap{overflow-x:auto;}
   table{width:100%;border-collapse:collapse;font-size:0.88rem;}
-  th{padding:10px 12px;text-align:left;font-size:0.75rem;font-weight:700;color:#6b3d2e;text-transform:uppercase;letter-spacing:0.05em;background:#fdf5f0;border-bottom:1px solid #e8c4bc;}
+  th{padding:10px 12px;text-align:left;font-size:0.75rem;font-weight:700;color:#6b3d2e;text-transform:uppercase;letter-spacing:0.05em;background:#fdf5f0;border-bottom:1px solid #e8c4bc;white-space:nowrap;}
+  .brow:hover{background:#fdf5f0;}
   .email-form{padding:24px;}
   .field{margin-bottom:16px;}
   label{display:block;font-size:0.75rem;font-weight:700;color:#6b3d2e;text-transform:uppercase;letter-spacing:0.06em;margin-bottom:6px;}
@@ -173,13 +193,15 @@ router.get("/admin", async (req, res) => {
   .btn{display:inline-block;padding:13px 28px;background:linear-gradient(135deg,#c9a96e,#9e7c4a);color:#fff;border:none;border-radius:8px;font-size:0.95rem;font-weight:700;font-family:Georgia,serif;cursor:pointer;letter-spacing:0.03em;transition:opacity .2s;}
   .btn:hover{opacity:0.88;}
   .btn:disabled{opacity:0.5;cursor:not-allowed;}
-  .btn-outline{background:none;border:1.5px solid #c9a96e;color:#9e7c4a;padding:8px 18px;border-radius:6px;font-size:0.85rem;font-weight:600;cursor:pointer;transition:all .2s;font-family:inherit;}
+  .btn-outline{background:none;border:1.5px solid #c9a96e;color:#9e7c4a;padding:8px 18px;border-radius:6px;font-size:0.85rem;font-weight:600;cursor:pointer;transition:all .2s;font-family:inherit;white-space:nowrap;}
   .btn-outline:hover{background:#fdf0ee;}
+  .btn-sm{padding:7px 16px;font-size:0.82rem;}
   .alert{padding:12px 16px;border-radius:6px;font-size:0.88rem;margin-bottom:16px;display:none;}
   .alert-success{background:#f0fff4;border:1px solid #a8e6b8;color:#2c6e3f;}
   .alert-error{background:#fff0f0;border:1px solid #f5c0c0;color:#c0392b;}
   .regen-section{display:flex;align-items:center;gap:12px;flex-wrap:wrap;}
   .regen-note{font-size:0.8rem;color:#9e7c4a;}
+  #no-results{display:none;padding:18px;color:#aaa;text-align:center;font-size:0.9rem;}
 </style>
 </head>
 <body>
@@ -193,32 +215,43 @@ router.get("/admin", async (req, res) => {
 
 <div class="header">
   <h1>✦ Admin Dashboard</h1>
-  <p>View all bookings and send emails to clients.</p>
+  <p>View and manage all bookings, send emails to clients.</p>
+  <div class="stats">
+    <div class="stat"><div class="stat-val">${allBookings.length}</div><div class="stat-lbl">Total Bookings</div></div>
+    <div class="stat"><div class="stat-val">${upcoming.length}</div><div class="stat-lbl">Upcoming</div></div>
+    <div class="stat"><div class="stat-val">A$${totalRevenue.toFixed(2)}</div><div class="stat-lbl">Card Revenue</div></div>
+    <div class="stat"><div class="stat-val">${allBookings.filter(b => b.paymentMethod === "cash").length}</div><div class="stat-lbl">Cash Bookings</div></div>
+  </div>
 </div>
 
 <div class="content">
 
   <div class="section">
-    <div class="section-title">📅 Upcoming Confirmed Bookings <span style="font-family:sans-serif;font-size:0.8rem;font-weight:400;color:#9e7c4a;">(${upcoming.length})</span></div>
-    <div class="card">
-      <table>
-        <thead><tr>
-          <th>Client</th><th>Email</th><th>Service</th><th>Date & Time</th><th>Amount</th><th>Payment</th>
-        </tr></thead>
-        <tbody>${upcomingRows}</tbody>
-      </table>
+    <div class="section-title">📋 All Bookings</div>
+    <div class="toolbar">
+      <input class="search-input" id="search-input" type="text" placeholder="Search by name, email, or service…" oninput="filterTable()">
+      <select class="filter-sel" id="filter-payment" onchange="filterTable()">
+        <option value="">All payments</option>
+        <option value="card">Card</option>
+        <option value="cash">Cash</option>
+      </select>
+      <select class="filter-sel" id="filter-time" onchange="filterTable()">
+        <option value="">All dates</option>
+        <option value="upcoming">Upcoming</option>
+        <option value="past">Past</option>
+      </select>
+      <button class="btn-outline btn-sm" onclick="exportCSV()">⬇ Export CSV</button>
     </div>
-  </div>
-
-  <div class="section">
-    <div class="section-title">🗂 Past Bookings <span style="font-family:sans-serif;font-size:0.8rem;font-weight:400;color:#9e7c4a;">(${past.length})</span></div>
     <div class="card">
-      <table>
-        <thead><tr>
-          <th>Client</th><th>Email</th><th>Service</th><th>Date & Time</th><th>Amount</th><th>Payment</th>
-        </tr></thead>
-        <tbody>${pastRows}</tbody>
-      </table>
+      <div class="table-wrap">
+        <table id="bookings-table">
+          <thead><tr>
+            <th>Client</th><th>Email</th><th>Service</th><th>Date & Time</th><th>Amount</th><th>Payment</th><th>Booked On</th>
+          </tr></thead>
+          <tbody id="bookings-tbody">${allBookingRows}</tbody>
+        </table>
+        <div id="no-results">No bookings match your search.</div>
+      </div>
     </div>
   </div>
 
@@ -261,6 +294,84 @@ router.get("/admin", async (req, res) => {
 <script>
 const TOKEN = ${JSON.stringify(token)};
 const API = '/api';
+const TODAY = new Date().toISOString().split('T')[0];
+
+const ALL_BOOKINGS = ${JSON.stringify(allBookings.map(b => ({
+  clientName: b.clientName || "",
+  clientEmail: b.clientEmail || "",
+  service: b.service || "",
+  bookingDate: b.bookingDate || "",
+  bookingTime: b.bookingTime || "",
+  location: b.location || "",
+  numPeople: b.numPeople || "",
+  totalAud: b.totalAud ? Number(b.totalAud).toFixed(2) : "",
+  paymentMethod: b.paymentMethod || "",
+  status: b.status || "confirmed",
+  stripePaymentIntentId: b.stripePaymentIntentId || "",
+  createdAt: b.createdAt ? new Date(b.createdAt).toLocaleDateString("en-AU") : "",
+}))
+)};
+
+function toggleDetails(idx) {
+  const row = document.getElementById('detail-' + idx);
+  if (row) row.style.display = row.style.display === 'none' ? '' : 'none';
+}
+
+function filterTable() {
+  const q = document.getElementById('search-input').value.toLowerCase();
+  const pm = document.getElementById('filter-payment').value;
+  const ft = document.getElementById('filter-time').value;
+  const rows = document.querySelectorAll('.brow');
+  const details = document.querySelectorAll('.brow-detail');
+  let visible = 0;
+  rows.forEach((row, i) => {
+    const b = ALL_BOOKINGS[i];
+    if (!b) return;
+    const matchQ = !q || [b.clientName, b.clientEmail, b.service, b.location].join(' ').toLowerCase().includes(q);
+    const matchPm = !pm || b.paymentMethod === pm;
+    const matchFt = !ft ||
+      (ft === 'upcoming' && b.bookingDate >= TODAY) ||
+      (ft === 'past' && (!b.bookingDate || b.bookingDate < TODAY));
+    const show = matchQ && matchPm && matchFt;
+    row.style.display = show ? '' : 'none';
+    if (details[i]) details[i].style.display = 'none';
+    if (show) visible++;
+  });
+  document.getElementById('no-results').style.display = visible === 0 ? 'block' : 'none';
+}
+
+function exportCSV() {
+  const q = document.getElementById('search-input').value.toLowerCase();
+  const pm = document.getElementById('filter-payment').value;
+  const ft = document.getElementById('filter-time').value;
+  const filtered = ALL_BOOKINGS.filter(b => {
+    const matchQ = !q || [b.clientName, b.clientEmail, b.service, b.location].join(' ').toLowerCase().includes(q);
+    const matchPm = !pm || b.paymentMethod === pm;
+    const matchFt = !ft ||
+      (ft === 'upcoming' && b.bookingDate >= TODAY) ||
+      (ft === 'past' && (!b.bookingDate || b.bookingDate < TODAY));
+    return matchQ && matchPm && matchFt;
+  });
+  const headers = ['Name','Email','Service','Date','Time','Location','People','Amount (AUD)','Payment','Status','Booked On'];
+  const rows = filtered.map(b => [
+    b.clientName, b.clientEmail, b.service, b.bookingDate, b.bookingTime,
+    b.location, b.numPeople, b.totalAud, b.paymentMethod, b.status, b.createdAt
+  ].map(v => '"' + String(v || '').replace(/"/g, '""') + '"').join(','));
+  const csv = [headers.join(','), ...rows].join('\\n');
+  const blob = new Blob([csv], { type: 'text/csv' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'glam-bookings-' + new Date().toISOString().split('T')[0] + '.csv';
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+function prefillEmail(email) {
+  document.getElementById('e-to').value = email;
+  document.getElementById('e-subject').focus();
+  document.getElementById('e-subject').scrollIntoView({ behavior: 'smooth', block: 'center' });
+}
 
 async function sendEmail() {
   const btn = document.getElementById('send-email-btn');

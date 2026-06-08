@@ -18,6 +18,12 @@ export default defineConfig({
     port: parseInt(process.env.PORT || "5173"),
     host: "0.0.0.0",
     allowedHosts: true,
+    proxy: {
+      "/api": {
+        target: "http://localhost:8080",
+        changeOrigin: true,
+      },
+    },
   },
   build: {
     outDir: path.resolve(__dirname, "dist"),

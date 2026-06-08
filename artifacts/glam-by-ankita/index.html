@@ -1594,18 +1594,22 @@
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ token })
       });
-      const { client_secret, error } = await res.json();
-      if (error || !client_secret) {
+      const json = await res.json();
+      if (json.error || !json.client_secret) {
         document.getElementById('payment-ready').style.display = 'none';
-        document.getElementById('payment-no-stripe').style.display = 'block';
+        const noStripeDiv = document.getElementById('payment-no-stripe');
+        noStripeDiv.innerHTML = '<p style="color:var(--text-mid);font-size:0.9rem;">' + (json.error || 'Card payment is temporarily unavailable. Please contact Ankita to arrange payment.') + '</p><a href="mailto:theglambyankita@gmail.com" class="sp-btn" style="display:block;text-align:center;text-decoration:none;margin-top:8px;">Contact Ankita</a>';
+        noStripeDiv.style.display = 'block';
         return;
       }
-      _stripeElements = _stripe.elements({ clientSecret: client_secret, appearance: { theme: 'stripe', variables: { colorPrimary: '#c9a96e', fontFamily: 'Nunito, sans-serif' } } });
+      _stripeElements = _stripe.elements({ clientSecret: json.client_secret, appearance: { theme: 'stripe', variables: { colorPrimary: '#c9a96e', fontFamily: 'Nunito, sans-serif' } } });
       const paymentEl = _stripeElements.create('payment');
       paymentEl.mount('#stripe-element');
     } catch (e) {
       document.getElementById('payment-ready').style.display = 'none';
-      document.getElementById('payment-no-stripe').style.display = 'block';
+      const noStripeDiv = document.getElementById('payment-no-stripe');
+      noStripeDiv.innerHTML = '<p style="color:var(--text-mid);font-size:0.9rem;">Card payment is temporarily unavailable. Please contact Ankita to arrange payment.</p><a href="mailto:theglambyankita@gmail.com" class="sp-btn" style="display:block;text-align:center;text-decoration:none;margin-top:8px;">Contact Ankita</a>';
+      noStripeDiv.style.display = 'block';
     }
   }
 
