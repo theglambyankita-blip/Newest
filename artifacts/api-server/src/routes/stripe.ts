@@ -30,21 +30,24 @@ router.post("/create-payment-intent", async (req, res) => {
     return;
   }
 
-  const totalAud = Number(bookingData.total_aud);
+  const totalAud = Number(bookingData.total_aud ?? bookingData.totalAud ?? 0);
   if (!totalAud || totalAud <= 0) {
     res.status(400).json({ error: "Invalid payment amount." });
     return;
   }
+
+  const clientEmail = (bookingData.client_email || bookingData.clientEmail || "") as string;
+  const clientName = (bookingData.client_name || bookingData.clientName || "") as string;
 
   const stripe = new Stripe(secretKey);
   try {
     const paymentIntent = await stripe.paymentIntents.create({
       amount: Math.round(totalAud * 100),
       currency: "aud",
-      receipt_email: (bookingData.client_email as string) || undefined,
+      receipt_email: clientEmail || undefined,
       metadata: {
-        client_name: (bookingData.client_name as string) || "",
-        client_email: (bookingData.client_email as string) || "",
+        client_name: clientName,
+        client_email: clientEmail,
       },
     });
     res.json({ client_secret: paymentIntent.client_secret });
