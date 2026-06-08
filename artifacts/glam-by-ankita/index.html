@@ -1117,7 +1117,7 @@
   </div>
   <div class="sp-header">
     <h1>Review Booking Request</h1>
-    <p>Edit details, set deposit, then send to client</p>
+    <p>Edit details, set payment amount, then send to client</p>
   </div>
   <div class="sp-body" id="review-body">
     <div class="sp-loading" id="review-loading">Loading booking details…</div>
@@ -1150,7 +1150,7 @@
         </div>
       </div>
       <div class="sp-card" style="border:2px solid var(--gold);background:linear-gradient(135deg,#fdf8f4,#fdf0ee);">
-        <h3>💰 Set Deposit Amount</h3>
+        <h3>💰 Set Payment Amount</h3>
         <div class="sp-field"><label>Amount to Charge (AUD $)</label><input type="number" id="rv-total" min="0" step="0.01" placeholder="e.g. 150" style="font-size:1.1rem;font-weight:700;"></div>
       </div>
       <div class="sp-card">
@@ -1176,7 +1176,7 @@
   </div>
   <div class="sp-header">
     <h1>Your Booking Confirmation</h1>
-    <p>Review your details and complete your deposit</p>
+    <p>Review your details and complete your payment</p>
   </div>
   <div class="sp-body">
     <div class="sp-loading" id="booking-loading">Loading your booking…</div>
@@ -1490,7 +1490,7 @@
     try {
       if (!data.total_aud || parseFloat(data.total_aud) <= 0) {
         if (loadingEl) loadingEl.textContent =
-          'This booking link does not have a valid deposit amount. Please contact Ankita.';
+          'This booking link does not have a valid payment amount. Please contact Ankita.';
         return;
       }
 
@@ -1617,7 +1617,7 @@
       err.textContent = error.message;
       err.style.display = 'block';
       btn.disabled = false;
-      btn.textContent = 'Pay Deposit ✦';
+      btn.textContent = 'Pay Now ✦';
     } else {
       document.getElementById('payment-card').style.display = 'none';
       document.getElementById('payment-success-card').style.display = 'block';

@@ -54,7 +54,7 @@ app.post("/api/webhook", express.raw({ type: "application/json" }), async (req, 
           <div style="padding:18px 24px;">
             <p style="color:#2c1810;font-size:0.9rem;margin:0 0 6px;">Client: <strong>${clientName}</strong></p>
             ${clientEmail ? `<p style="color:#6b3d2e;font-size:0.85rem;margin:0;">Email: ${clientEmail}</p>` : ""}
-            <p style="color:#4a2e22;font-size:0.85rem;margin:12px 0 0;">Deposit of <strong>A$${amountAud}</strong> successfully received via Stripe.</p>
+            <p style="color:#4a2e22;font-size:0.85rem;margin:12px 0 0;">Payment of <strong>A$${amountAud}</strong> successfully received via Stripe.</p>
           </div>
         </div>`,
       }).catch((e) => console.error("Webhook email error:", e));

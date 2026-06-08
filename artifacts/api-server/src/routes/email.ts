@@ -105,7 +105,7 @@ router.get("/review", (req, res) => {
 </div>
 <div class="header">
   <h1>Review Booking Request</h1>
-  <p>Check what the client submitted, confirm the details, set your deposit, then send their confirmation.</p>
+  <p>Check what the client submitted, confirm the details, set the payment amount, then send their confirmation.</p>
 </div>
 <div class="body">
 
@@ -144,7 +144,7 @@ router.get("/review", (req, res) => {
   </div>
 
   <div class="card deposit-card">
-    <div class="card-title">💰 Set Deposit Amount</div>
+    <div class="card-title">💰 Set Payment Amount</div>
     <div class="card-body">
       <div class="field">
         <label>Amount to Charge (AUD $)</label>
@@ -178,7 +178,7 @@ async function sendIt() {
 
   const total = parseFloat(document.getElementById('f-total').value);
   if (!total || total <= 0) {
-    err.textContent = 'Please enter a deposit amount before sending.';
+    err.textContent = 'Please enter a payment amount before sending.';
     err.style.display = 'block';
     return;
   }
@@ -281,20 +281,20 @@ router.post("/select-cash", async (req, res) => {
           <h2 style="margin:0;color:#fff;font-size:1rem;">💵 Cash Payment Selected — ${client_name}</h2>
         </div>
         <div style="padding:18px 24px 8px;">
-          <p style="color:#2c1810;font-size:0.9rem;margin:0 0 6px;"><strong>${client_name}</strong> has chosen to pay the deposit in cash.</p>
+          <p style="color:#2c1810;font-size:0.9rem;margin:0 0 6px;"><strong>${client_name}</strong> has chosen to pay in cash.</p>
           ${client_email ? `<p style="color:#6b3d2e;font-size:0.85rem;margin:0 0 4px;">Email: ${client_email}</p>` : ""}
-          ${total_aud ? `<p style="color:#4a2e22;font-size:0.85rem;margin:0;">Deposit: <strong>A$${Number(total_aud).toFixed(2)}</strong></p>` : ""}
+          ${total_aud ? `<p style="color:#4a2e22;font-size:0.85rem;margin:0;">Payment: <strong>A$${Number(total_aud).toFixed(2)}</strong></p>` : ""}
         </div>
         ${detailRows ? `<table style="width:100%;border-collapse:collapse;font-size:0.88rem;margin-top:8px;">${detailRows}</table>` : ""}
         <div style="padding:14px 24px;background:#fff9f0;border-top:1px solid #e8c4bc;">
-          <p style="margin:0;font-size:0.82rem;color:#9e7c4a;">Remember to collect the cash deposit at the appointment.</p>
+          <p style="margin:0;font-size:0.82rem;color:#9e7c4a;">Remember to collect the cash payment at the appointment.</p>
         </div>
       </div>`;
 
     transporter.sendMail({
       from: `"The Glam by Ankita" <${process.env["GMAIL_USER"]}>`,
       to: process.env["GMAIL_USER"]!,
-      subject: `💵 ${client_name} will pay deposit in cash`,
+      subject: `💵 ${client_name} will pay in cash`,
       html,
     }).catch((e) => console.error("Select-cash email error:", e));
   }
@@ -338,7 +338,7 @@ router.post("/send-email", upload.array("files", 5), async (req, res) => {
     reviewSection = `
       <div style="padding:22px 32px;background:#f7e9d0;border-top:1px solid #e8c4bc;text-align:center;">
         <p style="margin:0 0 8px;font-size:0.95rem;font-weight:700;color:#6b3d2e;">📋 Review this booking request</p>
-        <p style="margin:0 0 16px;font-size:0.85rem;color:#4a2e22;line-height:1.6;">Set the deposit amount and send the client their confirmation + payment link.</p>
+        <p style="margin:0 0 16px;font-size:0.85rem;color:#4a2e22;line-height:1.6;">Set the payment amount and send the client their confirmation + payment link.</p>
         <a href="${reviewUrl}" style="display:inline-block;background:linear-gradient(135deg,#c9a96e,#9e7c4a);color:#fff;text-decoration:none;font-family:Georgia,serif;font-weight:700;font-size:1rem;padding:14px 32px;border-radius:6px;letter-spacing:0.02em;">✦ Review Booking Request</a>
       </div>`;
   }
@@ -449,9 +449,9 @@ router.post("/send-confirmation", async (req, res) => {
       <table style="width:100%;border-collapse:collapse;font-size:0.9rem;">${detailRows}</table>
       ${notes ? `<div style="padding:14px 32px;background:#fff9f0;border-top:1px solid #e8c4bc;"><p style="margin:0;font-size:0.88rem;color:#4a2e22;line-height:1.6;font-style:italic;">💬 ${notes}</p></div>` : ""}
       <div style="padding:22px 32px;background:#f7e9d0;border-top:1px solid #e8c4bc;text-align:center;">
-        <p style="margin:0 0 4px;font-size:1rem;font-weight:700;color:#6b3d2e;">Deposit: A$${Number(total_aud).toFixed(2)}</p>
-        <p style="margin:0 0 16px;font-size:0.85rem;color:#4a2e22;">Please complete your deposit to secure your appointment.</p>
-        <a href="${paymentUrl}" style="display:inline-block;background:linear-gradient(135deg,#c9a96e,#9e7c4a);color:#fff;text-decoration:none;font-family:Georgia,serif;font-weight:700;font-size:0.95rem;padding:14px 32px;border-radius:6px;">✦ Review Details & Pay Deposit</a>
+        <p style="margin:0 0 4px;font-size:1rem;font-weight:700;color:#6b3d2e;">Payment: A$${Number(total_aud).toFixed(2)}</p>
+        <p style="margin:0 0 16px;font-size:0.85rem;color:#4a2e22;">Please complete your payment to secure your appointment.</p>
+        <a href="${paymentUrl}" style="display:inline-block;background:linear-gradient(135deg,#c9a96e,#9e7c4a);color:#fff;text-decoration:none;font-family:Georgia,serif;font-weight:700;font-size:0.95rem;padding:14px 32px;border-radius:6px;">✦ Review Details & Pay Now</a>
       </div>
       <div style="padding:24px 32px;">
         <p style="font-size:0.9rem;color:#6b3d2e;margin:0;">With love,<br><strong>Ankita</strong><br>The Glam by Ankita ✦</p>
@@ -464,7 +464,7 @@ router.post("/send-confirmation", async (req, res) => {
         <h2 style="margin:0;color:#fff;font-size:1rem;">✅ Confirmation sent to ${client_name}</h2>
       </div>
       <div style="padding:18px 24px;">
-        <p style="color:#2c1810;font-size:0.9rem;margin:0 0 6px;">Deposit: <strong>A$${Number(total_aud).toFixed(2)}</strong></p>
+        <p style="color:#2c1810;font-size:0.9rem;margin:0 0 6px;">Payment: <strong>A$${Number(total_aud).toFixed(2)}</strong></p>
         <p style="color:#6b3d2e;font-size:0.85rem;margin:0;">Client: ${client_email}</p>
       </div>
     </div>`;
