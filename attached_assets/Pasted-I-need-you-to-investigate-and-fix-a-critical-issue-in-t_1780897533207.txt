@@ -1,0 +1,134 @@
+I need you to investigate and fix a critical issue in the makeup booking system immediately.
+
+Current workflow:
+
+1. A client fills out the makeup booking form.
+2. The booking request gets sent to nishankn.ankita@gmail.com for review.
+3. I review the booking details and send the booking to the client.
+4. The client receives a link where they should be able to:
+   - Review their final booking details.
+   - Confirm the booking.
+   - Proceed to payment.
+
+The issue is happening at Step 4.
+
+When the client opens the link they receive, the page gets stuck on a loading screen and never finishes loading. The booking review page does not appear and the client cannot continue.
+
+I have attached the exact link and a screenshot showing the issue.
+
+I need you to thoroughly investigate the entire workflow and determine the root cause. Please do not make assumptions. I want a proper diagnosis and fix.
+
+Things I want checked:
+
+- Frontend routing.
+- Dynamic route parameters.
+- Booking ID generation.
+- Booking ID retrieval.
+- Database queries.
+- API endpoints.
+- Authentication checks.
+- Authorization checks.
+- Infinite loading states.
+- Failed fetch requests.
+- Server-side errors.
+- Client-side JavaScript errors.
+- Environment variables.
+- Redirect logic.
+- Email link generation.
+- Booking record creation.
+- Loading components that never resolve.
+- Missing or invalid booking data.
+- Error handling logic.
+- Any Stripe-related code that could block page loading.
+
+Most importantly:
+
+I do not care if Stripe payments are fully functional right now.
+
+If Stripe is causing issues, temporarily bypass, mock, or isolate it if necessary so the booking review and confirmation flow can function properly.
+
+My priority is:
+
+1. Client opens the link successfully.
+2. Client sees their booking details.
+3. Client can review everything.
+4. Client can confirm the booking.
+5. Client can reach the payment stage.
+6. No infinite loading screens.
+7. No broken pages.
+8. Clear error messages if something goes wrong.
+
+Please inspect the entire process from beginning to end:
+
+- Form submission.
+- Database storage.
+- Email generation.
+- Link creation.
+- Link delivery.
+- Booking retrieval.
+- Booking review page.
+- Confirmation page.
+- Payment page.
+
+I want you to verify that the booking record actually exists when the link is opened and that the page correctly retrieves and displays the booking data.
+
+Please also verify that:
+
+- The booking page works for users who are not logged in.
+- The booking page handles invalid data gracefully.
+- The booking page does not depend on unavailable services.
+- The booking page properly handles loading and error states.
+- No API requests are failing silently.
+- There are no console errors.
+- There are no server errors.
+- There are no missing routes.
+
+Very important:
+
+I do not want you to stop after making code changes.
+
+I am not looking for "I updated the code and it should work now."
+
+I need actual verification.
+
+Please perform end-to-end testing yourself:
+
+1. Submit a test booking.
+2. Verify the booking is saved.
+3. Verify the email is generated.
+4. Open the review link.
+5. Confirm the booking details load.
+6. Verify the confirmation flow.
+7. Verify the payment page can be reached.
+8. Confirm there are no infinite loading screens.
+9. Confirm there are no blocking errors.
+
+If any part of the workflow fails, continue debugging until the entire workflow is functional.
+
+Please do not stop at the first fix if additional issues remain.
+
+I will not consider this resolved unless the complete booking flow is verified to work from beginning to end.
+
+I need a very high level of confidence that a real customer can successfully:
+
+- Submit a booking.
+- Receive the booking review link.
+- Open the link.
+- Review their details.
+- Confirm the booking.
+- Continue to payment.
+
+I need you to keep investigating and testing until you can confidently explain:
+
+- What the root cause was.
+- Why it happened.
+- What files were changed.
+- What code was modified.
+- What testing was performed.
+- Why you believe the issue is fully resolved.
+
+Please prioritize fixing functionality over cosmetic improvements. This booking flow is one of the most important parts of the business and must work reliably for real clients.
+
+Do not stop when you think it is fixed.
+
+Stop only when you have tested the complete workflow and can confidently verify that the loading issue is gone and the client booking review process works correctly.
