@@ -32,12 +32,22 @@ module.exports = async function handler(req, res) {
       ? `New Booking Request from ${clientName}`
       : `New Collab Enquiry from ${clientName}`;
 
+    const labelMap = {
+      first_name: 'First Name', last_name: 'Last Name', client_email: 'Email',
+      phone: 'Phone', contact_method: 'Preferred Contact', preferred_date: 'Preferred Date',
+      num_people: 'Number of People', services: 'Services', location: 'Suburb / Location',
+      postcode: 'Postcode', referral: 'How They Found You', vision: 'Look / Vision',
+      name: 'Name', brand: 'Brand / Company', collab_email: 'Email',
+      instagram: 'Instagram Handle', collab_type: 'Collaboration Type', project_desc: 'Project Description',
+    };
+    const toLabel = (k) => labelMap[k] || k.split('_').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
+
     const excludeKeys = ['type', 'owner_email', 'from_email'];
     const rows = Object.entries(fields)
       .filter(([k]) => !excludeKeys.includes(k))
       .map(([k, v]) => {
         const val = Array.isArray(v) ? v[0] : v;
-        return `<tr><td style="padding:6px 12px;font-weight:600;color:#6b3d2e;white-space:nowrap;background:#fdf0ee;">${k.replace(/_/g, ' ')}</td><td style="padding:6px 12px;color:#2c1810;">${val || '—'}</td></tr>`;
+        return `<tr><td style="padding:8px 14px;font-weight:700;color:#6b3d2e;white-space:nowrap;background:#fdf0ee;border-bottom:1px solid #f0ddd6;">${toLabel(k)}</td><td style="padding:8px 14px;color:#2c1810;border-bottom:1px solid #f0ddd6;">${val || '—'}</td></tr>`;
       })
       .join('');
 

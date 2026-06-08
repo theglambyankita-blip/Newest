@@ -1,4 +1,5 @@
 const nodemailer = require('nodemailer');
+const { getPool } = require('./db');
 
 function decodeToken(token) {
   const payload = token.includes('.') ? token.substring(0, token.lastIndexOf('.')) : token;
@@ -65,6 +66,28 @@ module.exports = async function handler(req, res) {
   const totalAud = booking.totalAud != null ? booking.totalAud : (booking.total_aud != null ? booking.total_aud : null);
   const amount = totalAud ? `AUD $${parseFloat(totalAud).toFixed(2)}` : 'TBC';
   const notes = booking.notes || '';
+
+  // Save booking to DB
+  try {
+    const db = getPool();
+    await db.query(`
+      CREATE TABLE IF NOT EXISTS bookings (
+        id SERIAL PRIMARY KEY, client_name TEXT, client_email TEXT, service TEXT,
+        booking_date TEXT, booking_time TEXT, location TEXT, num_people TEXT,
+        total_aud NUMERIC(10,2), payment_method TEXT, status TEXT DEFAULT 'confirmed',
+        stripe_payment_intent_id TEXT, created_at TIMESTAMPTZ DEFAULT NOW()
+      )
+    `);
+    await db.query(
+      `INSERT INTO bookings (client_name, client_email, service, booking_date, booking_time, location, num_people, total_aud, payment_method, status)
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,'cash','confirmed')`,
+      [clientName, clientEmail,
+       confirmedData['Service'] || null, confirmedData['Date'] || confirmedData['Confirmed Date'] || null,
+       confirmedData['Time'] || null, confirmedData['Location'] || null,
+       confirmedData['Number of People'] || confirmedData['People'] || null,
+       totalAud != null ? parseFloat(totalAud) : null]
+    );
+  } catch (e) { console.error('DB save cash booking error:', e); }
 
   const user = process.env.GMAIL_USER;
   const pass = process.env.GMAIL_APP_PASSWORD;

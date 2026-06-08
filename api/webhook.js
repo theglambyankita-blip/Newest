@@ -1,4 +1,5 @@
 const nodemailer = require('nodemailer');
+const { getPool } = require('./db');
 
 const SITE_URL = 'https://www.theglambyankita.com';
 
@@ -84,6 +85,26 @@ module.exports = async function handler(req, res) {
     const amountAud = (intent.amount / 100).toFixed(2);
     const clientName = meta.client_name || 'Client';
     const clientEmail = meta.client_email || intent.receipt_email || '';
+
+    // Save booking to DB
+    try {
+      const db = getPool();
+      await db.query(`
+        CREATE TABLE IF NOT EXISTS bookings (
+          id SERIAL PRIMARY KEY, client_name TEXT, client_email TEXT, service TEXT,
+          booking_date TEXT, booking_time TEXT, location TEXT, num_people TEXT,
+          total_aud NUMERIC(10,2), payment_method TEXT, status TEXT DEFAULT 'confirmed',
+          stripe_payment_intent_id TEXT, created_at TIMESTAMPTZ DEFAULT NOW()
+        )
+      `);
+      await db.query(
+        `INSERT INTO bookings (client_name, client_email, service, booking_date, booking_time, location, num_people, total_aud, payment_method, status, stripe_payment_intent_id)
+         VALUES ($1,$2,$3,$4,$5,$6,$7,$8,'card','confirmed',$9)`,
+        [clientName, clientEmail, meta.booking_service || null, meta.booking_date || null,
+         meta.booking_time || null, meta.booking_location || null, meta.booking_people || null,
+         intent.amount / 100, intent.id]
+      );
+    } catch (e) { console.error('DB save booking error:', e); }
 
     const user = process.env.GMAIL_USER;
     const pass = process.env.GMAIL_APP_PASSWORD;
