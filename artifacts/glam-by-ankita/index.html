@@ -1441,60 +1441,66 @@
   // ── CLIENT BOOKING PAGE ───────────────────────────────────────
   let _stripe = null, _stripeElements = null, _bookingToken = null;
 
+  function _decodeBookingToken(token) {
+    // Token format: base64url(payload).signature — strip signature first
+    const payload = token.includes('.') ? token.substring(0, token.lastIndexOf('.')) : token;
+    const b64 = payload.replace(/-/g, '+').replace(/_/g, '/');
+    const pad = (4 - b64.length % 4) % 4;
+    const raw = JSON.parse(atob(b64 + '='.repeat(pad)));
+    // Normalise camelCase → snake_case so renderBookingDetails works
+    return {
+      confirmed_data: raw.confirmedData || raw.confirmed_data || {},
+      client_name:    raw.clientName    || raw.client_name    || '',
+      client_email:   raw.clientEmail   || raw.client_email   || '',
+      notes:          raw.notes         || '',
+      total_aud:      raw.totalAud      != null ? raw.totalAud : (raw.total_aud != null ? raw.total_aud : null),
+      status:         raw.status        || 'pending',
+    };
+  }
+
   async function loadBookingPage(token) {
     _bookingToken = token;
+    let data;
     try {
-      const res = await fetch('/api/get-booking?token=' + encodeURIComponent(token));
-      if (!res.ok) {
-        const body = await res.json().catch(() => ({}));
-        if (res.status === 503) throw new Error('try-again');
-        throw new Error(body.error || 'not-found');
-      }
-      const data = await res.json();
+      data = _decodeBookingToken(token);
+    } catch (e) {
+      document.getElementById('booking-loading').textContent =
+        'This booking link appears to be invalid. Please use the exact link from your email or contact Ankita.';
+      return;
+    }
 
-      if (data.status === 'paid') {
-        document.getElementById('booking-loading').style.display = 'none';
-        document.getElementById('booking-content').style.display = 'block';
-        document.getElementById('payment-card').style.display = 'none';
-        document.getElementById('payment-success-card').style.display = 'block';
-        renderBookingDetails(data);
-        return;
-      }
+    if (!data.total_aud || parseFloat(data.total_aud) <= 0) {
+      document.getElementById('booking-loading').textContent =
+        'This booking link does not have a valid deposit amount. Please contact Ankita.';
+      return;
+    }
 
-      renderBookingDetails(data);
+    renderBookingDetails(data);
 
-      if (data.total_aud) {
-        document.getElementById('deposit-display').textContent = 'AUD $' + parseFloat(data.total_aud).toFixed(2);
-      }
+    document.getElementById('deposit-display').textContent =
+      'AUD $' + parseFloat(data.total_aud).toFixed(2);
 
-      if (data.notes) {
-        const nw = document.getElementById('booking-notes-wrap');
-        nw.textContent = data.notes;
-        nw.style.display = 'block';
-      }
+    if (data.notes) {
+      const nw = document.getElementById('booking-notes-wrap');
+      nw.textContent = data.notes;
+      nw.style.display = 'block';
+    }
 
-      document.getElementById('booking-loading').style.display = 'none';
-      document.getElementById('booking-content').style.display = 'block';
+    document.getElementById('booking-loading').style.display = 'none';
+    document.getElementById('booking-content').style.display = 'block';
 
-      try {
-        const cfg = await fetch('/api/config').then(r => r.json());
-        if (cfg.stripePublishableKey && data.total_aud) {
-          initStripe(cfg.stripePublishableKey, token);
-        } else {
-          document.getElementById('payment-ready').style.display = 'none';
-          document.getElementById('payment-no-stripe').style.display = 'block';
-        }
-      } catch {
+    // Try to load Stripe — if unavailable just show fallback silently
+    try {
+      const cfg = await fetch('/api/config').then(r => r.json());
+      if (cfg.stripePublishableKey && data.total_aud) {
+        initStripe(cfg.stripePublishableKey, token);
+      } else {
         document.getElementById('payment-ready').style.display = 'none';
         document.getElementById('payment-no-stripe').style.display = 'block';
       }
-    } catch (e) {
-      const el = document.getElementById('booking-loading');
-      if (e.message === 'try-again') {
-        el.textContent = 'Having trouble loading your booking — please refresh the page and try again. If this keeps happening, contact Ankita.';
-      } else {
-        el.textContent = 'Booking not found or this link has expired. Please contact Ankita for a new link.';
-      }
+    } catch {
+      document.getElementById('payment-ready').style.display = 'none';
+      document.getElementById('payment-no-stripe').style.display = 'block';
     }
   }
 
