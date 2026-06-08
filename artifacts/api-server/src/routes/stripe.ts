@@ -3,6 +3,11 @@ import Stripe from "stripe";
 
 const router = Router();
 
+router.get("/config", (_req, res) => {
+  const stripePublishableKey = process.env["STRIPE_PUBLISHABLE_KEY"] ?? null;
+  res.json({ stripePublishableKey });
+});
+
 function fromUrlSafeBase64(token: string): Record<string, unknown> {
   const payload = token.includes(".") ? token.substring(0, token.lastIndexOf(".")) : token;
   const b64 = payload.replace(/-/g, "+").replace(/_/g, "/");
