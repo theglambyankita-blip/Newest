@@ -1210,8 +1210,8 @@
       </div>
       <div id="payment-success-card" class="sp-card" style="display:none;text-align:center;padding:40px 24px;">
         <div class="sp-success-icon">💄</div>
-        <h3 style="font-family:'Playfair Display',serif;color:var(--text-dark);margin:0 0 8px;">Payment Complete — You're Booked!</h3>
-        <p style="color:var(--text-mid);font-size:0.9rem;line-height:1.7;">Your payment has been received. I'll be in touch with all the details closer to your appointment. So excited to work with you! ✨</p>
+        <h3 style="font-family:'Playfair Display',serif;color:var(--text-dark);margin:0 0 8px;">You're All Booked! ✓</h3>
+        <p style="color:var(--text-mid);font-size:0.9rem;line-height:1.7;">Your appointment is confirmed — I'll be in touch with everything you need closer to the day. So excited to work with you! ✨</p>
         <span class="sp-badge" style="margin-top:12px;">Confirmed ✓</span>
       </div>
     </div>
@@ -1495,9 +1495,12 @@
         return;
       }
 
-      // Handle Stripe 3DS redirect return — show success card immediately
+      // Show confirmed/view-only state: 3DS return, view=1 link, or status=confirmed token
       const _urlParams = new URLSearchParams(window.location.search);
-      if (_urlParams.get('redirect_status') === 'succeeded') {
+      const _isConfirmed = _urlParams.get('redirect_status') === 'succeeded'
+        || _urlParams.get('view') === '1'
+        || data.status === 'confirmed';
+      if (_isConfirmed) {
         renderBookingDetails(data);
         const depositEl = document.getElementById('deposit-display');
         if (depositEl) depositEl.textContent = 'AUD $' + parseFloat(data.total_aud).toFixed(2);

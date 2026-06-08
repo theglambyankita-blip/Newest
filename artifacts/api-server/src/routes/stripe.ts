@@ -4,7 +4,6 @@ import Stripe from "stripe";
 const router = Router();
 
 function fromUrlSafeBase64(token: string): Record<string, unknown> {
-  // Strip JWT-like signature (payload.signature format) if present
   const payload = token.includes(".") ? token.substring(0, token.lastIndexOf(".")) : token;
   const b64 = payload.replace(/-/g, "+").replace(/_/g, "/");
   const pad = (4 - b64.length % 4) % 4;
@@ -39,7 +38,8 @@ router.post("/create-payment-intent", async (req, res) => {
   }
 
   const clientEmail = (bookingData.client_email || bookingData.clientEmail || "") as string;
-  const clientName = (bookingData.client_name || bookingData.clientName || "") as string;
+  const clientName  = (bookingData.client_name  || bookingData.clientName  || "") as string;
+  const cd = (bookingData.confirmed_data || bookingData.confirmedData || {}) as Record<string, string>;
 
   const stripe = new Stripe(secretKey);
   try {
@@ -48,8 +48,14 @@ router.post("/create-payment-intent", async (req, res) => {
       currency: "aud",
       receipt_email: clientEmail || undefined,
       metadata: {
-        client_name: clientName,
-        client_email: clientEmail,
+        client_name:      clientName,
+        client_email:     clientEmail,
+        booking_date:     cd["Date"]             || "",
+        booking_time:     cd["Time"]             || "",
+        booking_service:  cd["Service"]          || "",
+        booking_location: cd["Location"]         || "",
+        booking_people:   cd["Number of People"] || "",
+        booking_token:    token.length <= 450 ? token : "",
       },
     });
     res.json({ client_secret: paymentIntent.client_secret });

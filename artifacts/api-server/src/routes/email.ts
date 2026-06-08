@@ -1,6 +1,7 @@
 import { Router } from "express";
 import nodemailer from "nodemailer";
 import multer from "multer";
+import { buildIcs } from "../lib/ics.js";
 
 const router = Router();
 const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 10 * 1024 * 1024, files: 5 } });
@@ -297,6 +298,74 @@ router.post("/select-cash", async (req, res) => {
       subject: `💵 ${client_name} will pay in cash`,
       html,
     }).catch((e) => console.error("Select-cash email error:", e));
+
+    // ── Confirmation email to client ──────────────────────────
+    if (client_email) {
+      const csDate     = (confirmed_data as Record<string,string>)?.["Date"]     || "";
+      const csTime     = (confirmed_data as Record<string,string>)?.["Time"]     || "";
+      const csService  = (confirmed_data as Record<string,string>)?.["Service"]  || "";
+      const csLocation = (confirmed_data as Record<string,string>)?.["Location"] || "";
+
+      const csViewToken = toUrlSafeBase64({
+        confirmed_data,
+        total_aud:    Number(total_aud),
+        client_name,
+        client_email,
+        status:       "confirmed",
+      });
+      const csViewUrl = `${SITE_URL}/p?b=${csViewToken}&view=1`;
+
+      const csIcsBuffer = csDate ? buildIcs({
+        uid:           `cash-${Date.now()}-${client_email}@theglambyankita.com`,
+        summary:       `The Glam by Ankita — ${csService || "Appointment"}`,
+        date:          csDate,
+        time:          csTime     || undefined,
+        location:      csLocation || undefined,
+        description:   [
+          "The Glam by Ankita — Your Appointment",
+          csService  ? `Service: ${csService}`   : "",
+          csLocation ? `Location: ${csLocation}` : "",
+          total_aud  ? `Amount: A$${Number(total_aud).toFixed(2)} (cash)` : "",
+          "Contact: theglambyankita@gmail.com",
+        ].filter(Boolean).join("\\n"),
+        organizerEmail: process.env["GMAIL_USER"],
+        attendeeEmail:  client_email,
+        attendeeName:   client_name,
+      }) : null;
+
+      const csClientDetailRows = Object.entries((confirmed_data as Record<string,string>) || {})
+        .filter(([, v]) => v)
+        .map(([k, v]) => `<tr><td style="padding:6px 14px;font-weight:600;color:#6b3d2e;background:#fdf0ee;white-space:nowrap;">${k}</td><td style="padding:6px 14px;color:#2c1810;">${v}</td></tr>`)
+        .join("");
+
+      const csClientHtml = `
+        <div style="font-family:sans-serif;max-width:600px;margin:0 auto;background:#fdf8f4;border:1px solid #e8c4bc;border-radius:8px;overflow:hidden;">
+          <div style="background:linear-gradient(135deg,#c9a96e,#9e7c4a);padding:24px 32px;">
+            <h2 style="margin:0;color:#fff;font-size:1.3rem;">💵 Booking Confirmed — Pay by Cash!</h2>
+            <p style="margin:4px 0 0;color:rgba(255,255,255,0.85);font-size:0.85rem;">The Glam by Ankita</p>
+          </div>
+          <div style="padding:28px 32px 16px;">
+            <p style="font-size:1rem;color:#2c1810;margin:0 0 12px;">Hi ${client_name},</p>
+            <p style="font-size:0.95rem;color:#4a2e22;line-height:1.7;margin:0 0 4px;">Your appointment is confirmed! You've chosen to pay by cash on the day${total_aud ? ` — please bring <strong>A$${Number(total_aud).toFixed(2)}</strong>` : ""}. I can't wait to work with you! ✨</p>
+          </div>
+          ${csClientDetailRows ? `<table style="width:100%;border-collapse:collapse;font-size:0.9rem;margin-top:8px;">${csClientDetailRows}</table>` : ""}
+          <div style="padding:22px 32px;background:#f7e9d0;border-top:1px solid #e8c4bc;text-align:center;">
+            ${csIcsBuffer ? `<p style="margin:0 0 14px;font-size:0.85rem;color:#4a2e22;">📅 A calendar invite is attached — open it to add your appointment to your calendar.</p>` : ""}
+            <a href="${csViewUrl}" style="display:inline-block;background:linear-gradient(135deg,#c9a96e,#9e7c4a);color:#fff;text-decoration:none;font-family:Georgia,serif;font-weight:700;font-size:0.95rem;padding:14px 32px;border-radius:6px;">✦ View Your Booking</a>
+          </div>
+          <div style="padding:24px 32px;">
+            <p style="font-size:0.9rem;color:#6b3d2e;margin:0;">With love,<br><strong>Ankita</strong><br>The Glam by Ankita ✦</p>
+          </div>
+        </div>`;
+
+      transporter.sendMail({
+        from:        `"The Glam by Ankita" <${process.env["GMAIL_USER"]}>`,
+        to:          client_email,
+        subject:     "Your appointment is confirmed — paying by cash on the day! 💵",
+        html:        csClientHtml,
+        attachments: csIcsBuffer ? [{ filename: "appointment.ics", content: csIcsBuffer, contentType: "text/calendar; charset=utf-8; method=REQUEST" }] : [],
+      }).catch((e) => console.error("Select-cash client email error:", e));
+    }
   }
 
   res.json({ ok: true });
@@ -452,6 +521,35 @@ router.post("/send-confirmation", async (req, res) => {
     status: "pending",
   });
   const paymentUrl = `${SITE_URL}/p?b=${paymentToken}`;
+  const viewUrl    = `${paymentUrl}&view=1`;
+
+  const bkDate     = (confirmed_data?.["Date"]     || "") as string;
+  const bkTime     = (confirmed_data?.["Time"]     || "") as string;
+  const bkService  = (confirmed_data?.["Service"]  || "") as string;
+  const bkLocation = (confirmed_data?.["Location"] || "") as string;
+
+  const icsBuffer = bkDate ? buildIcs({
+    uid:           `booking-${Date.now()}-${client_email}@theglambyankita.com`,
+    summary:       `The Glam by Ankita — ${bkService || "Appointment"}`,
+    date:          bkDate,
+    time:          bkTime     || undefined,
+    location:      bkLocation || undefined,
+    description:   [
+      "The Glam by Ankita — Your Appointment",
+      bkService  ? `Service: ${bkService}`   : "",
+      bkLocation ? `Location: ${bkLocation}` : "",
+      `Amount: A$${Number(total_aud).toFixed(2)}`,
+      "Contact: theglambyankita@gmail.com",
+    ].filter(Boolean).join("\\n"),
+    organizerEmail: process.env["GMAIL_USER"],
+    attendeeEmail:  client_email,
+    attendeeName:   client_name,
+  }) : null;
+  const icsAttachments = icsBuffer ? [{
+    filename:    "appointment.ics",
+    content:     icsBuffer,
+    contentType: "text/calendar; charset=utf-8; method=REQUEST",
+  }] : [];
 
   const detailRows = Object.entries(confirmed_data)
     .filter(([, v]) => v)
@@ -474,8 +572,10 @@ router.post("/send-confirmation", async (req, res) => {
       ${notes ? `<div style="padding:14px 32px;background:#fff9f0;border-top:1px solid #e8c4bc;"><p style="margin:0;font-size:0.88rem;color:#4a2e22;line-height:1.6;font-style:italic;">💬 ${notes}</p></div>` : ""}
       <div style="padding:22px 32px;background:#f7e9d0;border-top:1px solid #e8c4bc;text-align:center;">
         <p style="margin:0 0 4px;font-size:1rem;font-weight:700;color:#6b3d2e;">Payment: A$${Number(total_aud).toFixed(2)}</p>
-        <p style="margin:0 0 16px;font-size:0.85rem;color:#4a2e22;">Please complete your payment to secure your appointment.</p>
+        <p style="margin:0 0 ${icsBuffer ? "10px" : "16px"};font-size:0.85rem;color:#4a2e22;">Please complete your payment to secure your appointment.</p>
+        ${icsBuffer ? `<p style="margin:0 0 14px;font-size:0.83rem;color:#4a2e22;">📅 A calendar invite is attached — add the date to your calendar now!</p>` : ""}
         <a href="${paymentUrl}" style="display:inline-block;background:linear-gradient(135deg,#c9a96e,#9e7c4a);color:#fff;text-decoration:none;font-family:Georgia,serif;font-weight:700;font-size:0.95rem;padding:14px 32px;border-radius:6px;">✦ Review Details & Pay Now</a>
+        <p style="margin:12px 0 0;"><a href="${viewUrl}" style="font-size:0.82rem;color:#9e7c4a;text-decoration:none;">or view booking details →</a></p>
       </div>
       <div style="padding:24px 32px;">
         <p style="font-size:0.9rem;color:#6b3d2e;margin:0;">With love,<br><strong>Ankita</strong><br>The Glam by Ankita ✦</p>
@@ -495,10 +595,11 @@ router.post("/send-confirmation", async (req, res) => {
 
   try {
     await transporter.sendMail({
-      from: `"The Glam by Ankita" <${process.env["GMAIL_USER"]}>`,
-      to: client_email,
-      subject: "Your booking is confirmed! 💄",
-      html: clientHtml,
+      from:        `"The Glam by Ankita" <${process.env["GMAIL_USER"]}>`,
+      to:          client_email,
+      subject:     "Your booking is confirmed! 💄",
+      html:        clientHtml,
+      attachments: icsAttachments,
     });
     await transporter.sendMail({
       from: `"The Glam by Ankita" <${process.env["GMAIL_USER"]}>`,
