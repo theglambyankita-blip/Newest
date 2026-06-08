@@ -3,7 +3,7 @@ const { Pool } = require('pg');
 let pool;
 
 function getDbUrl() {
-  return (
+  const raw = (
     process.env.DATABASE_URL ||
     process.env.DATABASE_URL_POSTGRES_URL_NON_POOLING ||
     process.env.DATABASE_URL_POSTGRES_URL ||
@@ -11,12 +11,24 @@ function getDbUrl() {
     process.env.POSTGRES_URL ||
     null
   );
+  if (!raw) return null;
+
+  // Strip PgBouncer params that break the raw pg driver
+  try {
+    const url = new URL(raw);
+    url.searchParams.delete('pgbouncer');
+    url.searchParams.delete('connection_limit');
+    return url.toString();
+  } catch {
+    return raw;
+  }
 }
 
 function getPool() {
   if (!pool) {
+    const connectionString = getDbUrl();
     pool = new Pool({
-      connectionString: getDbUrl(),
+      connectionString,
       ssl: { rejectUnauthorized: false }
     });
   }
