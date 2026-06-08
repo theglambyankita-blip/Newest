@@ -2,7 +2,7 @@ const nodemailer = require('nodemailer');
 const crypto = require('crypto');
 
 function getTokenSecret() {
-  return process.env.STRIPE_SECRET_KEY || process.env.GMAIL_APP_PASSWORD || 'glam-by-ankita-2026';
+  return process.env.GMAIL_APP_PASSWORD || 'glam-by-ankita-2026';
 }
 
 function createBookingToken(data) {

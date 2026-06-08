@@ -1,7 +1,10 @@
 const crypto = require('crypto');
 
-function getTokenSecret() {
-  return process.env.STRIPE_SECRET_KEY || process.env.GMAIL_APP_PASSWORD || 'glam-by-ankita-2026';
+function getPossibleSecrets() {
+  const secrets = ['glam-by-ankita-2026'];
+  if (process.env.GMAIL_APP_PASSWORD) secrets.unshift(process.env.GMAIL_APP_PASSWORD);
+  if (process.env.STRIPE_SECRET_KEY) secrets.unshift(process.env.STRIPE_SECRET_KEY);
+  return secrets;
 }
 
 function verifyBookingToken(token) {
@@ -9,8 +12,12 @@ function verifyBookingToken(token) {
   if (lastDot === -1) throw new Error('Invalid token format');
   const payload = token.substring(0, lastDot);
   const sig = token.substring(lastDot + 1);
-  const expected = crypto.createHmac('sha256', getTokenSecret()).update(payload).digest('base64url');
-  if (sig !== expected) throw new Error('This link is invalid or has been tampered with.');
+  const secrets = getPossibleSecrets();
+  const matched = secrets.some(secret => {
+    const expected = crypto.createHmac('sha256', secret).update(payload).digest('base64url');
+    return sig === expected;
+  });
+  if (!matched) throw new Error('This link is invalid or has been tampered with.');
   return JSON.parse(Buffer.from(payload, 'base64url').toString('utf8'));
 }
 
