@@ -1,8 +1,27 @@
 const nodemailer = require('nodemailer');
+const crypto = require('crypto');
 
-function decodeToken(token) {
-  const payload = token.includes('.') ? token.substring(0, token.lastIndexOf('.')) : token;
-  const b64 = payload.replace(/-/g, '+').replace(/_/g, '/');
+function getPossibleSecrets() {
+  const secrets = ['glam-by-ankita-2026'];
+  if (process.env.GMAIL_APP_PASSWORD) secrets.unshift(process.env.GMAIL_APP_PASSWORD);
+  return secrets;
+}
+
+function verifyAndDecodeToken(token) {
+  const lastDot = token.lastIndexOf('.');
+  if (lastDot !== -1) {
+    const payload = token.substring(0, lastDot);
+    const sig = token.substring(lastDot + 1);
+    const secrets = getPossibleSecrets();
+    const matched = secrets.some(secret => {
+      const expected = crypto.createHmac('sha256', secret).update(payload).digest('base64url');
+      return sig === expected;
+    });
+    if (matched) {
+      return JSON.parse(Buffer.from(payload, 'base64url').toString('utf8'));
+    }
+  }
+  const b64 = token.replace(/-/g, '+').replace(/_/g, '/');
   const pad = (4 - b64.length % 4) % 4;
   return JSON.parse(Buffer.from(b64 + '='.repeat(pad), 'base64').toString('utf8'));
 }
@@ -54,7 +73,7 @@ module.exports = async function handler(req, res) {
 
   let booking;
   try {
-    booking = decodeToken(token);
+    booking = verifyAndDecodeToken(token);
   } catch (e) {
     return res.status(400).json({ error: 'Invalid token' });
   }
@@ -62,8 +81,8 @@ module.exports = async function handler(req, res) {
   const confirmedData = booking.confirmedData || booking.confirmed_data || {};
   const clientName = booking.clientName || booking.client_name || confirmedData['First Name'] || 'Client';
   const clientEmail = booking.clientEmail || booking.client_email || confirmedData['Email'] || '';
-  const totalAud = booking.totalAud != null ? booking.totalAud : (booking.total_aud != null ? booking.total_aud : null);
-  const amount = totalAud ? `AUD $${parseFloat(totalAud).toFixed(2)}` : 'TBC';
+  const totalAud = booking.totalAud != null ? booking.totalAud : (booking.total_aud != null ? booking.total_aud : 0);
+  const amount = `AUD $${parseFloat(totalAud).toFixed(2)}`;
   const notes = booking.notes || '';
 
   const user = process.env.GMAIL_USER;
@@ -79,14 +98,13 @@ module.exports = async function handler(req, res) {
   if (user && pass) {
     try {
       const transporter = nodemailer.createTransport({ service: 'gmail', auth: { user, pass } });
-
       const calSection = buildCalendarSection(confirmedData, siteUrl);
 
       if (clientEmail) {
         const clientHtml = `
 <!DOCTYPE html>
 <html lang="en">
-<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Booking Confirmed — The Glam by Ankita</title></head>
+<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Payment Confirmed — The Glam by Ankita</title></head>
 <body style="margin:0;padding:0;background:#f5ede8;font-family:'Helvetica Neue',Helvetica,Arial,sans-serif;">
   <table width="100%" cellpadding="0" cellspacing="0" style="background:#f5ede8;padding:32px 16px;">
     <tr><td align="center">
@@ -94,15 +112,14 @@ module.exports = async function handler(req, res) {
         <tr>
           <td style="background:linear-gradient(135deg,#c9a96e 0%,#9e7c4a 100%);padding:32px 36px 28px;">
             <p style="margin:0 0 6px;font-size:0.75rem;font-weight:700;color:rgba(255,255,255,0.7);text-transform:uppercase;letter-spacing:0.15em;">The Glam by Ankita</p>
-            <h1 style="margin:0;font-size:1.6rem;font-weight:700;color:#fff;line-height:1.2;">Booking Confirmed! ✅</h1>
-            <p style="margin:10px 0 0;font-size:0.88rem;color:rgba(255,255,255,0.9);">Your appointment is locked in — see you soon!</p>
+            <h1 style="margin:0;font-size:1.6rem;font-weight:700;color:#fff;line-height:1.2;">Payment Received! 🎉</h1>
+            <p style="margin:10px 0 0;font-size:0.88rem;color:rgba(255,255,255,0.9);">Your deposit is paid and your appointment is locked in!</p>
           </td>
         </tr>
         <tr>
           <td style="padding:28px 36px 0;">
             <p style="margin:0;font-size:1rem;color:#2c1810;line-height:1.7;">Hi <strong>${clientName}</strong>,</p>
-            <p style="margin:10px 0 0;font-size:0.95rem;color:#4a2e22;line-height:1.8;">Your booking is confirmed and Ankita is so excited to work with you! 💄</p>
-            <p style="margin:8px 0 0;font-size:0.95rem;color:#4a2e22;line-height:1.8;">You have chosen to pay the deposit of <strong style="color:#9e7c4a;">${amount}</strong> in cash at the appointment.</p>
+            <p style="margin:10px 0 0;font-size:0.95rem;color:#4a2e22;line-height:1.8;">Your deposit of <strong style="color:#9e7c4a;">${amount}</strong> has been received — your appointment is officially secured. Ankita can't wait to work with you! 💄</p>
           </td>
         </tr>
         <tr>
@@ -144,7 +161,7 @@ module.exports = async function handler(req, res) {
         await transporter.sendMail({
           from: `"The Glam by Ankita" <${user}>`,
           to: clientEmail,
-          subject: `✅ Booking Confirmed — The Glam by Ankita`,
+          subject: `🎉 Payment Confirmed — The Glam by Ankita`,
           html: clientHtml,
         });
       }
@@ -152,28 +169,25 @@ module.exports = async function handler(req, res) {
       await transporter.sendMail({
         from: `"The Glam by Ankita" <${user}>`,
         to: ownerEmail,
-        subject: `💵 Cash payment selected — ${clientName}`,
+        subject: `💳 Deposit paid — ${clientName} (${amount})`,
         html: `
           <div style="font-family:sans-serif;max-width:580px;margin:0 auto;background:#fdf8f4;border:1px solid #e8c4bc;border-radius:8px;overflow:hidden;">
             <div style="background:linear-gradient(135deg,#c9a96e,#9e7c4a);padding:22px 28px;">
-              <h2 style="margin:0;color:#fff;font-size:1.2rem;">💵 Cash Payment Selected</h2>
-              <p style="margin:4px 0 0;color:rgba(255,255,255,0.85);font-size:0.85rem;">The Glam by Ankita — Booking Notification</p>
+              <h2 style="margin:0;color:#fff;font-size:1.2rem;">✅ Deposit Received — ${amount}</h2>
+              <p style="margin:4px 0 0;color:rgba(255,255,255,0.85);font-size:0.85rem;">The Glam by Ankita — Payment Notification</p>
             </div>
             <div style="padding:24px 28px;">
-              <p style="margin:0 0 8px;font-size:0.95rem;color:#2c1810;"><strong>${clientName}</strong> has chosen to pay by <strong>cash</strong> at the appointment.</p>
-              <p style="margin:0 0 16px;font-size:0.95rem;color:#2c1810;">Amount to collect: <strong style="color:#9e7c4a;">${amount}</strong></p>
+              <p style="margin:0 0 8px;font-size:0.95rem;color:#2c1810;"><strong>${clientName}</strong> has paid their deposit by card.</p>
+              <p style="margin:0 0 16px;font-size:0.95rem;color:#2c1810;">Amount received: <strong style="color:#9e7c4a;">${amount}</strong></p>
               ${clientEmail ? `<p style="margin:0 0 16px;font-size:0.88rem;color:#6b3d2e;">Client email: ${clientEmail}</p>` : ''}
               <table style="width:100%;border-collapse:collapse;font-size:0.9rem;border:1px solid #fdeee8;border-radius:6px;overflow:hidden;">
                 ${detailRows}
               </table>
             </div>
-            <div style="padding:14px 28px;background:#fff9f0;border-top:1px solid #e8c4bc;">
-              <p style="margin:0;font-size:0.82rem;color:#9e7c4a;">Remember to collect the cash deposit at the appointment.</p>
-            </div>
           </div>`,
       });
     } catch (emailErr) {
-      console.error('select-cash email error:', emailErr);
+      console.error('confirm-payment email error:', emailErr);
     }
   }
 

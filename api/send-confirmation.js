@@ -216,6 +216,32 @@ module.exports = async function handler(req, res) {
       subject: `✨ Confirm Your Booking & Complete Payment — The Glam by Ankita`,
       html: clientHtml
     });
+
+    const ownerEmail = 'nishankn.ankita@gmail.com';
+    const ownerDetailRows = Object.entries(confirmed_data)
+      .filter(([, v]) => v)
+      .map(([k, v]) => `<tr><td style="padding:6px 14px;font-size:0.82rem;font-weight:700;color:#9a7060;width:38%;background:#fdf0ee;border-bottom:1px solid #fdeee8;">${k}</td><td style="padding:6px 14px;font-size:0.9rem;color:#2c1810;border-bottom:1px solid #fdeee8;">${v}</td></tr>`)
+      .join('');
+
+    await transporter.sendMail({
+      from: `"The Glam by Ankita" <${user}>`,
+      to: ownerEmail,
+      subject: `📨 Confirmation sent to ${resolvedClientName} — deposit AUD $${parseFloat(total_aud).toFixed(2)}`,
+      html: `
+        <div style="font-family:sans-serif;max-width:580px;margin:0 auto;background:#fdf8f4;border:1px solid #e8c4bc;border-radius:8px;overflow:hidden;">
+          <div style="background:linear-gradient(135deg,#c9a96e,#9e7c4a);padding:22px 28px;">
+            <h2 style="margin:0;color:#fff;font-size:1.1rem;">📨 Confirmation Sent to ${resolvedClientName}</h2>
+            <p style="margin:4px 0 0;color:rgba(255,255,255,0.85);font-size:0.85rem;">They have been emailed their payment link.</p>
+          </div>
+          <div style="padding:22px 28px;">
+            <p style="margin:0 0 8px;font-size:0.9rem;color:#2c1810;">Client: <strong>${resolvedClientName}</strong> &lt;${resolvedClientEmail}&gt;</p>
+            <p style="margin:0 0 16px;font-size:0.9rem;color:#2c1810;">Deposit requested: <strong style="color:#9e7c4a;">AUD $${parseFloat(total_aud).toFixed(2)}</strong></p>
+            <table style="width:100%;border-collapse:collapse;font-size:0.9rem;border:1px solid #fdeee8;border-radius:6px;overflow:hidden;">
+              ${ownerDetailRows}
+            </table>
+          </div>
+        </div>`
+    });
   }
 
   res.json({ ok: true });
