@@ -586,11 +586,25 @@
     .sp-success-icon { font-size: 3rem; margin-bottom: 12px; }
     .sp-loading { text-align: center; padding: 60px 20px; color: var(--text-light); }
     .sp-error-msg { background: #fff0f0; border: 1px solid #f5c0c0; color: #c62828; padding: 10px 14px; border-radius: 4px; font-size: 0.85rem; margin-bottom: 12px; }
+    #scroll-top-btn {
+      position: fixed; bottom: 1.4rem; right: 1.2rem;
+      width: 36px; height: 36px; border-radius: 50%;
+      background: var(--gold); color: #fff; border: none; cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.18);
+      opacity: 0; visibility: hidden; transform: translateY(8px);
+      transition: opacity 0.25s, transform 0.25s, visibility 0.25s;
+      z-index: 900; font-size: 0.95rem; line-height: 1;
+    }
+    #scroll-top-btn.visible { opacity: 0.85; visibility: visible; transform: translateY(0); }
+    #scroll-top-btn:hover { opacity: 1; transform: translateY(-2px); }
+    #scroll-top-btn:focus-visible { outline: 2px solid var(--gold-dark); outline-offset: 3px; }
   </style>
 </head>
 <body>
 
 <div id="progress-bar"></div>
+<button id="scroll-top-btn" aria-label="Scroll to top" onclick="window.scrollTo({top:0,behavior:'smooth'})">↑</button>
 
 <!-- TOAST -->
 <div class="toast" id="toast"></div>
@@ -1650,6 +1664,8 @@
   window.addEventListener('scroll', () => {
     const nav = document.getElementById('sitenav');
     nav.classList.toggle('scrolled', window.scrollY > 20);
+    const scrollBtn = document.getElementById('scroll-top-btn');
+    if (scrollBtn) scrollBtn.classList.toggle('visible', window.scrollY > 300);
     const tabs = document.getElementById('sitenav-tabs');
     if (tabs && window.innerWidth > 600) {
       tabs.classList.add('tabs-hidden');
