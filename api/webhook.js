@@ -2,6 +2,7 @@ const nodemailer = require('nodemailer');
 const { getPool } = require('./db');
 
 const SITE_URL = 'https://www.theglambyankita.com';
+const OWNER_EMAIL = 'nishankn.ankita@gmail.com';
 
 function buildCalendarLinks(meta) {
   const date = meta.date || '';
@@ -26,7 +27,58 @@ function buildCalendarLinks(meta) {
   const outlook = `https://outlook.live.com/calendar/0/deeplink/compose?subject=${encodeURIComponent(title)}&startdt=${date}T${pad(hour)}:${pad(minute)}:00&enddt=${date}T${pad(endH)}:${pad(minute)}:00&body=${encodeURIComponent(desc)}&location=${encodeURIComponent(loc)}`;
   const ics = `${SITE_URL}/api/calendar?${new URLSearchParams({ title, date, time: time || '09:00', location: loc, description: desc, uid: `booking-${Date.now()}@theglambyankita.com` })}`;
 
-  return { gCal, outlook, ics, title, service, loc, date, time };
+  return { gCal, outlook, ics, title, service, loc, date, time, desc };
+}
+
+function buildIcsAttachment(meta) {
+  const date = meta.date || '';
+  const time = meta.time || '09:00';
+  if (!date) return null;
+
+  const [year, month, day] = date.split('-').map(Number);
+  const [hour, minute] = (time).split(':').map(Number);
+  const pad = n => String(n || 0).padStart(2, '0');
+
+  const startStr = `${year}${pad(month)}${pad(day)}T${pad(hour)}${pad(minute)}00`;
+  const endTotalMins = hour * 60 + minute + 120;
+  const endH = Math.floor(endTotalMins / 60) % 24;
+  const endM = endTotalMins % 60;
+  const dayOverflow = endTotalMins >= 24 * 60 ? 1 : 0;
+  const endDay = new Date(year, month - 1, day + dayOverflow);
+  const endStr = `${endDay.getFullYear()}${pad(endDay.getMonth() + 1)}${pad(endDay.getDate())}T${pad(endH)}${pad(endM)}00`;
+
+  const now = new Date().toISOString().replace(/[-:.]/g, '').slice(0, 15) + 'Z';
+  const uid = `booking-${Date.now()}@theglambyankita.com`;
+  const service = meta.service || 'Makeup Appointment';
+  const loc = meta.location || '';
+  const numPeople = meta.num_people || '';
+  const title = `${service} — The Glam by Ankita`;
+  const descRaw = `Appointment with Ankita from The Glam by Ankita.\nService: ${service}${numPeople ? `\nNumber of people: ${numPeople}` : ''}${loc ? `\nLocation: ${loc}` : ''}`;
+  const desc = descRaw.replace(/\n/g, '\\n');
+
+  const lines = [
+    'BEGIN:VCALENDAR',
+    'VERSION:2.0',
+    'PRODID:-//The Glam by Ankita//Bookings//EN',
+    'CALSCALE:GREGORIAN',
+    'METHOD:PUBLISH',
+    'BEGIN:VEVENT',
+    `UID:${uid}`,
+    `DTSTAMP:${now}`,
+    `DTSTART:${startStr}`,
+    `DTEND:${endStr}`,
+    `SUMMARY:${title}`,
+    loc ? `LOCATION:${loc}` : null,
+    `DESCRIPTION:${desc}`,
+    'END:VEVENT',
+    'END:VCALENDAR',
+  ].filter(Boolean).join('\r\n');
+
+  return {
+    filename: 'glam-booking.ics',
+    content: Buffer.from(lines, 'utf8'),
+    contentType: 'text/calendar; method=PUBLISH; charset=utf-8',
+  };
 }
 
 function calendarButtonsHtml(links) {
@@ -58,6 +110,23 @@ function buildDetailRows(meta) {
     .join('');
 }
 
+function receiptHtml(receiptUrl) {
+  if (!receiptUrl) return '';
+  return `
+    <tr>
+      <td style="padding:16px 32px 0;">
+        <table width="100%" cellpadding="0" cellspacing="0" style="background:#f0fff4;border:1px solid #c8e6c9;border-radius:6px;">
+          <tr>
+            <td style="padding:14px 20px;text-align:center;">
+              <p style="margin:0 0 8px;font-size:0.75rem;font-weight:700;color:#2e7d32;text-transform:uppercase;letter-spacing:0.1em;">🧾 Payment Receipt</p>
+              <a href="${receiptUrl}" target="_blank" style="display:inline-block;background:#2e7d32;color:#fff;text-decoration:none;padding:9px 22px;border-radius:4px;font-size:0.85rem;font-weight:700;">View Stripe Invoice / Receipt</a>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>`;
+}
+
 module.exports = async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).end();
 
@@ -85,6 +154,18 @@ module.exports = async function handler(req, res) {
     const amountAud = (intent.amount / 100).toFixed(2);
     const clientName = meta.client_name || 'Client';
     const clientEmail = meta.client_email || intent.receipt_email || '';
+
+    // Fetch receipt URL from the Stripe charge
+    let receiptUrl = null;
+    try {
+      const chargeId = intent.latest_charge;
+      if (chargeId) {
+        const charge = await stripe.charges.retrieve(chargeId);
+        receiptUrl = charge.receipt_url || null;
+      }
+    } catch (e) {
+      console.error('Failed to fetch charge receipt URL:', e.message);
+    }
 
     // Save booking to DB
     try {
@@ -115,12 +196,18 @@ module.exports = async function handler(req, res) {
         const calLinks = buildCalendarLinks(meta);
         const calButtons = calendarButtonsHtml(calLinks);
         const detailRows = buildDetailRows(meta);
+        const icsAttachment = buildIcsAttachment(meta);
+        const receiptSection = receiptHtml(receiptUrl);
+        const receiptLine = receiptUrl
+          ? `<p style="margin:8px 0 0;font-size:0.88rem;color:#4a2e22;">Receipt: <a href="${receiptUrl}" style="color:#c9a96e;">${receiptUrl}</a></p>`
+          : '';
 
-        // Email to Ankita
+        // ── Email to Ankita ────────────────────────────────────────────────
         await transporter.sendMail({
           from: `"The Glam by Ankita" <${user}>`,
-          to: user,
+          to: OWNER_EMAIL,
           subject: `💰 Payment received — ${clientName} paid AUD $${amountAud}`,
+          attachments: icsAttachment ? [icsAttachment] : [],
           html: `
 <!DOCTYPE html>
 <html lang="en">
@@ -144,11 +231,13 @@ module.exports = async function handler(req, res) {
                   <p style="margin:0 0 4px;font-size:0.78rem;font-weight:700;color:#2e7d32;text-transform:uppercase;letter-spacing:0.1em;">Amount Received</p>
                   <p style="margin:0;font-size:2.2rem;font-weight:700;color:#1b5e20;">AUD $${amountAud}</p>
                   ${clientEmail ? `<p style="margin:6px 0 0;font-size:0.85rem;color:#388e3c;">From: ${clientEmail}</p>` : ''}
+                  ${receiptLine}
                 </td>
               </tr>
             </table>
           </td>
         </tr>
+        ${receiptSection}
         ${detailRows ? `
         <tr>
           <td style="padding:20px 32px 0;">
@@ -181,13 +270,29 @@ module.exports = async function handler(req, res) {
 </html>`
         });
 
-        // Confirmation email to client
+        // ── Confirmation email to client ───────────────────────────────────
         if (clientEmail) {
           const firstName = clientName.split(' ')[0] || clientName;
+          const clientReceiptSection = receiptUrl ? `
+        <tr>
+          <td style="padding:16px 36px 0;">
+            <table width="100%" cellpadding="0" cellspacing="0" style="background:#f0fff4;border:1px solid #c8e6c9;border-radius:6px;">
+              <tr>
+                <td style="padding:14px 20px;text-align:center;">
+                  <p style="margin:0 0 8px;font-size:0.75rem;font-weight:700;color:#2e7d32;text-transform:uppercase;letter-spacing:0.1em;">🧾 Your Payment Receipt</p>
+                  <a href="${receiptUrl}" target="_blank" style="display:inline-block;background:#2e7d32;color:#fff;text-decoration:none;padding:9px 22px;border-radius:4px;font-size:0.85rem;font-weight:700;">View Receipt / Invoice</a>
+                  <p style="margin:8px 0 0;font-size:0.75rem;color:#6b3d2e;">Issued by Stripe · Secure payment</p>
+                </td>
+              </tr>
+            </table>
+          </td>
+        </tr>` : '';
+
           await transporter.sendMail({
             from: `"The Glam by Ankita" <${user}>`,
             to: clientEmail,
             subject: `🎉 You're all booked! — The Glam by Ankita`,
+            attachments: icsAttachment ? [icsAttachment] : [],
             html: `
 <!DOCTYPE html>
 <html lang="en">
@@ -230,9 +335,16 @@ module.exports = async function handler(req, res) {
             <table width="100%" cellpadding="0" cellspacing="0" style="border:1px solid #fdeee8;border-radius:6px;overflow:hidden;">${detailRows}</table>
           </td>
         </tr>` : ''}
+        ${clientReceiptSection}
         ${calButtons ? `<tr><td style="padding:20px 36px 0;">${calButtons}</td></tr>` : ''}
         <tr>
-          <td style="padding:28px 36px 0;">
+          <td style="padding:20px 36px 0;">
+            <p style="margin:0 0 8px;font-size:0.75rem;font-weight:700;color:#4a6fa5;text-transform:uppercase;letter-spacing:0.1em;">📎 Calendar file attached</p>
+            <p style="margin:0;font-size:0.85rem;color:#4a2e22;line-height:1.6;">A <strong>glam-booking.ics</strong> file is attached to this email — open it to instantly save your appointment to any calendar app.</p>
+          </td>
+        </tr>
+        <tr>
+          <td style="padding:24px 36px 0;">
             <table width="100%" cellpadding="0" cellspacing="0" style="background:#fff8f0;border-left:3px solid #c9a96e;border-radius:0 6px 6px 0;">
               <tr>
                 <td style="padding:14px 18px;">
