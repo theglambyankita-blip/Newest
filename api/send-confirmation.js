@@ -90,7 +90,6 @@ module.exports = async function handler(req, res) {
 
     const firstName = confirmed_data['First Name'] || resolvedClientName;
     const amountDisplay = total_aud ? `AUD $${parseFloat(total_aud).toFixed(2)}` : null;
-    const calendarHtml = buildCalendarSection(confirmed_data, Date.now().toString(36), siteUrl);
 
     const detailRows = Object.entries(confirmed_data)
       .filter(([, v]) => v)
@@ -192,8 +191,6 @@ module.exports = async function handler(req, res) {
             <p style="margin:4px 0 0;font-size:0.78rem;"><a href="${clientLink}" style="color:#c9a96e;word-break:break-all;">${clientLink}</a></p>
           </td>
         </tr>
-
-        ${calendarHtml}
 
         <tr>
           <td style="padding:28px 36px 32px;">

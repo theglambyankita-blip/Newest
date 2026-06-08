@@ -1444,7 +1444,7 @@
   async function loadBookingPage(token) {
     _bookingToken = token;
     try {
-      const res = await fetch('/api/get-booking?token=' + token);
+      const res = await fetch('/api/get-booking?token=' + encodeURIComponent(token));
       if (!res.ok) {
         const body = await res.json().catch(() => ({}));
         if (res.status === 503) throw new Error('try-again');
