@@ -97,11 +97,6 @@ app.get("/r", (req, res) => {
   }
 });
 
-// Redirect /p?b=TOKEN → serve via frontend (already handled there)
-app.get("/p", (req, res) => {
-  res.redirect(302, `/?page=booking&b=${req.query.b || ""}`);
-});
-
 app.use("/api", router);
 
 export default app;

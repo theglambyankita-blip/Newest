@@ -200,7 +200,7 @@ async function sendIt() {
     'Service': document.getElementById('f-service').value,
     'Date': document.getElementById('f-date').value,
     'Time': document.getElementById('f-time').value,
-    'People': document.getElementById('f-people').value,
+    'Number of People': document.getElementById('f-people').value,
     'Location': document.getElementById('f-location').value,
     'Client Name': clientName,
     'Phone': document.getElementById('f-phone').value,
@@ -323,10 +323,34 @@ router.post("/send-email", upload.array("files", 5), async (req, res) => {
     ? `New Booking Request from ${clientName}`
     : `New Collab Enquiry from ${clientName}`;
 
+  const emailLabelMap: Record<string, string> = {
+    first_name:     "First Name",
+    last_name:      "Last Name",
+    client_email:   "Email",
+    phone:          "Phone",
+    contact_method: "Preferred Contact",
+    preferred_date: "Preferred Date",
+    num_people:     "Number of People",
+    services:       "Services",
+    location:       "Suburb / Location",
+    postcode:       "Postcode",
+    referral:       "How They Found You",
+    vision:         "Look / Vision",
+    name:           "Name",
+    brand:          "Brand / Company",
+    collab_email:   "Email",
+    instagram:      "Instagram Handle",
+    collab_type:    "Collaboration Type",
+    project_desc:   "Project Description",
+  };
+  const skipEmailFields = new Set(["owner_email", "from_email", "_client_email", "_client_name"]);
+  const toTitleCase = (k: string) =>
+    k.split("_").map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(" ");
+
   const rows = Object.entries(fields)
-    .filter(([k]) => !["owner_email", "from_email"].includes(k))
+    .filter(([k, v]) => !skipEmailFields.has(k) && v !== undefined && v !== "")
     .map(([k, v]) => `<tr>
-      <td style="padding:6px 12px;font-weight:600;color:#6b3d2e;white-space:nowrap;background:#fdf0ee;">${k.replace(/_/g, " ")}</td>
+      <td style="padding:6px 12px;font-weight:600;color:#6b3d2e;white-space:nowrap;background:#fdf0ee;">${emailLabelMap[k] || toTitleCase(k)}</td>
       <td style="padding:6px 12px;color:#2c1810;">${v || "—"}</td>
     </tr>`).join("");
 
