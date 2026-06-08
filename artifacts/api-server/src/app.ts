@@ -6,6 +6,8 @@ import Stripe from "stripe";
 import router from "./routes";
 import { logger } from "./lib/logger";
 import { buildIcs } from "./lib/ics";
+import { initAdminToken } from "./routes/admin";
+import { db, bookings } from "@workspace/db";
 
 const SITE_URL = "https://www.theglambyankita.com";
 
@@ -53,6 +55,20 @@ app.post("/api/webhook", express.raw({ type: "application/json" }), async (req, 
     const bookingLocation = pi.metadata?.booking_location || "";
     const bookingPeople   = pi.metadata?.booking_people   || "";
     const bookingToken    = pi.metadata?.booking_token    || "";
+
+    db.insert(bookings).values({
+      clientName,
+      clientEmail,
+      service:              bookingService  || null,
+      bookingDate:          bookingDate     || null,
+      bookingTime:          bookingTime     || null,
+      location:             bookingLocation || null,
+      numPeople:            bookingPeople   || null,
+      totalAud:             String(pi.amount / 100),
+      paymentMethod:        "card",
+      status:               "confirmed",
+      stripePaymentIntentId: pi.id,
+    }).catch((e) => console.error("DB insert booking error:", e));
 
     const gmailUser = process.env["GMAIL_USER"];
     const gmailPass = process.env["GMAIL_APP_PASSWORD"];
@@ -191,5 +207,7 @@ app.get("/r", (req, res) => {
 });
 
 app.use("/api", router);
+
+initAdminToken().catch((e) => console.error("initAdminToken failed:", e));
 
 export default app;

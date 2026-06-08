@@ -1,20 +1,28 @@
-// Export your models here. Add one export per file
-// export * from "./posts";
-//
-// Each model/table should ideally be split into different files.
-// Each model/table should define a Drizzle table, insert schema, and types:
-//
-//   import { pgTable, text, serial } from "drizzle-orm/pg-core";
-//   import { createInsertSchema } from "drizzle-zod";
-//   import { z } from "zod/v4";
-//
-//   export const postsTable = pgTable("posts", {
-//     id: serial("id").primaryKey(),
-//     title: text("title").notNull(),
-//   });
-//
-//   export const insertPostSchema = createInsertSchema(postsTable).omit({ id: true });
-//   export type InsertPost = z.infer<typeof insertPostSchema>;
-//   export type Post = typeof postsTable.$inferSelect;
+import { pgTable, serial, text, timestamp, numeric } from "drizzle-orm/pg-core";
 
-export {}
+export const adminTokens = pgTable("admin_tokens", {
+  id: serial("id").primaryKey(),
+  token: text("token").notNull().unique(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  expiresAt: timestamp("expires_at").notNull(),
+});
+
+export const bookings = pgTable("bookings", {
+  id: serial("id").primaryKey(),
+  clientName: text("client_name"),
+  clientEmail: text("client_email"),
+  service: text("service"),
+  bookingDate: text("booking_date"),
+  bookingTime: text("booking_time"),
+  location: text("location"),
+  numPeople: text("num_people"),
+  totalAud: numeric("total_aud"),
+  paymentMethod: text("payment_method"),
+  status: text("status").default("confirmed"),
+  stripePaymentIntentId: text("stripe_payment_intent_id"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+export type AdminToken = typeof adminTokens.$inferSelect;
+export type Booking = typeof bookings.$inferSelect;
+export type InsertBooking = typeof bookings.$inferInsert;
