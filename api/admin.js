@@ -99,9 +99,22 @@ module.exports = async function handler(req, res) {
     console.error('ensureTables error:', e);
   }
 
-  // ── POST: regenerate token ──────────────────────────────────────
+  // ── POST: regenerate token (works even with expired token, or no token) ─
   if (req.method === 'POST') {
     const token = req.query.token;
+    const action = req.query.action;
+
+    // Allow force-request with no/expired token via action=request
+    if (action === 'request') {
+      try {
+        await generateNewToken(db);
+        return res.json({ ok: true });
+      } catch (e) {
+        console.error('Request token error:', e);
+        return res.status(500).json({ error: 'Failed to send link.' });
+      }
+    }
+
     const valid = await validateToken(db, token).catch(() => false);
     if (!valid) return res.status(403).json({ error: 'Unauthorized' });
 
@@ -118,38 +131,41 @@ module.exports = async function handler(req, res) {
   const token = req.query.token;
   const valid = await validateToken(db, token).catch(() => false);
 
-  // If no token at all, try to init one
-  if (!token) {
-    try {
-      const { rows } = await db.query(
-        'SELECT * FROM admin_tokens WHERE expires_at > NOW() LIMIT 1'
-      );
-      if (rows.length === 0) {
-        await generateNewToken(db);
-        return res.setHeader('Content-Type', 'text/html; charset=utf-8').status(200).send(`
-          <!DOCTYPE html><html><head><meta charset="UTF-8"><title>Admin — The Glam by Ankita</title>
-          <style>body{font-family:sans-serif;background:#fdf8f4;display:flex;align-items:center;justify-content:center;min-height:100vh;margin:0;}
-          .box{text-align:center;padding:40px;background:#fff;border:1px solid #e8c4bc;border-radius:10px;max-width:440px;}
-          h2{color:#6b3d2e;font-family:Georgia,serif;margin-bottom:12px;}p{color:#4a2e22;font-size:0.9rem;line-height:1.6;}</style>
-          </head><body><div class="box"><h2>✦ Admin Link Sent</h2>
-          <p>Your admin dashboard link has been emailed to <strong>${ADMIN_EMAIL}</strong>.<br>Check your inbox to access the dashboard.</p>
-          </div></body></html>
-        `);
-      }
-    } catch (e) {
-      console.error('Init token error:', e);
-    }
-  }
-
   if (!valid) {
     res.setHeader('Content-Type', 'text/html; charset=utf-8');
-    return res.status(403).send(`
-      <!DOCTYPE html><html><head><meta charset="UTF-8"><title>Access Denied</title>
+    return res.status(200).send(`
+      <!DOCTYPE html><html><head><meta charset="UTF-8"><title>Admin — The Glam by Ankita</title>
       <style>body{font-family:sans-serif;background:#fdf8f4;display:flex;align-items:center;justify-content:center;min-height:100vh;margin:0;}
-      .box{text-align:center;padding:40px;background:#fff;border:1px solid #e8c4bc;border-radius:10px;max-width:400px;}
-      h2{color:#6b3d2e;font-family:Georgia,serif;}p{color:#4a2e22;font-size:0.9rem;}</style>
-      </head><body><div class="box"><h2>✦ Access Denied</h2>
-      <p>This link is invalid or has expired.<br>Please request a new admin link.</p></div></body></html>
+      .box{text-align:center;padding:40px;background:#fff;border:1px solid #e8c4bc;border-radius:10px;max-width:440px;}
+      h2{color:#6b3d2e;font-family:Georgia,serif;margin-bottom:12px;}
+      p{color:#4a2e22;font-size:0.9rem;line-height:1.6;margin-bottom:20px;}
+      .btn{display:inline-block;padding:13px 28px;background:linear-gradient(135deg,#c9a96e,#9e7c4a);color:#fff;border:none;border-radius:8px;font-size:0.95rem;font-weight:700;font-family:Georgia,serif;cursor:pointer;}
+      .btn:disabled{opacity:0.5;cursor:not-allowed;}
+      .note{font-size:0.82rem;color:#9e7c4a;margin-top:14px;}
+      </style>
+      </head><body><div class="box">
+      <h2>✦ Admin Access</h2>
+      <p>This link has expired or is invalid.<br>Click below to send a fresh link to <strong>${ADMIN_EMAIL}</strong>.</p>
+      <button class="btn" id="btn" onclick="sendLink()">Send me a new link</button>
+      <p class="note" id="note"></p>
+      <script>
+      async function sendLink() {
+        const btn = document.getElementById('btn');
+        const note = document.getElementById('note');
+        btn.disabled = true; btn.textContent = 'Sending…';
+        try {
+          const res = await fetch('/api/admin?action=request', { method: 'POST' });
+          const j = await res.json();
+          if (!res.ok) throw new Error(j.error);
+          btn.textContent = '✅ Link sent!';
+          note.textContent = 'Check your inbox at ${ADMIN_EMAIL}';
+        } catch(e) {
+          btn.disabled = false; btn.textContent = 'Send me a new link';
+          note.textContent = '❌ Failed. Please try again.';
+        }
+      }
+      </script>
+      </div></body></html>
     `);
   }
 
