@@ -1278,7 +1278,8 @@
 
   function showSpecialPage(pageId, token) {
     document.querySelectorAll('.page').forEach(p => { p.classList.remove('active'); p.style.display = 'none'; });
-    document.getElementById('sitenav').style.display = 'none';
+    const siteNav = document.getElementById('sitenav');
+    if (siteNav) siteNav.style.display = 'none';
     const el = document.getElementById('page-' + pageId);
     if (el) { el.style.display = 'block'; el.classList.add('active'); }
     window.scrollTo({top:0});
@@ -1291,6 +1292,11 @@
     const pageId = (e.state && e.state.page) || 'home';
     showPage(pageId, null, false);
   });
+
+  // ── State variables (declared before IIFE to avoid Temporal Dead Zone) ──
+  let _reviewToken = null;
+  let _reviewBookingData = null;
+  let _stripe = null, _stripeElements = null, _bookingToken = null;
 
   // Navigate to correct page on direct URL visit
   (function () {
@@ -1312,8 +1318,6 @@
   })();
 
   // ── REVIEW PAGE ──────────────────────────────────────────────
-  let _reviewToken = null;
-  let _reviewBookingData = null;
 
   function _b64Decode(token) {
     const b64 = token.replace(/-/g, '+').replace(/_/g, '/');
@@ -1414,13 +1418,19 @@
     btn.innerHTML = '<span class="sp-spinner"></span>Sending…';
 
     try {
+      const clientFirstName = document.getElementById('rv-first-name').value.trim();
+      const clientLastName = document.getElementById('rv-last-name').value.trim();
+      const clientEmail = document.getElementById('rv-email').value.trim();
+      const clientName = [clientFirstName, clientLastName].filter(Boolean).join(' ')
+        || (_reviewBookingData && (_reviewBookingData._client_name || _reviewBookingData.first_name)) || '';
+      const resolvedEmail = clientEmail
+        || (_reviewBookingData && (_reviewBookingData._client_email || _reviewBookingData.client_email)) || '';
       const res = await fetch('/api/send-confirmation', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          booking_data: _reviewBookingData,
-          client_name: (_reviewBookingData && (_reviewBookingData._client_name || _reviewBookingData.first_name)) || '',
-          client_email: (_reviewBookingData && (_reviewBookingData._client_email || _reviewBookingData.client_email)) || '',
+          client_name: clientName,
+          client_email: resolvedEmail,
           confirmed_data,
           notes: document.getElementById('rv-notes').value,
           total_aud: total
@@ -1439,14 +1449,20 @@
   }
 
   // ── CLIENT BOOKING PAGE ───────────────────────────────────────
-  let _stripe = null, _stripeElements = null, _bookingToken = null;
 
   function _decodeBookingToken(token) {
     // Token format: base64url(payload).signature — strip signature first
     const payload = token.includes('.') ? token.substring(0, token.lastIndexOf('.')) : token;
     const b64 = payload.replace(/-/g, '+').replace(/_/g, '/');
     const pad = (4 - b64.length % 4) % 4;
-    const raw = JSON.parse(atob(b64 + '='.repeat(pad)));
+    const padded = b64 + '='.repeat(pad);
+    let raw;
+    try {
+      const bytes = Uint8Array.from(atob(padded), c => c.charCodeAt(0));
+      raw = JSON.parse(new TextDecoder().decode(bytes));
+    } catch (_) {
+      raw = JSON.parse(atob(padded));
+    }
     // Normalise camelCase → snake_case so renderBookingDetails works
     return {
       confirmed_data: raw.confirmedData || raw.confirmed_data || {},
@@ -1460,57 +1476,78 @@
 
   async function loadBookingPage(token) {
     _bookingToken = token;
+    const loadingEl = document.getElementById('booking-loading');
     let data;
     try {
       data = _decodeBookingToken(token);
     } catch (e) {
-      document.getElementById('booking-loading').textContent =
+      console.error('Token decode error:', e);
+      if (loadingEl) loadingEl.textContent =
         'This booking link appears to be invalid. Please use the exact link from your email or contact Ankita.';
       return;
     }
 
-    if (!data.total_aud || parseFloat(data.total_aud) <= 0) {
-      document.getElementById('booking-loading').textContent =
-        'This booking link does not have a valid deposit amount. Please contact Ankita.';
-      return;
-    }
-
-    renderBookingDetails(data);
-
-    document.getElementById('deposit-display').textContent =
-      'AUD $' + parseFloat(data.total_aud).toFixed(2);
-
-    if (data.notes) {
-      const nw = document.getElementById('booking-notes-wrap');
-      nw.textContent = data.notes;
-      nw.style.display = 'block';
-    }
-
-    document.getElementById('booking-loading').style.display = 'none';
-    document.getElementById('booking-content').style.display = 'block';
-
-    // Try to load Stripe — if unavailable just show fallback silently
     try {
-      const cfg = await fetch('/api/config').then(r => r.json());
-      if (cfg.stripePublishableKey && data.total_aud) {
-        initStripe(cfg.stripePublishableKey, token);
-      } else {
+      if (!data.total_aud || parseFloat(data.total_aud) <= 0) {
+        if (loadingEl) loadingEl.textContent =
+          'This booking link does not have a valid deposit amount. Please contact Ankita.';
+        return;
+      }
+
+      renderBookingDetails(data);
+
+      const depositEl = document.getElementById('deposit-display');
+      if (depositEl) depositEl.textContent = 'AUD $' + parseFloat(data.total_aud).toFixed(2);
+
+      if (data.notes) {
+        const nw = document.getElementById('booking-notes-wrap');
+        if (nw) { nw.textContent = data.notes; nw.style.display = 'block'; }
+      }
+
+      if (loadingEl) loadingEl.style.display = 'none';
+      const contentEl = document.getElementById('booking-content');
+      if (contentEl) contentEl.style.display = 'block';
+
+      // Try to load Stripe — if unavailable just show fallback silently
+      try {
+        const cfg = await fetch('/api/config').then(r => r.json());
+        if (cfg.stripePublishableKey && data.total_aud) {
+          initStripe(cfg.stripePublishableKey, token);
+        } else {
+          document.getElementById('payment-ready').style.display = 'none';
+          document.getElementById('payment-no-stripe').style.display = 'block';
+        }
+      } catch {
         document.getElementById('payment-ready').style.display = 'none';
         document.getElementById('payment-no-stripe').style.display = 'block';
       }
-    } catch {
-      document.getElementById('payment-ready').style.display = 'none';
-      document.getElementById('payment-no-stripe').style.display = 'block';
+    } catch (e) {
+      console.error('loadBookingPage error:', e);
+      if (loadingEl) loadingEl.textContent =
+        'Something went wrong loading your booking. Please contact Ankita directly at theglambyankita@gmail.com';
     }
   }
 
   function renderBookingDetails(data) {
     const d = data.confirmed_data || {};
     const list = document.getElementById('booking-details-list');
-    list.innerHTML = Object.entries(d)
+    if (!list) return;
+    list.innerHTML = '';
+    Object.entries(d)
       .filter(([, v]) => v)
-      .map(([k, v]) => `<div class="sp-detail-row"><span class="sp-key">${k}</span><span class="sp-val">${v}</span></div>`)
-      .join('');
+      .forEach(([k, v]) => {
+        const row = document.createElement('div');
+        row.className = 'sp-detail-row';
+        const keyEl = document.createElement('span');
+        keyEl.className = 'sp-key';
+        keyEl.textContent = k;
+        const valEl = document.createElement('span');
+        valEl.className = 'sp-val';
+        valEl.textContent = String(v);
+        row.appendChild(keyEl);
+        row.appendChild(valEl);
+        list.appendChild(row);
+      });
   }
 
   async function initStripe(pubKey, token) {
@@ -1543,10 +1580,20 @@
     btn.disabled = true;
     btn.textContent = 'Confirming…';
     try {
+      let body = { token: _bookingToken };
+      try {
+        const d = _decodeBookingToken(_bookingToken);
+        body = {
+          client_name: d.client_name,
+          client_email: d.client_email,
+          total_aud: d.total_aud,
+          confirmed_data: d.confirmed_data
+        };
+      } catch (_) {}
       await fetch('/api/select-cash', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ token: _bookingToken })
+        body: JSON.stringify(body)
       });
     } catch (e) { /* best effort */ }
     btn.style.display = 'none';

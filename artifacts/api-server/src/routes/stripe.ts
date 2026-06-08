@@ -4,7 +4,9 @@ import Stripe from "stripe";
 const router = Router();
 
 function fromUrlSafeBase64(token: string): Record<string, unknown> {
-  const b64 = token.replace(/-/g, "+").replace(/_/g, "/");
+  // Strip JWT-like signature (payload.signature format) if present
+  const payload = token.includes(".") ? token.substring(0, token.lastIndexOf(".")) : token;
+  const b64 = payload.replace(/-/g, "+").replace(/_/g, "/");
   const pad = (4 - b64.length % 4) % 4;
   return JSON.parse(Buffer.from(b64 + "=".repeat(pad), "base64").toString("utf8"));
 }
