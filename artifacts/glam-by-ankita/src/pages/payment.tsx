@@ -118,6 +118,18 @@ type Screen =
 
 type Booking = ReturnType<typeof normalise>;
 
+type SavedDetails = { name: string; email: string; phone: string };
+
+function loadSavedDetails(): SavedDetails | null {
+  try {
+    const raw = localStorage.getItem("glamSavedDetails");
+    if (!raw) return null;
+    const d = JSON.parse(raw) as SavedDetails;
+    if (!d.name && !d.email && !d.phone) return null;
+    return d;
+  } catch { return null; }
+}
+
 export default function PaymentPage() {
   const [screen, setScreen] = useState<Screen>("loading");
   const [errorMsg, setErrorMsg] = useState("");
@@ -129,6 +141,15 @@ export default function PaymentPage() {
   const [paying, setPaying] = useState(false);
   const [cashLoading, setCashLoading] = useState(false);
   const stripeLoaded = useRef(false);
+
+  const [savedDetails, setSavedDetails] = useState<SavedDetails | null>(null);
+  const [showSaveForm, setShowSaveForm] = useState(false);
+  const [saveForm, setSaveForm] = useState({ name: "", email: "", phone: "" });
+  const [detailsSaved, setDetailsSaved] = useState(false);
+
+  useEffect(() => {
+    setSavedDetails(loadSavedDetails());
+  }, []);
 
   useEffect(() => {
     try {
@@ -163,6 +184,25 @@ export default function PaymentPage() {
       setScreen("error");
     }
   }, []);
+
+  function handleSaveDetails() {
+    const details: SavedDetails = {
+      name: saveForm.name.trim(),
+      email: saveForm.email.trim(),
+      phone: saveForm.phone.trim(),
+    };
+    if (!details.name && !details.email && !details.phone) return;
+    localStorage.setItem("glamSavedDetails", JSON.stringify(details));
+    setSavedDetails(details);
+    setShowSaveForm(false);
+    setDetailsSaved(true);
+  }
+
+  function handleClearDetails() {
+    localStorage.removeItem("glamSavedDetails");
+    setSavedDetails(null);
+    setDetailsSaved(false);
+  }
 
   async function initStripe() {
     if (stripeLoaded.current) return;
@@ -199,7 +239,9 @@ export default function PaymentPage() {
         },
       });
 
-      const payEl = els.create("payment");
+      const payEl = els.create("payment", {
+        wallets: { applePay: "never", googlePay: "never" },
+      });
       setStripeObj(stripe);
       setElements(els);
       setScreen("card-ready");
@@ -400,6 +442,21 @@ export default function PaymentPage() {
       </div>
 
       <div style={{ maxWidth: 560, margin: "0 auto", padding: "24px 16px 60px" }}>
+
+        {/* ── Fast checkout banner ── */}
+        {savedDetails && screen !== "loading" && (
+          <div style={{ background: "#fff", border: "1.5px solid #c9a96e", borderRadius: 10, padding: "14px 18px", marginBottom: 18, display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 10 }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+              <div style={{ width: 36, height: 36, borderRadius: "50%", background: "linear-gradient(135deg,#c9a96e,#9e7c4a)", display: "flex", alignItems: "center", justifyContent: "center", color: "#fff", fontSize: "1rem", flexShrink: 0 }}>👤</div>
+              <div>
+                <div style={{ fontWeight: 700, color: "#2c1810", fontSize: "0.9rem" }}>Welcome back, {savedDetails.name || savedDetails.email}!</div>
+                <div style={{ fontSize: "0.78rem", color: "#9e7c4a" }}>{[savedDetails.email, savedDetails.phone].filter(Boolean).join(" · ")}</div>
+              </div>
+            </div>
+            <button onClick={handleClearDetails} style={{ background: "none", border: "none", color: "#c9a96e", fontSize: "0.78rem", cursor: "pointer", textDecoration: "underline", flexShrink: 0 }}>Not you?</button>
+          </div>
+        )}
+
         {screen === "loading" && (
           <div style={{ textAlign: "center", padding: "48px 0", color: "#6b3d2e" }}>
             <div style={{ width: 40, height: 40, border: "3px solid #c9a96e", borderTopColor: "transparent", borderRadius: "50%", animation: "spin 0.8s linear infinite", margin: "0 auto 16px" }} />
@@ -529,6 +586,48 @@ export default function PaymentPage() {
             {payError && (
               <div style={{ background: "#fff0f0", border: "1px solid #f5c0c0", borderRadius: 6, padding: "12px 16px", color: "#c0392b", fontSize: "0.88rem", marginTop: 12 }}>
                 {payError}
+              </div>
+            )}
+
+            {/* ── Save details for next time ── */}
+            {screen === "card-ready" && !savedDetails && !detailsSaved && (
+              <div style={{ marginTop: 18, border: "1px solid #e8c4bc", borderRadius: 8, overflow: "hidden" }}>
+                <button
+                  onClick={() => setShowSaveForm(v => !v)}
+                  style={{ width: "100%", background: "#fdf5f0", border: "none", padding: "11px 16px", display: "flex", alignItems: "center", justifyContent: "space-between", cursor: "pointer", color: "#6b3d2e", fontSize: "0.85rem", fontWeight: 600, fontFamily: "inherit" }}
+                >
+                  <span>💾 Save your details for faster checkout next time</span>
+                  <span style={{ fontSize: "0.78rem", color: "#c9a96e" }}>{showSaveForm ? "▲ Hide" : "▼ Show"}</span>
+                </button>
+                {showSaveForm && (
+                  <div style={{ padding: "14px 16px", background: "#fff" }}>
+                    <p style={{ fontSize: "0.78rem", color: "#9e7c4a", margin: "0 0 12px", lineHeight: 1.5 }}>
+                      Saved on this device only — no account needed. Your card details are never stored here.
+                    </p>
+                    {(["name", "email", "phone"] as const).map((field) => (
+                      <input
+                        key={field}
+                        type={field === "email" ? "email" : field === "phone" ? "tel" : "text"}
+                        placeholder={field === "name" ? "Your name" : field === "email" ? "Email address" : "Phone number"}
+                        value={saveForm[field]}
+                        onChange={e => setSaveForm(f => ({ ...f, [field]: e.target.value }))}
+                        style={{ width: "100%", padding: "9px 12px", border: "1.5px solid #e0c8c0", borderRadius: 6, fontSize: "0.9rem", color: "#2c1810", background: "#fff", fontFamily: "inherit", outline: "none", marginBottom: 8, boxSizing: "border-box" }}
+                      />
+                    ))}
+                    <button
+                      onClick={handleSaveDetails}
+                      style={{ background: "linear-gradient(135deg,#c9a96e,#9e7c4a)", border: "none", color: "#fff", padding: "9px 20px", borderRadius: 6, fontSize: "0.88rem", fontWeight: 700, cursor: "pointer", fontFamily: "Georgia,serif" }}
+                    >
+                      Save Details
+                    </button>
+                  </div>
+                )}
+              </div>
+            )}
+            {screen === "card-ready" && (savedDetails || detailsSaved) && (
+              <div style={{ marginTop: 14, padding: "10px 14px", background: "#f0fff4", border: "1px solid #a8e6b8", borderRadius: 8, display: "flex", alignItems: "center", justifyContent: "space-between", fontSize: "0.82rem" }}>
+                <span style={{ color: "#2c6e3f" }}>✅ Details saved for faster checkout next time</span>
+                <button onClick={handleClearDetails} style={{ background: "none", border: "none", color: "#9e7c4a", fontSize: "0.78rem", cursor: "pointer", textDecoration: "underline" }}>Clear</button>
               </div>
             )}
 
