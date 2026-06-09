@@ -588,6 +588,61 @@
     .sp-success-icon { font-size: 3rem; margin-bottom: 12px; }
     .sp-loading { text-align: center; padding: 60px 20px; color: var(--text-light); }
     .sp-error-msg { background: #fff0f0; border: 1px solid #f5c0c0; color: #c62828; padding: 10px 14px; border-radius: 4px; font-size: 0.85rem; margin-bottom: 12px; }
+
+    /* ── Payment page animations ─────────────────────────────── */
+    /* Progress stepper */
+    .sp-progress { display: flex; align-items: center; justify-content: center; padding: 16px 0 8px; gap: 0; }
+    .sp-step { display: flex; flex-direction: column; align-items: center; gap: 3px; }
+    .sp-step-circle { width: 28px; height: 28px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 0.72rem; font-weight: 700; transition: all 0.4s ease; }
+    .sp-step-circle.done { background: #2c6e3f; color: #fff; }
+    .sp-step-circle.active { background: linear-gradient(135deg,#c9a96e,#9e7c4a); color: #fff; transform: scale(1.15); box-shadow: 0 0 0 4px rgba(201,169,110,0.25); }
+    .sp-step-circle.idle { background: #e8c4bc; color: #9e7c4a; }
+    .sp-step-label { font-size: 0.62rem; font-weight: 700; color: rgba(255,255,255,0.75); white-space: nowrap; }
+    .sp-step-label.active { color: #fff; }
+    .sp-step-connector { width: 44px; height: 2px; background: rgba(255,255,255,0.25); margin: 0 4px 18px; position: relative; overflow: hidden; flex-shrink: 0; }
+    .sp-connector-fill { position: absolute; inset: 0; background: rgba(255,255,255,0.8); width: 0; transition: width 0.5s ease; }
+
+    /* Animated booking rows */
+    @keyframes sp-row-in { from { opacity: 0; transform: translateX(-12px); } to { opacity: 1; transform: none; } }
+    .sp-detail-row.animated { animation: sp-row-in 0.4s ease both; }
+
+    /* Deposit box pulse */
+    @keyframes sp-deposit-glow { 0%,100% { box-shadow: 0 0 0 0 rgba(201,169,110,0.3); } 50% { box-shadow: 0 0 0 10px rgba(201,169,110,0); } }
+    .sp-deposit-box { animation: sp-deposit-glow 3s ease-in-out infinite; }
+
+    /* Payment method buttons */
+    .sp-method-btn { flex: 1; padding: 20px 12px; border-radius: 10px; cursor: pointer; display: flex; flex-direction: column; align-items: center; gap: 8px; transition: all 0.25s ease; }
+    .sp-method-btn:hover { transform: translateY(-4px); box-shadow: 0 8px 24px rgba(201,169,110,0.35); }
+    .sp-method-btn:active { transform: scale(0.96); }
+    .sp-method-icon { font-size: 1.9rem; }
+    .sp-method-title { font-weight: 700; font-size: 0.93rem; font-family: 'Playfair Display', serif; }
+    .sp-method-sub { font-size: 0.73rem; opacity: 0.82; font-family: 'Nunito', sans-serif; }
+
+    /* Sparkle floaters */
+    @keyframes sp-sparkle { 0% { opacity: 0; transform: translateY(60px) rotate(0deg) scale(0.5); } 15% { opacity: 1; } 85% { opacity: 1; } 100% { opacity: 0; transform: translateY(-100px) rotate(540deg) scale(0.8); } }
+    .sp-sparkle { position: fixed; pointer-events: none; z-index: 9999; animation: sp-sparkle 2.4s ease-out both; }
+
+    /* Success bounce */
+    @keyframes sp-success-bounce { 0% { transform: scale(0); opacity: 0; } 55% { transform: scale(1.25); } 80% { transform: scale(0.95); } 100% { transform: scale(1); opacity: 1; } }
+    .sp-success-bounce { animation: sp-success-bounce 0.55s cubic-bezier(0.175,0.885,0.32,1.275) both; }
+
+    /* Screen transitions */
+    @keyframes sp-slide-in { from { opacity: 0; transform: translateX(28px); } to { opacity: 1; transform: none; } }
+    .sp-screen-enter { animation: sp-slide-in 0.35s ease both; }
+    @keyframes sp-fade-up { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: none; } }
+    .sp-fade-up { animation: sp-fade-up 0.4s ease both; }
+
+    /* Fast checkout banner */
+    @keyframes sp-banner-in { from { opacity: 0; max-height: 0; padding: 0 18px; } to { opacity: 1; max-height: 80px; } }
+    .sp-fast-banner { animation: sp-banner-in 0.35s ease both; overflow: hidden; background: #fff; border: 1.5px solid #c9a96e; border-radius: 10px; padding: 12px 18px; margin-bottom: 16px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 8px; }
+
+    /* Calendar buttons */
+    .sp-cal-section { background: #f0f6ff; border: 1px solid #c5d8f7; border-radius: 10px; padding: 16px 18px; text-align: center; }
+    .sp-cal-btn { display: inline-block; padding: 8px 14px; border-radius: 5px; font-weight: 700; font-size: 0.8rem; text-decoration: none; color: #fff; margin: 4px; }
+
+    /* Save details toggle */
+    .sp-save-toggle { width: 100%; background: #fdf5f0; border: none; padding: 11px 16px; display: flex; align-items: center; justify-content: space-between; cursor: pointer; color: #6b3d2e; font-size: 0.84rem; font-weight: 700; font-family: 'Nunito', sans-serif; transition: background 0.2s; }
+    .sp-save-toggle:hover { background: #fdeee6; }
     #scroll-top-btn {
       position: fixed; bottom: 1.4rem; right: 1.2rem;
       width: 36px; height: 36px; border-radius: 50%;
@@ -1209,48 +1264,154 @@
     <img src="/logo-original.png" alt="The Glam by Ankita">
     <span>The Glam by Ankita</span>
   </div>
-  <div class="sp-header">
-    <h1>Your Booking Confirmation</h1>
-    <p>Review your details and complete your payment</p>
-  </div>
-  <div class="sp-body">
-    <div class="sp-loading" id="booking-loading">Loading your booking…</div>
-    <div id="booking-content" style="display:none;">
-      <div class="sp-card">
-        <h3>Booking Details</h3>
-        <div id="booking-details-list"></div>
+  <div class="sp-header" style="padding-bottom:0;">
+    <h1 style="font-size:1.35rem;">Confirm &amp; Pay Deposit</h1>
+    <p>Review your booking and secure your appointment.</p>
+    <div class="sp-progress" id="sp-progress">
+      <div class="sp-step">
+        <div class="sp-step-circle active" id="step-1">1</div>
+        <span class="sp-step-label active">Review</span>
       </div>
-      <div id="booking-notes-wrap" class="sp-note" style="display:none;"></div>
-      <div class="sp-card" id="payment-card">
-        <h3>Payment</h3>
-        <div style="margin-bottom:16px;">
-          <p style="margin:0 0 4px;font-size:0.85rem;color:var(--text-light);">Total amount due</p>
-          <span class="sp-amount" id="deposit-display">—</span>
-          <p style="margin:6px 0 0;font-size:0.8rem;color:var(--text-light);">Pay securely by card, Apple Pay, Google Pay &amp; more</p>
-        </div>
-        <div id="payment-ready">
-          <div id="stripe-element"></div>
-          <div id="payment-error" class="sp-error-msg" style="display:none;"></div>
-          <button class="sp-btn" id="pay-btn" onclick="submitPayment()">Pay Now ✦</button>
-        </div>
-        <div id="payment-no-stripe" style="display:none;">
-          <p style="color:var(--text-mid);font-size:0.9rem;">Card payment is temporarily unavailable. You can pay by cash on the day, or contact Ankita to arrange payment.</p>
-          <a href="mailto:theglambyankita@gmail.com" class="sp-btn" style="display:block;text-align:center;text-decoration:none;margin-top:8px;">Contact Ankita</a>
-        </div>
-        <div style="margin-top:20px;padding-top:18px;border-top:1px solid #f5ddd8;text-align:center;">
-          <p style="margin:0 0 10px;font-size:0.8rem;color:var(--text-light);text-transform:uppercase;letter-spacing:0.1em;font-weight:700;">Or pay on the day</p>
-          <button class="sp-btn sp-btn-outline" onclick="selectCash()" id="cash-btn" style="width:100%;margin-top:0;">💵 Pay by Cash on the Day</button>
-          <p id="cash-note" style="display:none;margin:10px 0 0;font-size:0.82rem;color:var(--text-mid);line-height:1.6;">✓ Cash noted! Please bring exact change on the day. Ankita will be in touch shortly to confirm your appointment.</p>
-        </div>
+      <div class="sp-step-connector"><div class="sp-connector-fill" id="conn-1"></div></div>
+      <div class="sp-step">
+        <div class="sp-step-circle idle" id="step-2">2</div>
+        <span class="sp-step-label" id="lbl-2">Pay</span>
       </div>
-      <div id="payment-success-card" class="sp-card" style="display:none;text-align:center;padding:40px 24px;">
-        <div class="sp-success-icon">💄</div>
-        <h3 style="font-family:'Playfair Display',serif;color:var(--text-dark);margin:0 0 8px;">You're All Booked! ✓</h3>
-        <p style="color:var(--text-mid);font-size:0.9rem;line-height:1.7;">Your appointment is confirmed — I'll be in touch with everything you need closer to the day. So excited to work with you! ✨</p>
-        <span class="sp-badge" style="margin-top:12px;">Confirmed ✓</span>
+      <div class="sp-step-connector"><div class="sp-connector-fill" id="conn-2"></div></div>
+      <div class="sp-step">
+        <div class="sp-step-circle idle" id="step-3">3</div>
+        <span class="sp-step-label" id="lbl-3">Done!</span>
       </div>
     </div>
   </div>
+  <div class="sp-body">
+    <div class="sp-loading" id="booking-loading">
+      <div style="width:34px;height:34px;border:3px solid #c9a96e;border-top-color:transparent;border-radius:50%;animation:spin 0.8s linear infinite;margin:0 auto 12px;"></div>
+      Loading your booking…
+    </div>
+
+    <div id="booking-content" style="display:none;">
+
+      <!-- Fast checkout banner (shown if saved details found) -->
+      <div id="sp-fast-banner" style="display:none;" class="sp-fast-banner">
+        <div style="display:flex;align-items:center;gap:10px;">
+          <div style="width:34px;height:34px;border-radius:50%;background:linear-gradient(135deg,#c9a96e,#9e7c4a);display:flex;align-items:center;justify-content:center;color:#fff;font-size:0.95rem;flex-shrink:0;">👤</div>
+          <div>
+            <div id="sp-banner-name" style="font-weight:700;color:#2c1810;font-size:0.88rem;"></div>
+            <div id="sp-banner-sub" style="font-size:0.75rem;color:#9e7c4a;"></div>
+          </div>
+        </div>
+        <button onclick="clearSavedDetails()" style="background:none;border:none;color:#c9a96e;font-size:0.77rem;cursor:pointer;text-decoration:underline;font-family:'Nunito',sans-serif;flex-shrink:0;">Not you?</button>
+      </div>
+
+      <!-- Booking details card -->
+      <div class="sp-card sp-fade-up">
+        <h3>📅 Your Confirmed Booking</h3>
+        <div id="booking-details-list"></div>
+      </div>
+
+      <!-- Note from Ankita -->
+      <div id="booking-notes-wrap" class="sp-note" style="display:none;"></div>
+
+      <!-- Deposit amount box -->
+      <div class="sp-card sp-deposit-box sp-fade-up" style="border:2px solid #c9a96e;background:linear-gradient(135deg,#fff9f0,#fdf5e8);text-align:center;padding:22px 24px;margin-bottom:16px;">
+        <p style="margin:0 0 4px;font-size:0.74rem;color:#9e7c4a;font-weight:700;text-transform:uppercase;letter-spacing:0.07em;">Deposit Due</p>
+        <span class="sp-amount" id="deposit-display" style="display:block;font-size:2.2rem;margin:8px 0 4px;">—</span>
+        <p style="margin:0;font-size:0.77rem;color:#9e7c4a;">Secures your appointment · Non-refundable</p>
+      </div>
+
+      <!-- ① Payment method choice screen -->
+      <div id="pay-method-screen" class="sp-screen-enter">
+        <p style="text-align:center;font-family:'Playfair Display',serif;font-size:0.97rem;color:#6b3d2e;margin-bottom:14px;">How would you like to pay?</p>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:4px;">
+          <button class="sp-method-btn" onclick="showCardScreen()" style="background:linear-gradient(135deg,#c9a96e,#9e7c4a);color:#fff;border:none;box-shadow:0 4px 16px rgba(201,169,110,0.3);">
+            <span class="sp-method-icon">💳</span>
+            <span class="sp-method-title">Pay by Card</span>
+            <span class="sp-method-sub">Secure · Instant</span>
+          </button>
+          <button class="sp-method-btn" id="cash-method-btn" onclick="selectCash()" style="background:#fff;color:#6b3d2e;border:2px solid #c9a96e;">
+            <span class="sp-method-icon">💵</span>
+            <span class="sp-method-title">Lay-by / Cash</span>
+            <span class="sp-method-sub">Pay at appointment</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- ② Card payment screen -->
+      <div id="pay-card-screen" style="display:none;">
+        <div class="sp-card sp-screen-enter">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">
+            <h3 style="margin:0;padding:0;border:none;">💳 Card Details</h3>
+            <button onclick="backToMethodChoice()" style="background:none;border:none;color:#9e7c4a;font-size:0.82rem;cursor:pointer;text-decoration:underline;font-family:'Nunito',sans-serif;">← Back</button>
+          </div>
+          <div id="payment-ready">
+            <div id="stripe-element"></div>
+            <div id="payment-error" class="sp-error-msg" style="display:none;"></div>
+            <button class="sp-btn" id="pay-btn" onclick="submitPayment()">Pay Deposit ✦</button>
+          </div>
+          <div id="payment-no-stripe" style="display:none;">
+            <p style="color:var(--text-mid);font-size:0.9rem;">Card payment is temporarily unavailable. Please contact Ankita to arrange payment.</p>
+            <a href="mailto:theglambyankita@gmail.com" class="sp-btn" style="display:block;text-align:center;text-decoration:none;margin-top:8px;">Contact Ankita</a>
+          </div>
+          <p style="text-align:center;font-size:0.76rem;color:#bbb;margin-top:10px;">Secured by Stripe · Your card details are never stored by us.</p>
+        </div>
+        <!-- Save details section (hidden if already saved) -->
+        <div id="sp-save-section" style="border:1px solid #e8c4bc;border-radius:8px;overflow:hidden;margin-top:4px;">
+          <button class="sp-save-toggle" onclick="toggleSaveForm()">
+            <span>💾 Save your details for faster checkout next time</span>
+            <span id="sp-save-arrow" style="color:#c9a96e;font-size:0.78rem;transition:transform 0.25s;">▼</span>
+          </button>
+          <div id="sp-save-form" style="display:none;padding:14px 16px;background:#fff;">
+            <p style="font-size:0.77rem;color:#9e7c4a;margin:0 0 10px;line-height:1.5;">Saved on this device only — no account needed. Your card details are never stored here.</p>
+            <input type="text" id="sp-save-name" placeholder="Your name" style="width:100%;padding:9px 12px;border:1.5px solid #e0c8c0;border-radius:6px;font-size:0.88rem;font-family:'Nunito',sans-serif;margin-bottom:8px;box-sizing:border-box;outline:none;">
+            <input type="email" id="sp-save-email" placeholder="Email address" style="width:100%;padding:9px 12px;border:1.5px solid #e0c8c0;border-radius:6px;font-size:0.88rem;font-family:'Nunito',sans-serif;margin-bottom:8px;box-sizing:border-box;outline:none;">
+            <input type="tel" id="sp-save-phone" placeholder="Phone number" style="width:100%;padding:9px 12px;border:1.5px solid #e0c8c0;border-radius:6px;font-size:0.88rem;font-family:'Nunito',sans-serif;margin-bottom:10px;box-sizing:border-box;outline:none;">
+            <button onclick="saveDetails()" style="background:linear-gradient(135deg,#c9a96e,#9e7c4a);border:none;color:#fff;padding:9px 20px;border-radius:6px;font-size:0.87rem;font-weight:700;cursor:pointer;font-family:'Playfair Display',serif;">Save Details</button>
+          </div>
+        </div>
+        <div id="sp-saved-confirm" style="display:none;margin-top:8px;padding:10px 14px;background:#f0fff4;border:1px solid #a8e6b8;border-radius:8px;display:none;align-items:center;justify-content:space-between;font-size:0.81rem;">
+          <span style="color:#2c6e3f;">✅ Details saved for faster checkout next time</span>
+          <button onclick="clearSavedDetails()" style="background:none;border:none;color:#9e7c4a;font-size:0.77rem;cursor:pointer;text-decoration:underline;font-family:'Nunito',sans-serif;">Clear</button>
+        </div>
+      </div>
+
+      <!-- ③a Success: card payment -->
+      <div id="payment-success-card" style="display:none;">
+        <div class="sp-card sp-fade-up" style="text-align:center;padding:40px 24px;border:2px solid #a8e6b8;background:linear-gradient(135deg,#f0fff4,#e8f8ef);">
+          <div class="sp-success-icon sp-success-bounce">🎉</div>
+          <h3 style="font-family:'Playfair Display',serif;color:#2c6e3f;margin:0 0 10px;font-size:1.4rem;">Deposit Paid!</h3>
+          <p style="color:#3a6b47;font-size:0.92rem;line-height:1.7;margin:0;">Your deposit has been received — your appointment is officially locked in.<br>A confirmation has been sent to your email. See you soon! ✨</p>
+        </div>
+        <div class="sp-card sp-fade-up" style="margin-top:12px;">
+          <h3>📅 Your Booking</h3>
+          <div id="success-details-list"></div>
+        </div>
+        <div id="success-calendar-section" style="display:none;margin-top:12px;" class="sp-cal-section sp-fade-up">
+          <p style="margin:0 0 10px;font-size:0.76rem;font-weight:700;color:#4a6fa5;text-transform:uppercase;letter-spacing:0.1em;">📅 Add to your calendar</p>
+          <div id="success-calendar-buttons"></div>
+        </div>
+      </div>
+
+      <!-- ③b Success: cash -->
+      <div id="payment-success-cash" style="display:none;">
+        <div class="sp-card sp-fade-up" style="text-align:center;padding:40px 24px;border:2px solid #e8d5a0;background:linear-gradient(135deg,#fff9f0,#fdf5e8);">
+          <div class="sp-success-icon sp-success-bounce">✅</div>
+          <h3 style="font-family:'Playfair Display',serif;color:#6b3d2e;margin:0 0 10px;font-size:1.4rem;">Booking Confirmed!</h3>
+          <p style="color:#4a2e22;font-size:0.92rem;line-height:1.7;margin:0;">Got it — Ankita has been notified and your appointment is confirmed.<br>A confirmation email has been sent to you. See you soon! ✨</p>
+          <p id="cash-deposit-note" style="color:#9e7c4a;font-size:0.84rem;margin-top:10px;"></p>
+        </div>
+        <div class="sp-card sp-fade-up" style="margin-top:12px;">
+          <h3>📅 Your Booking</h3>
+          <div id="cash-details-list"></div>
+        </div>
+        <div id="cash-calendar-section" style="display:none;margin-top:12px;" class="sp-cal-section sp-fade-up">
+          <p style="margin:0 0 10px;font-size:0.76rem;font-weight:700;color:#4a6fa5;text-transform:uppercase;letter-spacing:0.1em;">📅 Add to your calendar</p>
+          <div id="cash-calendar-buttons"></div>
+        </div>
+      </div>
+
+    </div><!-- /booking-content -->
+  </div><!-- /sp-body -->
 </div>
 
 <!-- FOOTER -->
@@ -1510,6 +1671,146 @@
     };
   }
 
+  // ── Saved details (localStorage) ─────────────────────────────
+  function _loadSavedDetails() {
+    try { const d = JSON.parse(localStorage.getItem('glamSavedDetails') || 'null'); return (d && (d.name || d.email || d.phone)) ? d : null; } catch { return null; }
+  }
+  function saveDetails() {
+    const name = (document.getElementById('sp-save-name').value || '').trim();
+    const email = (document.getElementById('sp-save-email').value || '').trim();
+    const phone = (document.getElementById('sp-save-phone').value || '').trim();
+    if (!name && !email && !phone) return;
+    localStorage.setItem('glamSavedDetails', JSON.stringify({ name, email, phone }));
+    document.getElementById('sp-save-section').style.display = 'none';
+    const c = document.getElementById('sp-saved-confirm');
+    c.style.display = 'flex';
+    _showFastBanner({ name, email, phone });
+  }
+  function clearSavedDetails() {
+    localStorage.removeItem('glamSavedDetails');
+    document.getElementById('sp-fast-banner').style.display = 'none';
+    document.getElementById('sp-save-section').style.display = 'block';
+    document.getElementById('sp-saved-confirm').style.display = 'none';
+  }
+  function toggleSaveForm() {
+    const form = document.getElementById('sp-save-form');
+    const arrow = document.getElementById('sp-save-arrow');
+    const open = form.style.display === 'none' || form.style.display === '';
+    form.style.display = open ? 'block' : 'none';
+    arrow.style.transform = open ? 'rotate(180deg)' : '';
+  }
+  function _showFastBanner(d) {
+    const banner = document.getElementById('sp-fast-banner');
+    document.getElementById('sp-banner-name').textContent = 'Welcome back, ' + (d.name || d.email || '') + '!';
+    document.getElementById('sp-banner-sub').textContent = [d.email, d.phone].filter(Boolean).join(' · ');
+    banner.style.display = 'flex';
+  }
+
+  // ── Progress stepper ──────────────────────────────────────────
+  function setProgressStep(n) {
+    [1, 2, 3].forEach(i => {
+      const circle = document.getElementById('step-' + i);
+      const lbl = document.getElementById('lbl-' + i) || circle.nextElementSibling;
+      if (!circle) return;
+      circle.className = 'sp-step-circle ' + (i < n ? 'done' : i === n ? 'active' : 'idle');
+      circle.textContent = i < n ? '✓' : String(i);
+      if (lbl) lbl.className = 'sp-step-label' + (i === n ? ' active' : '');
+    });
+    const c1 = document.getElementById('conn-1');
+    const c2 = document.getElementById('conn-2');
+    if (c1) c1.style.width = n > 1 ? '100%' : '0%';
+    if (c2) c2.style.width = n > 2 ? '100%' : '0%';
+  }
+
+  // ── Sparkle confetti ──────────────────────────────────────────
+  function launchSparkles() {
+    const items = ['✨','💄','🌸','💫','✦','💕','🎉','⭐','🌟','💖'];
+    for (let i = 0; i < 18; i++) {
+      setTimeout(() => {
+        const el = document.createElement('div');
+        el.className = 'sp-sparkle';
+        el.textContent = items[Math.floor(Math.random() * items.length)];
+        el.style.left = Math.random() * 100 + 'vw';
+        el.style.bottom = '-20px';
+        el.style.fontSize = (0.9 + Math.random() * 1.1) + 'rem';
+        el.style.animationDelay = (Math.random() * 0.5) + 's';
+        document.body.appendChild(el);
+        setTimeout(() => el.remove(), 3200);
+      }, i * 60);
+    }
+  }
+
+  // ── Calendar helpers ──────────────────────────────────────────
+  function _buildCalendarButtons(confirmedData, containerId, sectionId) {
+    const date = confirmedData['Date'] || confirmedData['Confirmed Date'] || '';
+    if (!date) return;
+    const time = confirmedData['Time'] || '09:00';
+    const service = confirmedData['Service'] || 'Makeup Appointment';
+    const location = confirmedData['Location'] || '';
+    const numPeople = confirmedData['Number of People'] || confirmedData['People'] || '';
+    const title = service + ' — The Glam by Ankita';
+    const descParts = ['Appointment with Ankita from The Glam by Ankita.', 'Service: ' + service];
+    if (numPeople) descParts.push('Number of people: ' + numPeople);
+    if (location) descParts.push('Location: ' + location);
+    const desc = descParts.join('\n');
+    const [year, month, day] = date.split('-').map(Number);
+    const [hour, min] = (time || '09:00').split(':').map(Number);
+    const pad = n => String(n || 0).padStart(2, '0');
+    const startDT = year + '' + pad(month) + pad(day) + 'T' + pad(hour) + pad(min) + '00';
+    const endH = (hour + 2) % 24;
+    const endDT = year + '' + pad(month) + pad(day) + 'T' + pad(endH) + pad(min) + '00';
+    const gCal = 'https://calendar.google.com/calendar/render?action=TEMPLATE&text=' + encodeURIComponent(title) + '&dates=' + startDT + '/' + endDT + '&details=' + encodeURIComponent(desc) + '&location=' + encodeURIComponent(location);
+    const outlook = 'https://outlook.live.com/calendar/0/deeplink/compose?subject=' + encodeURIComponent(title) + '&startdt=' + date + 'T' + pad(hour) + ':' + pad(min) + ':00&enddt=' + date + 'T' + pad(endH) + ':' + pad(min) + ':00&body=' + encodeURIComponent(desc) + '&location=' + encodeURIComponent(location);
+    const icsParams = new URLSearchParams({ title, date, time: time || '09:00', location, description: desc, uid: 'booking-' + date + '@theglambyankita.com' });
+    const container = document.getElementById(containerId);
+    const section = document.getElementById(sectionId);
+    if (container && section) {
+      container.innerHTML = '<a href="' + gCal + '" target="_blank" rel="noopener" class="sp-cal-btn" style="background:#4285f4;">Google Calendar</a>' +
+        '<a href="' + outlook + '" target="_blank" rel="noopener" class="sp-cal-btn" style="background:#0078d4;">Outlook</a>' +
+        '<a href="/api/calendar?' + icsParams + '" class="sp-cal-btn" style="background:#555;">Apple Calendar (.ics)</a>';
+      section.style.display = 'block';
+    }
+  }
+
+  function _copyDetailsToList(sourceListId, destListId) {
+    const src = document.getElementById(sourceListId);
+    const dest = document.getElementById(destListId);
+    if (src && dest) dest.innerHTML = src.innerHTML;
+  }
+
+  // ── Screen transitions ────────────────────────────────────────
+  function showCardScreen() {
+    document.getElementById('pay-method-screen').style.display = 'none';
+    const cardScreen = document.getElementById('pay-card-screen');
+    cardScreen.style.display = 'block';
+    setProgressStep(2);
+    // Pre-fill save form with saved details if available
+    const saved = _loadSavedDetails();
+    if (saved) {
+      document.getElementById('sp-save-section').style.display = 'none';
+      const c = document.getElementById('sp-saved-confirm');
+      c.style.display = 'flex';
+    }
+    // Init Stripe if not done yet
+    if (!_stripeInitStarted && _bookingToken) {
+      _stripeInitStarted = true;
+      fetch('/api/config').then(r => r.json()).then(cfg => {
+        if (cfg.stripePublishableKey) initStripe(cfg.stripePublishableKey, _bookingToken);
+        else { document.getElementById('payment-ready').style.display = 'none'; document.getElementById('payment-no-stripe').style.display = 'block'; }
+      }).catch(() => { document.getElementById('payment-ready').style.display = 'none'; document.getElementById('payment-no-stripe').style.display = 'block'; });
+    }
+  }
+
+  function backToMethodChoice() {
+    document.getElementById('pay-card-screen').style.display = 'none';
+    const ms = document.getElementById('pay-method-screen');
+    ms.style.display = 'block';
+    ms.classList.remove('sp-screen-enter');
+    void ms.offsetWidth;
+    ms.classList.add('sp-screen-enter');
+    setProgressStep(1);
+  }
+
   async function loadBookingPage(token) {
     _bookingToken = token;
     const loadingEl = document.getElementById('booking-loading');
@@ -1518,90 +1819,70 @@
       data = _decodeBookingToken(token);
     } catch (e) {
       console.error('Token decode error:', e);
-      if (loadingEl) loadingEl.textContent =
-        'This booking link appears to be invalid. Please use the exact link from your email or contact Ankita.';
+      if (loadingEl) loadingEl.textContent = 'This booking link appears to be invalid. Please use the exact link from your email or contact Ankita.';
       return;
     }
 
     try {
       if (!data.total_aud || parseFloat(data.total_aud) <= 0) {
-        if (loadingEl) loadingEl.textContent =
-          'This booking link does not have a valid payment amount. Please contact Ankita.';
+        if (loadingEl) loadingEl.textContent = 'This booking link does not have a valid payment amount. Please contact Ankita.';
         return;
       }
 
-      // Show confirmed/view-only state: 3DS return, view=1 link, or status=confirmed token
       const _urlParams = new URLSearchParams(window.location.search);
       const _isConfirmed = _urlParams.get('redirect_status') === 'succeeded'
         || _urlParams.get('view') === '1'
         || data.status === 'confirmed';
+
+      renderBookingDetails(data);
+      const depositEl = document.getElementById('deposit-display');
+      if (depositEl) depositEl.textContent = 'AUD $' + parseFloat(data.total_aud).toFixed(2);
+      if (data.notes) {
+        const nw = document.getElementById('booking-notes-wrap');
+        if (nw) { nw.textContent = '💬 Note from Ankita: ' + data.notes; nw.style.display = 'block'; }
+      }
+      if (loadingEl) loadingEl.style.display = 'none';
+      document.getElementById('booking-content').style.display = 'block';
+
+      // Show fast checkout banner if saved details exist
+      const saved = _loadSavedDetails();
+      if (saved) _showFastBanner(saved);
+
       if (_isConfirmed) {
-        renderBookingDetails(data);
-        const depositEl = document.getElementById('deposit-display');
-        if (depositEl) depositEl.textContent = 'AUD $' + parseFloat(data.total_aud).toFixed(2);
-        if (loadingEl) loadingEl.style.display = 'none';
-        const contentEl = document.getElementById('booking-content');
-        if (contentEl) contentEl.style.display = 'block';
-        document.getElementById('payment-card').style.display = 'none';
-        document.getElementById('payment-success-card').style.display = 'block';
+        _showSuccessCard(data);
         return;
       }
 
-      renderBookingDetails(data);
-
-      const depositEl = document.getElementById('deposit-display');
-      if (depositEl) depositEl.textContent = 'AUD $' + parseFloat(data.total_aud).toFixed(2);
-
-      if (data.notes) {
-        const nw = document.getElementById('booking-notes-wrap');
-        if (nw) { nw.textContent = data.notes; nw.style.display = 'block'; }
-      }
-
-      if (loadingEl) loadingEl.style.display = 'none';
-      const contentEl = document.getElementById('booking-content');
-      if (contentEl) contentEl.style.display = 'block';
-
-      // Try to load Stripe — if unavailable just show fallback silently
-      try {
-        const cfg = await fetch('/api/config').then(r => r.json());
-        if (cfg.stripePublishableKey && data.total_aud) {
-          initStripe(cfg.stripePublishableKey, token);
-        } else {
-          document.getElementById('payment-ready').style.display = 'none';
-          document.getElementById('payment-no-stripe').style.display = 'block';
-        }
-      } catch {
-        document.getElementById('payment-ready').style.display = 'none';
-        document.getElementById('payment-no-stripe').style.display = 'block';
-      }
+      setProgressStep(1);
     } catch (e) {
       console.error('loadBookingPage error:', e);
-      if (loadingEl) loadingEl.textContent =
-        'Something went wrong loading your booking. Please contact Ankita directly at theglambyankita@gmail.com';
+      if (loadingEl) loadingEl.textContent = 'Something went wrong loading your booking. Please contact Ankita directly at theglambyankita@gmail.com';
     }
   }
 
   function renderBookingDetails(data) {
     const d = data.confirmed_data || {};
-    const list = document.getElementById('booking-details-list');
-    if (!list) return;
-    list.innerHTML = '';
-    Object.entries(d)
-      .filter(([, v]) => v)
-      .forEach(([k, v]) => {
+    const listIds = ['booking-details-list', 'success-details-list', 'cash-details-list'];
+    listIds.forEach(listId => {
+      const list = document.getElementById(listId);
+      if (!list) return;
+      list.innerHTML = '';
+      Object.entries(d).filter(([, v]) => v).forEach(([k, v], i) => {
         const row = document.createElement('div');
-        row.className = 'sp-detail-row';
-        const keyEl = document.createElement('span');
-        keyEl.className = 'sp-key';
-        keyEl.textContent = k;
-        const valEl = document.createElement('span');
-        valEl.className = 'sp-val';
-        valEl.textContent = String(v);
-        row.appendChild(keyEl);
-        row.appendChild(valEl);
+        row.className = 'sp-detail-row animated';
+        row.style.animationDelay = (i * 0.06) + 's';
+        const keyEl = document.createElement('span'); keyEl.className = 'sp-key'; keyEl.textContent = k;
+        const valEl = document.createElement('span'); valEl.className = 'sp-val'; valEl.textContent = String(v);
+        row.appendChild(keyEl); row.appendChild(valEl);
         list.appendChild(row);
       });
+    });
+    // Build calendar buttons for both success cards
+    _buildCalendarButtons(d, 'success-calendar-buttons', 'success-calendar-section');
+    _buildCalendarButtons(d, 'cash-calendar-buttons', 'cash-calendar-section');
   }
+
+  let _stripeInitStarted = false;
 
   async function initStripe(pubKey, token) {
     try {
@@ -1632,31 +1913,40 @@
     }
   }
 
+  function _showSuccessCard(data) {
+    document.getElementById('pay-method-screen').style.display = 'none';
+    document.getElementById('pay-card-screen').style.display = 'none';
+    document.getElementById('payment-success-card').style.display = 'block';
+    setProgressStep(3);
+    launchSparkles();
+    document.getElementById('payment-success-card').scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+
   async function selectCash() {
-    const btn = document.getElementById('cash-btn');
+    const btn = document.getElementById('cash-method-btn');
     btn.disabled = true;
-    btn.textContent = 'Confirming…';
+    btn.style.opacity = '0.6';
+    const origContent = btn.innerHTML;
+    btn.innerHTML = '<div style="display:flex;flex-direction:column;align-items:center;gap:6px;"><span class="sp-method-icon"><span class="sp-spinner" style="border-color:rgba(107,61,46,0.3);border-top-color:#6b3d2e;"></span></span><span class="sp-method-title" style="font-family:\'Nunito\',sans-serif;font-size:0.88rem;">Confirming…</span></div>';
     try {
       let body = { token: _bookingToken };
       try {
         const d = _decodeBookingToken(_bookingToken);
-        body = {
-          client_name: d.client_name,
-          client_email: d.client_email,
-          total_aud: d.total_aud,
-          confirmed_data: d.confirmed_data
-        };
+        body = { client_name: d.client_name, client_email: d.client_email, total_aud: d.total_aud, confirmed_data: d.confirmed_data };
       } catch (_) {}
-      await fetch('/api/select-cash', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(body)
-      });
+      await fetch('/api/select-cash', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
     } catch (e) { /* best effort */ }
-    // Show full booking confirmed card
-    document.getElementById('payment-card').style.display = 'none';
-    document.getElementById('payment-success-card').style.display = 'block';
-    document.getElementById('payment-success-card').scrollIntoView({ behavior: 'smooth', block: 'center' });
+    // Build cash deposit note
+    try {
+      const d = _decodeBookingToken(_bookingToken);
+      const note = document.getElementById('cash-deposit-note');
+      if (note && d.total_aud) note.textContent = 'Cash deposit of A$' + parseFloat(d.total_aud).toFixed(2) + ' to be paid at appointment.';
+    } catch (_) {}
+    document.getElementById('pay-method-screen').style.display = 'none';
+    document.getElementById('payment-success-cash').style.display = 'block';
+    setProgressStep(3);
+    launchSparkles();
+    document.getElementById('payment-success-cash').scrollIntoView({ behavior: 'smooth', block: 'start' });
   }
 
   async function submitPayment() {
@@ -1675,10 +1965,14 @@
       err.textContent = error.message;
       err.style.display = 'block';
       btn.disabled = false;
-      btn.textContent = 'Pay Now ✦';
+      btn.textContent = 'Pay Deposit ✦';
+      // Shake animation
+      err.style.animation = 'none'; void err.offsetWidth;
+      err.style.animation = '';
     } else {
-      document.getElementById('payment-card').style.display = 'none';
-      document.getElementById('payment-success-card').style.display = 'block';
+      try { await fetch('/api/confirm-payment', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ token: _bookingToken }) }); } catch {}
+      document.getElementById('pay-card-screen').style.display = 'none';
+      _showSuccessCard({});
     }
   }
 
