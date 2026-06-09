@@ -522,6 +522,7 @@
       .sitenav-tabs.mob-open button:nth-child(3) { transition-delay: 0.15s !important; }
       .sitenav-tabs.mob-open button:nth-child(4) { transition-delay: 0.2s !important; }
       .sitenav-tabs.mob-open button:nth-child(5) { transition-delay: 0.25s !important; }
+      .sitenav-tabs.mob-open button:nth-child(6) { transition-delay: 0.3s !important; }
       .sitenav-tabs.mob-open button.active,
       .sitenav-tabs.mob-open button:hover { border-left-color: var(--gold) !important; background: rgba(247,233,208,0.3) !important; }
     }
@@ -675,6 +676,7 @@
 </head>
 <body>
 
+<div id="root" style="display:none;position:fixed;inset:0;z-index:9000;overflow-y:auto;-webkit-overflow-scrolling:touch;"></div>
 <div id="progress-bar"></div>
 <button id="scroll-top-btn" aria-label="Scroll to top" onclick="window.scrollTo({top:0,behavior:'smooth'})">↑</button>
 
@@ -741,6 +743,7 @@
     <button onclick="showPage('services',this);closeMobileNav()">Services</button>
     <button onclick="showPage('gallery',this);closeMobileNav()">Gallery</button>
     <button onclick="showPage('contact',this);closeMobileNav()">Contact</button>
+    <button onclick="window.location.href='/account';closeMobileNav()" style="color:var(--gold-dark);">👤 Account</button>
   </div>
 </div>
 
@@ -1547,6 +1550,15 @@
   // Navigate to correct page on direct URL visit
   (function () {
     const path = window.location.pathname.replace(/^\//, '') || 'home';
+    // React-handled routes: show #root overlay, hide vanilla nav
+    const reactPaths = ['account', 'sign-in', 'sign-up'];
+    if (reactPaths.some(function(p) { return path === p || path.startsWith(p + '/'); })) {
+      const root = document.getElementById('root');
+      if (root) root.style.display = 'block';
+      const nav = document.getElementById('sitenav');
+      if (nav) nav.style.display = 'none';
+      return;
+    }
     if (path === 'r') {
       const b = new URLSearchParams(window.location.search).get('b');
       showSpecialPage('review', b || '');
@@ -2454,5 +2466,6 @@
     if (wrap) wrap.style.transform = `translate(${x}px,${y}px)`;
   });
 </script>
+<script type="module" src="/src/main.tsx"></script>
 </body>
 </html>

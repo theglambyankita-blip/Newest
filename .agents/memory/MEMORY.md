@@ -1,3 +1,4 @@
 - [Glam by Ankita — preserve credits](glam-credits.md) — footer credits must never be removed or modified; standing user rule.
 - [Replit pnpm bootstrap SIGABRT fix](pnpm-bootstrap-fix.md) — removing `packageManager` from root package.json prevents Replit from crashing on workflow start.
 - [Booking page TDZ bug](glam-booking-tdz.md) — `let` state vars declared after the IIFE caused a silent TDZ ReferenceError inside the async loadBookingPage; fix is to declare all state vars before the IIFE.
+- [Clerk auth setup](glam-clerk-setup.md) — Replit-managed Clerk provisioned; React app wired into index.html via #root overlay; account/sign-in/sign-up are React routes; vanilla JS hides itself for these paths.

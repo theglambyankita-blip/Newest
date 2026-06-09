@@ -3,6 +3,13 @@ import cors from "cors";
 import pinoHttp from "pino-http";
 import nodemailer from "nodemailer";
 import Stripe from "stripe";
+import { clerkMiddleware } from "@clerk/express";
+import { publishableKeyFromHost } from "@clerk/shared/keys";
+import {
+  CLERK_PROXY_PATH,
+  clerkProxyMiddleware,
+  getClerkProxyHost,
+} from "./middlewares/clerkProxyMiddleware";
 import router from "./routes";
 import { logger } from "./lib/logger";
 import { buildIcs } from "./lib/ics";
@@ -18,6 +25,8 @@ function toUrlSafeBase64(obj: object): string {
 }
 
 const app: Express = express();
+
+app.use(CLERK_PROXY_PATH, clerkProxyMiddleware());
 
 // ── STRIPE WEBHOOK (must be before express.json()) ───────────────
 app.post("/api/webhook", express.raw({ type: "application/json" }), async (req, res) => {
@@ -192,9 +201,17 @@ app.use(
     },
   }),
 );
-app.use(cors());
+app.use(cors({ credentials: true, origin: true }));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+app.use(
+  clerkMiddleware((req) => ({
+    publishableKey: publishableKeyFromHost(
+      getClerkProxyHost(req) ?? "",
+      process.env.CLERK_PUBLISHABLE_KEY,
+    ),
+  })),
+);
 
 // Redirect old /r?b=TOKEN links → /api/review?token=TOKEN
 app.get("/r", (req, res) => {
