@@ -1,5 +1,15 @@
 const nodemailer = require('nodemailer');
+const crypto = require('crypto');
 const { getPool } = require('./db');
+
+function generateBookingId() {
+  const now = new Date();
+  const y = now.getFullYear();
+  const m = String(now.getMonth() + 1).padStart(2, '0');
+  const d = String(now.getDate()).padStart(2, '0');
+  const rand = crypto.randomBytes(2).toString('hex').toUpperCase();
+  return `GBA-${y}${m}${d}-${rand}`;
+}
 
 function decodeToken(token) {
   const payload = token.includes('.') ? token.substring(0, token.lastIndexOf('.')) : token;
@@ -67,6 +77,8 @@ module.exports = async function handler(req, res) {
   const amount = totalAud ? `AUD $${parseFloat(totalAud).toFixed(2)}` : 'TBC';
   const notes = booking.notes || '';
 
+  const bookingId = generateBookingId();
+
   // Save booking to DB
   try {
     const db = getPool();
@@ -75,17 +87,19 @@ module.exports = async function handler(req, res) {
         id SERIAL PRIMARY KEY, client_name TEXT, client_email TEXT, service TEXT,
         booking_date TEXT, booking_time TEXT, location TEXT, num_people TEXT,
         total_aud NUMERIC(10,2), payment_method TEXT, status TEXT DEFAULT 'confirmed',
-        stripe_payment_intent_id TEXT, created_at TIMESTAMPTZ DEFAULT NOW()
+        stripe_payment_intent_id TEXT, booking_id TEXT, created_at TIMESTAMPTZ DEFAULT NOW()
       )
     `);
+    try { await db.query('ALTER TABLE bookings ADD COLUMN IF NOT EXISTS booking_id TEXT'); } catch(e) {}
     await db.query(
-      `INSERT INTO bookings (client_name, client_email, service, booking_date, booking_time, location, num_people, total_aud, payment_method, status)
-       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,'cash','confirmed')`,
+      `INSERT INTO bookings (client_name, client_email, service, booking_date, booking_time, location, num_people, total_aud, payment_method, status, booking_id)
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,'cash','confirmed',$9)`,
       [clientName, clientEmail,
        confirmedData['Service'] || null, confirmedData['Date'] || confirmedData['Confirmed Date'] || null,
        confirmedData['Time'] || null, confirmedData['Location'] || null,
        confirmedData['Number of People'] || confirmedData['People'] || null,
-       totalAud != null ? parseFloat(totalAud) : null]
+       totalAud != null ? parseFloat(totalAud) : null,
+       bookingId]
     );
   } catch (e) { console.error('DB save cash booking error:', e); }
 
@@ -126,6 +140,19 @@ module.exports = async function handler(req, res) {
             <p style="margin:0;font-size:1rem;color:#2c1810;line-height:1.7;">Hi <strong>${clientName}</strong>,</p>
             <p style="margin:10px 0 0;font-size:0.95rem;color:#4a2e22;line-height:1.8;">Your booking is confirmed and Ankita is so excited to work with you! 💄</p>
             <p style="margin:8px 0 0;font-size:0.95rem;color:#4a2e22;line-height:1.8;">You have chosen to pay the deposit of <strong style="color:#9e7c4a;">${amount}</strong> in cash at the appointment.</p>
+          </td>
+        </tr>
+        <tr>
+          <td style="padding:16px 36px 0;">
+            <table width="100%" cellpadding="0" cellspacing="0" style="background:linear-gradient(135deg,#fdf8f0,#fff8ec);border:1.5px solid #c9a96e;border-radius:8px;">
+              <tr>
+                <td style="padding:14px 20px;text-align:center;">
+                  <p style="margin:0 0 6px;font-size:0.68rem;font-weight:700;color:#9e7c4a;text-transform:uppercase;letter-spacing:0.16em;">📎 Your Booking Reference</p>
+                  <p style="margin:0;font-size:1.35rem;font-weight:700;color:#6b3d2e;letter-spacing:0.1em;font-family:'Courier New',monospace;">${bookingId}</p>
+                  <p style="margin:6px 0 0;font-size:0.73rem;color:#9e7c4a;">Keep this for your records · Quote it for any enquiries</p>
+                </td>
+              </tr>
+            </table>
           </td>
         </tr>
         <tr>
@@ -184,7 +211,8 @@ module.exports = async function handler(req, res) {
             </div>
             <div style="padding:24px 28px;">
               <p style="margin:0 0 8px;font-size:0.95rem;color:#2c1810;"><strong>${clientName}</strong> has chosen to pay by <strong>cash</strong> at the appointment.</p>
-              <p style="margin:0 0 16px;font-size:0.95rem;color:#2c1810;">Amount to collect: <strong style="color:#9e7c4a;">${amount}</strong></p>
+              <p style="margin:0 0 8px;font-size:0.95rem;color:#2c1810;">Amount to collect: <strong style="color:#9e7c4a;">${amount}</strong></p>
+              <p style="margin:0 0 16px;font-size:0.85rem;color:#9e7c4a;">Booking ref: <strong style="font-family:'Courier New',monospace;letter-spacing:0.06em;">${bookingId}</strong></p>
               ${clientEmail ? `<p style="margin:0 0 16px;font-size:0.88rem;color:#6b3d2e;">Client email: ${clientEmail}</p>` : ''}
               <table style="width:100%;border-collapse:collapse;font-size:0.9rem;border:1px solid #fdeee8;border-radius:6px;overflow:hidden;">
                 ${detailRows}
