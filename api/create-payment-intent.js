@@ -21,6 +21,15 @@ function verifyBookingToken(token) {
   return JSON.parse(Buffer.from(payload, 'base64url').toString('utf8'));
 }
 
+function generateBookingId() {
+  const now = new Date();
+  const y = now.getFullYear();
+  const m = String(now.getMonth() + 1).padStart(2, '0');
+  const d = String(now.getDate()).padStart(2, '0');
+  const rand = crypto.randomBytes(2).toString('hex').toUpperCase();
+  return `GBA-${y}${m}${d}-${rand}`;
+}
+
 module.exports = async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
@@ -44,12 +53,14 @@ module.exports = async function handler(req, res) {
 
     const amountCents = Math.round(amount * 100);
     const cd = data.confirmedData || {};
+    const bookingId = generateBookingId();
 
     const paymentIntent = await stripe.paymentIntents.create({
       amount: amountCents,
       currency: 'aud',
       automatic_payment_methods: { enabled: true },
       metadata: {
+        booking_id: bookingId,
         client_name: (data.clientName || '').substring(0, 100),
         client_email: (data.clientEmail || '').substring(0, 200),
         service: (cd['Service'] || '').substring(0, 100),
@@ -57,13 +68,13 @@ module.exports = async function handler(req, res) {
         time: (cd['Time'] || '').substring(0, 20),
         location: (cd['Location'] || '').substring(0, 200),
         num_people: String(cd['Number of People'] || '').substring(0, 20),
-        notes: (data.notes || '').substring(0, 300)
+        notes: (data.notes || '').substring(0, 300),
       },
       receipt_email: data.clientEmail || undefined,
-      description: `The Glam by Ankita — ${data.clientName || 'Client'}`
+      description: `The Glam by Ankita — ${data.clientName || 'Client'} (${bookingId})`,
     });
 
-    res.json({ client_secret: paymentIntent.client_secret });
+    res.json({ client_secret: paymentIntent.client_secret, booking_id: bookingId });
   } catch (err) {
     console.error('create-payment-intent error:', err.message);
     if (err.message.includes('tampered') || err.message.includes('Invalid token')) {
