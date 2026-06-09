@@ -1039,13 +1039,16 @@
             <div class="fgroup"><label>Appointment Location *</label>
               <div class="check-grid" style="grid-template-columns: 1fr 1fr;">
                 <label class="check-item" style="border-radius:8px;">
-                  <input type="radio" name="appt-location" id="appt-mobile" value="At my location (mobile service — Ankita travels to me)">
+                  <input type="radio" name="appt-location" id="appt-mobile" value="At my location (mobile service — Ankita travels to me)" onchange="toggleTravelNote()">
                   <span>📍 At my location <small style="display:block;font-size:0.75rem;color:var(--text-light);margin-top:2px;">Ankita comes to you</small></span>
                 </label>
                 <label class="check-item" style="border-radius:8px;">
-                  <input type="radio" name="appt-location" id="appt-studio" value="I am willing to travel to Ankita">
+                  <input type="radio" name="appt-location" id="appt-studio" value="I am willing to travel to Ankita" onchange="toggleTravelNote()">
                   <span>🚗 I'm happy to travel <small style="display:block;font-size:0.75rem;color:var(--text-light);margin-top:2px;">You come to Ankita</small></span>
                 </label>
+              </div>
+              <div id="travel-fee-note" style="display:none;margin-top:0.75rem;padding:0.75rem 1rem;background:#fff8f0;border:1.5px solid var(--gold);border-radius:8px;font-size:0.88rem;color:var(--text-dark);line-height:1.6;">
+                🚗 <strong>Travel fee applies</strong> — A travel fee will be discussed and confirmed with you based on your location before your booking is finalised.
               </div>
             </div>
             <div class="frow">
@@ -1879,6 +1882,11 @@
       owner_email:   'nishankn.ankita@gmail.com',
       from_email:    'theglambyankita@gmail.com'
     };
+  }
+
+  function toggleTravelNote() {
+    const isMobile = document.getElementById('appt-mobile').checked;
+    document.getElementById('travel-fee-note').style.display = isMobile ? 'block' : 'none';
   }
 
   function toggleOtherService(cb) {
