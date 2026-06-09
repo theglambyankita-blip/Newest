@@ -239,9 +239,7 @@ export default function PaymentPage() {
         },
       });
 
-      const payEl = els.create("payment", {
-        wallets: { applePay: "never", googlePay: "never" },
-      });
+      const payEl = els.create("payment");
       setStripeObj(stripe);
       setElements(els);
       setScreen("card-ready");

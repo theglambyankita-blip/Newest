@@ -59,7 +59,7 @@ router.post("/create-payment-intent", async (req, res) => {
     const paymentIntent = await stripe.paymentIntents.create({
       amount: Math.round(totalAud * 100),
       currency: "aud",
-      payment_method_types: ["card"],
+      automatic_payment_methods: { enabled: true },
       receipt_email: clientEmail || undefined,
       metadata: {
         client_name:      clientName,
