@@ -20,6 +20,8 @@ export const bookings = pgTable("bookings", {
   paymentMethod: text("payment_method"),
   status: text("status").default("confirmed"),
   stripePaymentIntentId: text("stripe_payment_intent_id"),
+  sendReminder: text("send_reminder").default("false"),
+  reminderSent: text("reminder_sent").default("false"),
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 

@@ -3,10 +3,6 @@ import { db, bookings } from "@workspace/db";
 import { eq, and } from "drizzle-orm";
 import { logger } from "./logger.js";
 
-const SITE_URL = "https://www.theglambyankita.com";
-
-// Track which booking IDs we've reminded today (reset on server restart — fine
-// because we only send inside a 9-10 am window so restarts won't double-send)
 const remindedToday = new Set<number>();
 let lastRemindDate = "";
 
@@ -14,44 +10,28 @@ function getMelbourneDateParts(): { dateStr: string; hour: number } {
   const now = new Date();
   const melb = new Intl.DateTimeFormat("en-AU", {
     timeZone: "Australia/Melbourne",
-    year: "numeric",
-    month: "2-digit",
-    day: "2-digit",
-    hour: "2-digit",
-    hour12: false,
+    year: "numeric", month: "2-digit", day: "2-digit",
+    hour: "2-digit", hour12: false,
   }).formatToParts(now);
   const get = (t: string) => melb.find((p) => p.type === t)?.value ?? "";
-  const dateStr = `${get("year")}-${get("month")}-${get("day")}`;
-  const hour = parseInt(get("hour"), 10);
-  return { dateStr, hour };
+  return { dateStr: `${get("year")}-${get("month")}-${get("day")}`, hour: parseInt(get("hour"), 10) };
 }
 
 function getTomorrowMelbourneDate(): string {
   const now = new Date();
   const melb = new Intl.DateTimeFormat("en-AU", {
     timeZone: "Australia/Melbourne",
-    year: "numeric",
-    month: "2-digit",
-    day: "2-digit",
+    year: "numeric", month: "2-digit", day: "2-digit",
   }).formatToParts(now);
   const get = (t: string) => melb.find((p) => p.type === t)?.value ?? "";
-  const y = parseInt(get("year"), 10);
-  const m = parseInt(get("month"), 10) - 1;
-  const d = parseInt(get("day"), 10);
-  const tomorrow = new Date(y, m, d + 1);
-  const ty = tomorrow.getFullYear();
-  const tm = String(tomorrow.getMonth() + 1).padStart(2, "0");
-  const td = String(tomorrow.getDate()).padStart(2, "0");
-  return `${ty}-${tm}-${td}`;
+  const tomorrow = new Date(parseInt(get("year")), parseInt(get("month")) - 1, parseInt(get("day")) + 1);
+  return `${tomorrow.getFullYear()}-${String(tomorrow.getMonth() + 1).padStart(2, "0")}-${String(tomorrow.getDate()).padStart(2, "0")}`;
 }
 
 async function sendReminders(): Promise<void> {
   const { dateStr, hour } = getMelbourneDateParts();
-
-  // Only send in the 9am hour Melbourne time
   if (hour !== 9) return;
 
-  // Reset tracker each new day
   if (lastRemindDate !== dateStr) {
     remindedToday.clear();
     lastRemindDate = dateStr;
@@ -71,7 +51,9 @@ async function sendReminders(): Promise<void> {
       .where(
         and(
           eq(bookings.bookingDate, tomorrow),
-          eq(bookings.status, "confirmed")
+          eq(bookings.status, "confirmed"),
+          eq(bookings.sendReminder, "true"),
+          eq(bookings.reminderSent, "false")
         )
       );
   } catch (e) {
@@ -81,34 +63,25 @@ async function sendReminders(): Promise<void> {
 
   if (!upcomingBookings.length) return;
 
-  const transporter = nodemailer.createTransport({
-    service: "gmail",
-    auth: { user: gmailUser, pass: gmailPass },
-  });
+  const transporter = nodemailer.createTransport({ service: "gmail", auth: { user: gmailUser, pass: gmailPass } });
 
   for (const booking of upcomingBookings) {
     if (!booking.clientEmail || !booking.id) continue;
     if (remindedToday.has(booking.id)) continue;
 
     const clientName = booking.clientName || "there";
-    const time     = booking.bookingTime  || "";
-    const service  = booking.service      || "your appointment";
-    const location = booking.location     || "";
-    const people   = booking.numPeople    || "";
-
     const rowEntries: [string, string][] = [
-      ["Date",    tomorrow],
-      ...(time     ? [["Time",             time    ] as [string,string]] : []),
-      ...(service  ? [["Service",          service ] as [string,string]] : []),
-      ...(people   ? [["Number of People", people  ] as [string,string]] : []),
-      ...(location ? [["Location",         location] as [string,string]] : []),
+      ["Date", tomorrow],
+      ...(booking.bookingTime  ? [["Time",             booking.bookingTime ] as [string,string]] : []),
+      ...(booking.service      ? [["Service",          booking.service     ] as [string,string]] : []),
+      ...(booking.numPeople    ? [["Number of People", booking.numPeople   ] as [string,string]] : []),
+      ...(booking.location     ? [["Location",         booking.location    ] as [string,string]] : []),
     ];
     const detailRows = rowEntries
       .map(([k, v]) => `<tr>
         <td style="padding:6px 14px;font-weight:600;color:#6b3d2e;background:#fdf0ee;white-space:nowrap;">${k}</td>
         <td style="padding:6px 14px;color:#2c1810;">${v}</td>
-      </tr>`)
-      .join("");
+      </tr>`).join("");
 
     const html = `
       <div style="font-family:sans-serif;max-width:600px;margin:0 auto;background:#fdf8f4;border:1px solid #e8c4bc;border-radius:8px;overflow:hidden;">
@@ -126,8 +99,8 @@ async function sendReminders(): Promise<void> {
         ${detailRows ? `<table style="width:100%;border-collapse:collapse;font-size:0.9rem;margin-top:4px;">${detailRows}</table>` : ""}
         <div style="padding:20px 32px 16px;">
           <p style="font-size:0.88rem;color:#6b3d2e;line-height:1.7;margin:0;">
-            💡 <strong>Quick tips:</strong> Please arrive/be ready with a clean, moisturised face and no eye makeup for the best results.
-            If you have any questions or need to make changes, reply to this email or contact me directly.
+            💡 <strong>Quick tip:</strong> Please arrive/be ready with a clean, moisturised face and no eye makeup for the best results.
+            If you have any questions, reply to this email or contact me directly.
           </p>
         </div>
         <div style="padding:18px 32px;background:#f7e9d0;border-top:1px solid #e8c4bc;">
@@ -147,6 +120,7 @@ async function sendReminders(): Promise<void> {
         subject: `💄 Reminder — your appointment is tomorrow! | The Glam by Ankita`,
         html,
       });
+      await db.update(bookings).set({ reminderSent: "true" }).where(eq(bookings.id, booking.id));
       remindedToday.add(booking.id);
       logger.info({ bookingId: booking.id, clientEmail: booking.clientEmail }, "Reminder sent");
     } catch (e) {
@@ -156,12 +130,9 @@ async function sendReminders(): Promise<void> {
 }
 
 export function startReminderScheduler(): void {
-  // Check every hour
-  const INTERVAL_MS = 60 * 60 * 1000;
-  logger.info("Appointment reminder scheduler started (checks hourly, sends at 9am Melbourne time)");
-  // Run immediately on startup in case the server restarted during the 9am window
+  logger.info("Appointment reminder scheduler started (checks hourly, sends at 9am Melbourne time, only for flagged bookings)");
   sendReminders().catch((e) => logger.error({ e }, "Initial reminder check failed"));
   setInterval(() => {
     sendReminders().catch((e) => logger.error({ e }, "Reminder check failed"));
-  }, INTERVAL_MS);
+  }, 60 * 60 * 1000);
 }

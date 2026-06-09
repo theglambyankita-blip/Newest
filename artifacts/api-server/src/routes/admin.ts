@@ -123,6 +123,11 @@ router.get("/admin", async (req, res) => {
         ? `<span style="background:#f0e8c8;color:#8a6a00;padding:2px 8px;border-radius:20px;font-size:0.75rem;font-weight:700;">Cash</span>`
         : `<span style="background:#e8f4e8;color:#2c6e3f;padding:2px 8px;border-radius:20px;font-size:0.75rem;font-weight:700;">Card</span>`;
     const createdDate = b.createdAt ? new Date(b.createdAt).toLocaleDateString("en-AU", { day:"2-digit", month:"short", year:"numeric" }) : "—";
+    const reminderOn = b.sendReminder === "true";
+    const reminderDone = b.reminderSent === "true";
+    const reminderBtn = reminderDone
+      ? `<span style="font-size:0.78rem;color:#2c6e3f;background:#e8f4e8;padding:3px 10px;border-radius:20px;">✅ Reminder sent</span>`
+      : `<button id="reminder-btn-${idx}" onclick="toggleReminder(${idx},${b.id},event)" style="background:${reminderOn ? "linear-gradient(135deg,#c9a96e,#9e7c4a)" : "none"};border:1.5px solid ${reminderOn ? "#c9a96e" : "#d0b8b0"};color:${reminderOn ? "#fff" : "#9e7c4a"};padding:3px 10px;border-radius:20px;font-size:0.78rem;cursor:pointer;transition:all .2s;">🔔 ${reminderOn ? "Reminder ON" : "Send reminder?"}</button>`;
     return `<tr class="brow" data-idx="${idx}" style="border-bottom:1px solid #f0ddd6;cursor:pointer;" onclick="toggleDetails(${idx})">
       <td style="padding:10px 12px;color:#2c1810;font-weight:600;">${esc(b.clientName || "—")}</td>
       <td style="padding:10px 12px;color:#4a2e22;font-size:0.85rem;">${esc(b.clientEmail || "—")}</td>
@@ -130,7 +135,7 @@ router.get("/admin", async (req, res) => {
       <td style="padding:10px 12px;color:#4a2e22;font-size:0.85rem;white-space:nowrap;">${esc(b.bookingDate || "—")}${b.bookingTime ? ` ${esc(b.bookingTime)}` : ""}</td>
       <td style="padding:10px 12px;color:#4a2e22;font-size:0.85rem;">${b.totalAud ? `A$${Number(b.totalAud).toFixed(2)}` : "—"}</td>
       <td style="padding:10px 12px;">${badge}</td>
-      <td style="padding:10px 12px;color:#aaa;font-size:0.8rem;">${createdDate}</td>
+      <td style="padding:10px 12px;">${reminderBtn}</td>
     </tr>
     <tr class="brow-detail" id="detail-${idx}" style="display:none;background:#fdf8f4;">
       <td colspan="7" style="padding:12px 20px 16px;">
@@ -139,7 +144,7 @@ router.get("/admin", async (req, res) => {
           ${b.numPeople ? `<div><span style="font-weight:700;color:#6b3d2e;">People:</span> ${esc(b.numPeople)}</div>` : ""}
           ${b.stripePaymentIntentId ? `<div><span style="font-weight:700;color:#6b3d2e;">Stripe PI:</span> <span style="font-family:monospace;font-size:0.78rem;">${esc(b.stripePaymentIntentId)}</span></div>` : ""}
           <div><span style="font-weight:700;color:#6b3d2e;">Status:</span> ${esc(b.status || "confirmed")}</div>
-          <div><span style="font-weight:700;color:#6b3d2e;">Created:</span> ${createdDate}</div>
+          <div><span style="font-weight:700;color:#6b3d2e;">Booked on:</span> ${createdDate}</div>
         </div>
         <button onclick="prefillEmail('${esc(b.clientEmail || "")}');event.stopPropagation();" style="margin-top:10px;background:none;border:1px solid #c9a96e;color:#9e7c4a;padding:5px 14px;border-radius:5px;font-size:0.8rem;cursor:pointer;">✉️ Email this client</button>
       </td>
@@ -246,7 +251,7 @@ router.get("/admin", async (req, res) => {
       <div class="table-wrap">
         <table id="bookings-table">
           <thead><tr>
-            <th>Client</th><th>Email</th><th>Service</th><th>Date & Time</th><th>Amount</th><th>Payment</th><th>Booked On</th>
+            <th>Client</th><th>Email</th><th>Service</th><th>Date & Time</th><th>Amount</th><th>Payment</th><th>Reminder</th>
           </tr></thead>
           <tbody id="bookings-tbody">${allBookingRows}</tbody>
         </table>
@@ -297,6 +302,7 @@ const API = '/api';
 const TODAY = new Date().toISOString().split('T')[0];
 
 const ALL_BOOKINGS = ${JSON.stringify(allBookings.map(b => ({
+  id: b.id,
   clientName: b.clientName || "",
   clientEmail: b.clientEmail || "",
   service: b.service || "",
@@ -308,9 +314,37 @@ const ALL_BOOKINGS = ${JSON.stringify(allBookings.map(b => ({
   paymentMethod: b.paymentMethod || "",
   status: b.status || "confirmed",
   stripePaymentIntentId: b.stripePaymentIntentId || "",
+  sendReminder: b.sendReminder || "false",
+  reminderSent: b.reminderSent || "false",
   createdAt: b.createdAt ? new Date(b.createdAt).toLocaleDateString("en-AU") : "",
 }))
 )};
+
+async function toggleReminder(idx, bookingId, event) {
+  event.stopPropagation();
+  const btn = document.getElementById('reminder-btn-' + idx);
+  if (!btn) return;
+  const isOn = btn.textContent.includes('ON');
+  const newVal = !isOn;
+  btn.disabled = true;
+  btn.textContent = '…';
+  try {
+    const res = await fetch(API + '/admin/toggle-reminder?token=' + encodeURIComponent(TOKEN), {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ bookingId, sendReminder: newVal }),
+    });
+    if (!res.ok) throw new Error('Failed');
+    btn.style.background = newVal ? 'linear-gradient(135deg,#c9a96e,#9e7c4a)' : 'none';
+    btn.style.border = '1.5px solid ' + (newVal ? '#c9a96e' : '#d0b8b0');
+    btn.style.color = newVal ? '#fff' : '#9e7c4a';
+    btn.textContent = '🔔 ' + (newVal ? 'Reminder ON' : 'Send reminder?');
+  } catch(e) {
+    btn.textContent = '❌ Error';
+  } finally {
+    btn.disabled = false;
+  }
+}
 
 function toggleDetails(idx) {
   const row = document.getElementById('detail-' + idx);
@@ -509,6 +543,26 @@ router.post("/admin/send-client-email", async (req, res) => {
   } catch (e) {
     console.error("Admin send-client-email error:", e);
     res.status(500).json({ error: "Failed to send email." });
+  }
+});
+
+// ── POST /api/admin/toggle-reminder ─────────────────────────────
+router.post("/admin/toggle-reminder", async (req, res) => {
+  const token = req.query.token as string;
+  const valid = await validateToken(token).catch(() => false);
+  if (!valid) { res.status(403).json({ error: "Unauthorized" }); return; }
+
+  const { bookingId, sendReminder } = req.body as { bookingId?: number; sendReminder?: boolean };
+  if (bookingId == null) { res.status(400).json({ error: "Missing bookingId" }); return; }
+
+  try {
+    await db.update(bookings)
+      .set({ sendReminder: sendReminder ? "true" : "false" })
+      .where(eq(bookings.id, bookingId));
+    res.json({ ok: true });
+  } catch (e) {
+    console.error("Admin toggle-reminder error:", e);
+    res.status(500).json({ error: "Failed to update reminder." });
   }
 });
 
