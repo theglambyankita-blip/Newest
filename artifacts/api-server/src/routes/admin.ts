@@ -127,7 +127,7 @@ router.get("/admin", async (req, res) => {
     const reminderDone = b.reminderSent === "true";
     const reminderBtn = reminderDone
       ? `<span style="font-size:0.78rem;color:#2c6e3f;background:#e8f4e8;padding:3px 10px;border-radius:20px;">✅ Reminder sent</span>`
-      : `<button id="reminder-btn-${idx}" onclick="toggleReminder(${idx},${b.id},event)" style="background:${reminderOn ? "linear-gradient(135deg,#c9a96e,#9e7c4a)" : "none"};border:1.5px solid ${reminderOn ? "#c9a96e" : "#d0b8b0"};color:${reminderOn ? "#fff" : "#9e7c4a"};padding:3px 10px;border-radius:20px;font-size:0.78rem;cursor:pointer;transition:all .2s;">🔔 ${reminderOn ? "Reminder ON" : "Send reminder?"}</button>`;
+      : `<button id="reminder-btn-${idx}" onclick="toggleReminder(${idx},${b.id},event)" style="background:${reminderOn ? "linear-gradient(135deg,#c9a96e,#9e7c4a)" : "none"};border:1.5px solid ${reminderOn ? "#c9a96e" : "#d0b8b0"};color:${reminderOn ? "#fff" : "#9e7c4a"};padding:3px 10px;border-radius:20px;font-size:0.78rem;cursor:pointer;transition:all .2s;">💡 ${reminderOn ? "Prep note ON" : "Add prep note?"}</button>`;
     return `<tr class="brow" data-idx="${idx}" style="border-bottom:1px solid #f0ddd6;cursor:pointer;" onclick="toggleDetails(${idx})">
       <td style="padding:10px 12px;color:#2c1810;font-weight:600;">${esc(b.clientName || "—")}</td>
       <td style="padding:10px 12px;color:#4a2e22;font-size:0.85rem;">${esc(b.clientEmail || "—")}</td>
