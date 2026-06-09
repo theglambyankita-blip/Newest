@@ -2070,7 +2070,7 @@
     err.style.display = 'none';
     btn.disabled = true;
     btn.innerHTML = '<span class="sp-spinner"></span>Processing…';
-    const { error } = await _stripe.confirmPayment({
+    const { error, paymentIntent } = await _stripe.confirmPayment({
       elements: _stripeElements,
       confirmParams: { return_url: window.location.href },
       redirect: 'if_required'
@@ -2084,7 +2084,7 @@
       err.style.animation = 'none'; void err.offsetWidth;
       err.style.animation = '';
     } else {
-      try { await fetch('/api/confirm-payment', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ token: _bookingToken }) }); } catch {}
+      try { await fetch('/api/confirm-payment', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ token: _bookingToken, payment_intent_id: paymentIntent?.id || null }) }); } catch {}
       document.getElementById('pay-card-screen').style.display = 'none';
       _showSuccessCard({});
     }
