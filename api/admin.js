@@ -133,7 +133,7 @@ module.exports = async function handler(req, res) {
         }
       }
       if (!dbSaved) {
-        return res.status(500).json({ error: 'Database unavailable. Please check server configuration.', detail: dbError });
+        return res.status(500).json({ error: 'Database unavailable. Please check server configuration.' });
       }
       return res.json({ ok: true, emailSent, adminUrl });
     }
