@@ -643,6 +643,21 @@
     /* Save details toggle */
     .sp-save-toggle { width: 100%; background: #fdf5f0; border: none; padding: 11px 16px; display: flex; align-items: center; justify-content: space-between; cursor: pointer; color: #6b3d2e; font-size: 0.84rem; font-weight: 700; font-family: 'Nunito', sans-serif; transition: background 0.2s; }
     .sp-save-toggle:hover { background: #fdeee6; }
+
+    /* PIN modal */
+    .sp-pin-overlay { position: fixed; inset: 0; background: rgba(44,24,16,0.55); z-index: 9000; display: flex; align-items: center; justify-content: center; padding: 20px; backdrop-filter: blur(4px); }
+    @keyframes sp-modal-in { from { opacity: 0; transform: scale(0.88) translateY(20px); } to { opacity: 1; transform: none; } }
+    .sp-pin-modal { background: #fff; border-radius: 14px; padding: 32px 28px; max-width: 340px; width: 100%; text-align: center; animation: sp-modal-in 0.3s cubic-bezier(0.175,0.885,0.32,1.275) both; box-shadow: 0 24px 60px rgba(44,24,16,0.25); }
+    .sp-pin-dots { display: flex; justify-content: center; gap: 10px; margin: 18px 0; }
+    .sp-pin-dot { width: 14px; height: 14px; border-radius: 50%; border: 2.5px solid #c9a96e; background: transparent; transition: background 0.2s; }
+    .sp-pin-dot.filled { background: #c9a96e; }
+    .sp-pin-pad { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-top: 16px; }
+    .sp-pin-key { padding: 14px 0; border-radius: 8px; border: 1.5px solid #e8c4bc; background: #fff; font-family: 'Playfair Display', serif; font-size: 1.15rem; font-weight: 700; color: #2c1810; cursor: pointer; transition: all 0.15s; }
+    .sp-pin-key:hover { background: #fdf5f0; border-color: #c9a96e; }
+    .sp-pin-key:active { transform: scale(0.93); background: #f0ddd6; }
+    .sp-pin-key.wide { grid-column: span 2; color: #9e7c4a; font-size: 0.88rem; font-family: 'Nunito', sans-serif; }
+    .sp-pin-key.submit { background: linear-gradient(135deg,#c9a96e,#9e7c4a); border-color: transparent; color: #fff; }
+    .sp-pin-error { color: #c0392b; font-size: 0.82rem; min-height: 18px; margin-top: 4px; }
     #scroll-top-btn {
       position: fixed; bottom: 1.4rem; right: 1.2rem;
       width: 36px; height: 36px; border-radius: 50%;
@@ -665,6 +680,37 @@
 
 <!-- TOAST -->
 <div class="toast" id="toast"></div>
+
+<!-- PIN MODAL -->
+<div id="sp-pin-overlay" class="sp-pin-overlay" style="display:none;" onclick="if(event.target===this){}">
+  <div class="sp-pin-modal">
+    <div style="font-size:2rem;margin-bottom:6px;">🔒</div>
+    <h3 style="font-family:'Playfair Display',serif;color:#2c1810;margin:0 0 4px;font-size:1.15rem;">Welcome back!</h3>
+    <p style="font-size:0.82rem;color:#9e7c4a;margin:0;">Enter your PIN to load your saved details.</p>
+    <div class="sp-pin-dots" id="sp-pin-dots">
+      <div class="sp-pin-dot" id="pd0"></div>
+      <div class="sp-pin-dot" id="pd1"></div>
+      <div class="sp-pin-dot" id="pd2"></div>
+      <div class="sp-pin-dot" id="pd3"></div>
+    </div>
+    <div id="sp-pin-error" class="sp-pin-error"></div>
+    <div class="sp-pin-pad">
+      <button class="sp-pin-key" onclick="_pinKey('1')">1</button>
+      <button class="sp-pin-key" onclick="_pinKey('2')">2</button>
+      <button class="sp-pin-key" onclick="_pinKey('3')">3</button>
+      <button class="sp-pin-key" onclick="_pinKey('4')">4</button>
+      <button class="sp-pin-key" onclick="_pinKey('5')">5</button>
+      <button class="sp-pin-key" onclick="_pinKey('6')">6</button>
+      <button class="sp-pin-key" onclick="_pinKey('7')">7</button>
+      <button class="sp-pin-key" onclick="_pinKey('8')">8</button>
+      <button class="sp-pin-key" onclick="_pinKey('9')">9</button>
+      <button class="sp-pin-key" onclick="_pinBackspace()" style="color:#9e7c4a;font-size:1.1rem;">⌫</button>
+      <button class="sp-pin-key" onclick="_pinKey('0')">0</button>
+      <button class="sp-pin-key submit" onclick="_pinSubmit()">✓</button>
+    </div>
+    <button onclick="_pinForgot()" style="background:none;border:none;color:#bbb;font-size:0.76rem;cursor:pointer;margin-top:16px;font-family:'Nunito',sans-serif;text-decoration:underline;">Forgot PIN? Clear saved details</button>
+  </div>
+</div>
 
 <!-- LIGHTBOX -->
 <div class="lightbox" id="lightbox" onclick="closeLightbox(event)">
@@ -1365,7 +1411,11 @@
             <p style="font-size:0.77rem;color:#9e7c4a;margin:0 0 10px;line-height:1.5;">Saved on this device only — no account needed. Your card details are never stored here.</p>
             <input type="text" id="sp-save-name" placeholder="Your name" style="width:100%;padding:9px 12px;border:1.5px solid #e0c8c0;border-radius:6px;font-size:0.88rem;font-family:'Nunito',sans-serif;margin-bottom:8px;box-sizing:border-box;outline:none;">
             <input type="email" id="sp-save-email" placeholder="Email address" style="width:100%;padding:9px 12px;border:1.5px solid #e0c8c0;border-radius:6px;font-size:0.88rem;font-family:'Nunito',sans-serif;margin-bottom:8px;box-sizing:border-box;outline:none;">
-            <input type="tel" id="sp-save-phone" placeholder="Phone number" style="width:100%;padding:9px 12px;border:1.5px solid #e0c8c0;border-radius:6px;font-size:0.88rem;font-family:'Nunito',sans-serif;margin-bottom:10px;box-sizing:border-box;outline:none;">
+            <input type="tel" id="sp-save-phone" placeholder="Phone number" style="width:100%;padding:9px 12px;border:1.5px solid #e0c8c0;border-radius:6px;font-size:0.88rem;font-family:'Nunito',sans-serif;margin-bottom:8px;box-sizing:border-box;outline:none;">
+            <div style="position:relative;">
+              <input type="password" id="sp-save-pin" placeholder="4-digit PIN (optional)" maxlength="4" inputmode="numeric" pattern="[0-9]*" style="width:100%;padding:9px 12px;border:1.5px solid #e0c8c0;border-radius:6px;font-size:0.88rem;font-family:'Nunito',sans-serif;margin-bottom:4px;box-sizing:border-box;outline:none;" oninput="this.value=this.value.replace(/[^0-9]/g,'').slice(0,4)">
+              <p style="font-size:0.72rem;color:#bbb;margin:0 0 10px;line-height:1.4;">Protects your details on shared devices. Skip if this is your personal phone.</p>
+            </div>
             <button onclick="saveDetails()" style="background:linear-gradient(135deg,#c9a96e,#9e7c4a);border:none;color:#fff;padding:9px 20px;border-radius:6px;font-size:0.87rem;font-weight:700;cursor:pointer;font-family:'Playfair Display',serif;">Save Details</button>
           </div>
         </div>
@@ -1676,14 +1726,15 @@
     try { const d = JSON.parse(localStorage.getItem('glamSavedDetails') || 'null'); return (d && (d.name || d.email || d.phone)) ? d : null; } catch { return null; }
   }
   function saveDetails() {
-    const name = (document.getElementById('sp-save-name').value || '').trim();
+    const name  = (document.getElementById('sp-save-name').value  || '').trim();
     const email = (document.getElementById('sp-save-email').value || '').trim();
     const phone = (document.getElementById('sp-save-phone').value || '').trim();
+    const pin   = (document.getElementById('sp-save-pin').value   || '').trim();
     if (!name && !email && !phone) return;
-    localStorage.setItem('glamSavedDetails', JSON.stringify({ name, email, phone }));
+    if (pin && pin.length !== 4) { showToast('⚠️ PIN must be exactly 4 digits.'); return; }
+    localStorage.setItem('glamSavedDetails', JSON.stringify({ name, email, phone, pin: pin || '' }));
     document.getElementById('sp-save-section').style.display = 'none';
-    const c = document.getElementById('sp-saved-confirm');
-    c.style.display = 'flex';
+    document.getElementById('sp-saved-confirm').style.display = 'flex';
     _showFastBanner({ name, email, phone });
   }
   function clearSavedDetails() {
@@ -1691,19 +1742,76 @@
     document.getElementById('sp-fast-banner').style.display = 'none';
     document.getElementById('sp-save-section').style.display = 'block';
     document.getElementById('sp-saved-confirm').style.display = 'none';
+    _pinClose();
   }
   function toggleSaveForm() {
-    const form = document.getElementById('sp-save-form');
+    const form  = document.getElementById('sp-save-form');
     const arrow = document.getElementById('sp-save-arrow');
-    const open = form.style.display === 'none' || form.style.display === '';
+    const open  = form.style.display === 'none' || form.style.display === '';
     form.style.display = open ? 'block' : 'none';
     arrow.style.transform = open ? 'rotate(180deg)' : '';
   }
   function _showFastBanner(d) {
-    const banner = document.getElementById('sp-fast-banner');
     document.getElementById('sp-banner-name').textContent = 'Welcome back, ' + (d.name || d.email || '') + '!';
     document.getElementById('sp-banner-sub').textContent = [d.email, d.phone].filter(Boolean).join(' · ');
-    banner.style.display = 'flex';
+    document.getElementById('sp-fast-banner').style.display = 'flex';
+  }
+
+  // ── PIN modal ─────────────────────────────────────────────────
+  let _pinBuffer = '', _pinAttempts = 0, _pinCallback = null;
+
+  function _showPinModal(onSuccess) {
+    _pinBuffer = ''; _pinAttempts = 0; _pinCallback = onSuccess;
+    document.getElementById('sp-pin-error').textContent = '';
+    _pinUpdateDots();
+    document.getElementById('sp-pin-overlay').style.display = 'flex';
+  }
+  function _pinClose() {
+    document.getElementById('sp-pin-overlay').style.display = 'none';
+    _pinBuffer = '';
+  }
+  function _pinUpdateDots() {
+    for (let i = 0; i < 4; i++) {
+      const dot = document.getElementById('pd' + i);
+      if (dot) dot.classList.toggle('filled', i < _pinBuffer.length);
+    }
+  }
+  function _pinKey(digit) {
+    if (_pinBuffer.length >= 4) return;
+    _pinBuffer += digit;
+    _pinUpdateDots();
+    document.getElementById('sp-pin-error').textContent = '';
+    if (_pinBuffer.length === 4) setTimeout(_pinSubmit, 200);
+  }
+  function _pinBackspace() {
+    _pinBuffer = _pinBuffer.slice(0, -1);
+    _pinUpdateDots();
+  }
+  function _pinSubmit() {
+    if (_pinBuffer.length < 4) { document.getElementById('sp-pin-error').textContent = 'Enter all 4 digits.'; return; }
+    const saved = _loadSavedDetails();
+    if (!saved) { _pinClose(); return; }
+    if (_pinBuffer === saved.pin) {
+      _pinClose();
+      if (_pinCallback) _pinCallback(saved);
+    } else {
+      _pinAttempts++;
+      _pinBuffer = ''; _pinUpdateDots();
+      const remaining = 3 - _pinAttempts;
+      if (remaining <= 0) {
+        document.getElementById('sp-pin-error').textContent = 'Too many attempts.';
+        setTimeout(() => { _pinForgot(); }, 900);
+      } else {
+        document.getElementById('sp-pin-error').textContent = 'Incorrect PIN. ' + remaining + ' attempt' + (remaining === 1 ? '' : 's') + ' left.';
+        // Shake the dots
+        const dots = document.getElementById('sp-pin-dots');
+        dots.style.animation = 'none'; void dots.offsetWidth;
+        dots.style.animation = 'sp-row-in 0.3s ease';
+      }
+    }
+  }
+  function _pinForgot() {
+    if (confirm('This will clear your saved details and PIN. Continue?')) { clearSavedDetails(); }
   }
 
   // ── Progress stepper ──────────────────────────────────────────
@@ -1844,9 +1952,15 @@
       if (loadingEl) loadingEl.style.display = 'none';
       document.getElementById('booking-content').style.display = 'block';
 
-      // Show fast checkout banner if saved details exist
+      // Show fast checkout banner if saved details exist (PIN-gated if set)
       const saved = _loadSavedDetails();
-      if (saved) _showFastBanner(saved);
+      if (saved) {
+        if (saved.pin) {
+          _showPinModal((unlockedDetails) => _showFastBanner(unlockedDetails));
+        } else {
+          _showFastBanner(saved);
+        }
+      }
 
       if (_isConfirmed) {
         _showSuccessCard(data);
