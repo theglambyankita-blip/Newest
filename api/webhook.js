@@ -192,6 +192,8 @@ module.exports = async function handler(req, res) {
       console.error('Failed to fetch charge receipt URL:', e.message);
     }
 
+    const bookingId = meta.booking_id || null;
+
     // Save booking to DB
     try {
       const db = getPool();
@@ -200,15 +202,17 @@ module.exports = async function handler(req, res) {
           id SERIAL PRIMARY KEY, client_name TEXT, client_email TEXT, service TEXT,
           booking_date TEXT, booking_time TEXT, location TEXT, num_people TEXT,
           total_aud NUMERIC(10,2), payment_method TEXT, status TEXT DEFAULT 'confirmed',
-          stripe_payment_intent_id TEXT, created_at TIMESTAMPTZ DEFAULT NOW()
+          stripe_payment_intent_id TEXT, booking_id TEXT, created_at TIMESTAMPTZ DEFAULT NOW()
         )
       `);
+      try { await db.query('ALTER TABLE bookings ADD COLUMN IF NOT EXISTS booking_id TEXT'); } catch(e) {}
       await db.query(
-        `INSERT INTO bookings (client_name, client_email, service, booking_date, booking_time, location, num_people, total_aud, payment_method, status, stripe_payment_intent_id)
-         VALUES ($1,$2,$3,$4,$5,$6,$7,$8,'card','confirmed',$9)`,
-        [clientName, clientEmail, meta.booking_service || null, meta.booking_date || null,
-         meta.booking_time || null, meta.booking_location || null, meta.booking_people || null,
-         intent.amount / 100, intent.id]
+        `INSERT INTO bookings (client_name, client_email, service, booking_date, booking_time, location, num_people, total_aud, payment_method, status, stripe_payment_intent_id, booking_id)
+         VALUES ($1,$2,$3,$4,$5,$6,$7,$8,'card','confirmed',$9,$10)`,
+        [clientName, clientEmail,
+         meta.service || null, meta.date || null,
+         meta.time || null, meta.location || null, meta.num_people || null,
+         intent.amount / 100, intent.id, bookingId]
       );
     } catch (e) { console.error('DB save booking error:', e); }
 
@@ -226,6 +230,21 @@ module.exports = async function handler(req, res) {
         const receiptLine = receiptUrl
           ? `<p style="margin:8px 0 0;font-size:0.88rem;color:#4a2e22;">Receipt: <a href="${receiptUrl}" style="color:#c9a96e;">${receiptUrl}</a></p>`
           : '';
+
+        const bookingRefSection = bookingId ? `
+        <tr>
+          <td style="padding:16px 32px 0;">
+            <table width="100%" cellpadding="0" cellspacing="0" style="background:linear-gradient(135deg,#fdf8f0,#fff8ec);border:1.5px solid #c9a96e;border-radius:8px;">
+              <tr>
+                <td style="padding:14px 20px;text-align:center;">
+                  <p style="margin:0 0 6px;font-size:0.68rem;font-weight:700;color:#9e7c4a;text-transform:uppercase;letter-spacing:0.16em;">📎 Booking Reference</p>
+                  <p style="margin:0;font-size:1.35rem;font-weight:700;color:#6b3d2e;letter-spacing:0.1em;font-family:'Courier New',monospace;">${bookingId}</p>
+                  <p style="margin:6px 0 0;font-size:0.73rem;color:#9e7c4a;">Quote this ID for any enquiries</p>
+                </td>
+              </tr>
+            </table>
+          </td>
+        </tr>` : '';
 
         // ── Email to Ankita ────────────────────────────────────────────────
         await transporter.sendMail({
@@ -262,6 +281,7 @@ module.exports = async function handler(req, res) {
             </table>
           </td>
         </tr>
+        ${bookingRefSection}
         ${receiptSection}
         ${detailRows ? `
         <tr>
@@ -353,9 +373,23 @@ module.exports = async function handler(req, res) {
             <p style="margin:10px 0 0;font-size:0.95rem;color:#4a2e22;line-height:1.8;">Your payment of <strong>AUD $${amountAud}</strong> has been received and your booking is confirmed. I absolutely can't wait to work with you! ✨</p>
           </td>
         </tr>
+        ${bookingId ? `
+        <tr>
+          <td style="padding:20px 36px 0;">
+            <table width="100%" cellpadding="0" cellspacing="0" style="background:linear-gradient(135deg,#fdf8f0,#fff8ec);border:1.5px solid #c9a96e;border-radius:8px;">
+              <tr>
+                <td style="padding:14px 20px;text-align:center;">
+                  <p style="margin:0 0 6px;font-size:0.68rem;font-weight:700;color:#9e7c4a;text-transform:uppercase;letter-spacing:0.16em;">📎 Your Booking Reference</p>
+                  <p style="margin:0;font-size:1.35rem;font-weight:700;color:#6b3d2e;letter-spacing:0.1em;font-family:'Courier New',monospace;">${bookingId}</p>
+                  <p style="margin:6px 0 0;font-size:0.73rem;color:#9e7c4a;">Keep this for your records · Quote it for any enquiries</p>
+                </td>
+              </tr>
+            </table>
+          </td>
+        </tr>` : ''}
         ${detailRows ? `
         <tr>
-          <td style="padding:24px 36px 0;">
+          <td style="padding:20px 36px 0;">
             <p style="margin:0 0 10px;font-size:0.75rem;font-weight:700;color:#9a7060;text-transform:uppercase;letter-spacing:0.12em;">Your Confirmed Booking</p>
             <table width="100%" cellpadding="0" cellspacing="0" style="border:1px solid #fdeee8;border-radius:6px;overflow:hidden;">${detailRows}</table>
           </td>
