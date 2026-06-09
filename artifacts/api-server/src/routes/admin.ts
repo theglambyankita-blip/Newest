@@ -123,11 +123,12 @@ router.get("/admin", async (req, res) => {
         ? `<span style="background:#f0e8c8;color:#8a6a00;padding:2px 8px;border-radius:20px;font-size:0.75rem;font-weight:700;">Cash</span>`
         : `<span style="background:#e8f4e8;color:#2c6e3f;padding:2px 8px;border-radius:20px;font-size:0.75rem;font-weight:700;">Card</span>`;
     const createdDate = b.createdAt ? new Date(b.createdAt).toLocaleDateString("en-AU", { day:"2-digit", month:"short", year:"numeric" }) : "—";
-    const reminderOn = b.sendReminder === "true";
+    const hasMsg = !!(b.clientMessage && b.clientMessage.trim());
     const reminderDone = b.reminderSent === "true";
-    const reminderBtn = reminderDone
-      ? `<span style="font-size:0.78rem;color:#2c6e3f;background:#e8f4e8;padding:3px 10px;border-radius:20px;">✅ Reminder sent</span>`
-      : `<button id="reminder-btn-${idx}" onclick="toggleReminder(${idx},${b.id},event)" style="background:${reminderOn ? "linear-gradient(135deg,#c9a96e,#9e7c4a)" : "none"};border:1.5px solid ${reminderOn ? "#c9a96e" : "#d0b8b0"};color:${reminderOn ? "#fff" : "#9e7c4a"};padding:3px 10px;border-radius:20px;font-size:0.78rem;cursor:pointer;transition:all .2s;">💡 ${reminderOn ? "Prep note ON" : "Add prep note?"}</button>`;
+    const msgLabel = hasMsg ? "✏️ Edit message" : "💬 Add message";
+    const msgBadge = hasMsg
+      ? `<span style="font-size:0.78rem;color:#6b3d2e;background:#fdf0ee;padding:3px 10px;border-radius:20px;border:1px solid #e8c4bc;">💬 Message set${reminderDone ? " · ✅ Sent" : ""}</span>`
+      : (reminderDone ? `<span style="font-size:0.78rem;color:#2c6e3f;background:#e8f4e8;padding:3px 10px;border-radius:20px;">✅ Reminder sent</span>` : "");
     return `<tr class="brow" data-idx="${idx}" style="border-bottom:1px solid #f0ddd6;cursor:pointer;" onclick="toggleDetails(${idx})">
       <td style="padding:10px 12px;color:#2c1810;font-weight:600;">${esc(b.clientName || "—")}</td>
       <td style="padding:10px 12px;color:#4a2e22;font-size:0.85rem;">${esc(b.clientEmail || "—")}</td>
@@ -135,7 +136,7 @@ router.get("/admin", async (req, res) => {
       <td style="padding:10px 12px;color:#4a2e22;font-size:0.85rem;white-space:nowrap;">${esc(b.bookingDate || "—")}${b.bookingTime ? ` ${esc(b.bookingTime)}` : ""}</td>
       <td style="padding:10px 12px;color:#4a2e22;font-size:0.85rem;">${b.totalAud ? `A$${Number(b.totalAud).toFixed(2)}` : "—"}</td>
       <td style="padding:10px 12px;">${badge}</td>
-      <td style="padding:10px 12px;">${reminderBtn}</td>
+      <td style="padding:10px 12px;">${msgBadge}</td>
     </tr>
     <tr class="brow-detail" id="detail-${idx}" style="display:none;background:#fdf8f4;">
       <td colspan="7" style="padding:12px 20px 16px;">
@@ -146,7 +147,11 @@ router.get("/admin", async (req, res) => {
           <div><span style="font-weight:700;color:#6b3d2e;">Status:</span> ${esc(b.status || "confirmed")}</div>
           <div><span style="font-weight:700;color:#6b3d2e;">Booked on:</span> ${createdDate}</div>
         </div>
-        <button onclick="prefillEmail('${esc(b.clientEmail || "")}');event.stopPropagation();" style="margin-top:10px;background:none;border:1px solid #c9a96e;color:#9e7c4a;padding:5px 14px;border-radius:5px;font-size:0.8rem;cursor:pointer;">✉️ Email this client</button>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px;">
+          <button onclick="prefillEmail('${esc(b.clientEmail || "")}');event.stopPropagation();" style="background:none;border:1px solid #c9a96e;color:#9e7c4a;padding:5px 14px;border-radius:5px;font-size:0.8rem;cursor:pointer;">✉️ Email this client</button>
+          <button onclick="openMessageModal(${b.id},${idx},event)" style="background:none;border:1px solid #c9a96e;color:#9e7c4a;padding:5px 14px;border-radius:5px;font-size:0.8rem;cursor:pointer;">${msgLabel}</button>
+        </div>
+        ${hasMsg ? `<div id="msg-preview-${idx}" style="margin-top:10px;padding:10px 14px;background:#fff9f5;border:1px solid #e8c4bc;border-radius:6px;font-size:0.83rem;color:#4a2e22;line-height:1.6;white-space:pre-wrap;">${esc(b.clientMessage || "")}</div>` : `<div id="msg-preview-${idx}" style="display:none;margin-top:10px;padding:10px 14px;background:#fff9f5;border:1px solid #e8c4bc;border-radius:6px;font-size:0.83rem;color:#4a2e22;line-height:1.6;white-space:pre-wrap;"></div>`}
       </td>
     </tr>`;
   }
@@ -251,7 +256,7 @@ router.get("/admin", async (req, res) => {
       <div class="table-wrap">
         <table id="bookings-table">
           <thead><tr>
-            <th>Client</th><th>Email</th><th>Service</th><th>Date & Time</th><th>Amount</th><th>Payment</th><th>Reminder</th>
+            <th>Client</th><th>Email</th><th>Service</th><th>Date & Time</th><th>Amount</th><th>Payment</th><th>Reminder Msg</th>
           </tr></thead>
           <tbody id="bookings-tbody">${allBookingRows}</tbody>
         </table>
@@ -316,33 +321,62 @@ const ALL_BOOKINGS = ${JSON.stringify(allBookings.map(b => ({
   stripePaymentIntentId: b.stripePaymentIntentId || "",
   sendReminder: b.sendReminder || "false",
   reminderSent: b.reminderSent || "false",
+  clientMessage: b.clientMessage || "",
   createdAt: b.createdAt ? new Date(b.createdAt).toLocaleDateString("en-AU") : "",
 }))
 )};
 
-async function toggleReminder(idx, bookingId, event) {
+let _modalBookingId = null;
+let _modalIdx = null;
+
+function openMessageModal(bookingId, idx, event) {
   event.stopPropagation();
-  const btn = document.getElementById('reminder-btn-' + idx);
-  if (!btn) return;
-  const isOn = btn.textContent.includes('ON');
-  const newVal = !isOn;
-  btn.disabled = true;
-  btn.textContent = '…';
+  _modalBookingId = bookingId;
+  _modalIdx = idx;
+  const b = ALL_BOOKINGS.find(x => x.id === bookingId);
+  document.getElementById('modal-textarea').value = b ? b.clientMessage : '';
+  document.getElementById('modal-client-name').textContent = b ? b.clientName : '';
+  document.getElementById('modal-save-status').textContent = '';
+  document.getElementById('msg-modal-overlay').style.display = 'flex';
+  document.getElementById('modal-textarea').focus();
+}
+
+function closeMessageModal() {
+  document.getElementById('msg-modal-overlay').style.display = 'none';
+  _modalBookingId = null;
+  _modalIdx = null;
+}
+
+async function saveClientMessage() {
+  const msg = document.getElementById('modal-textarea').value.trim();
+  const statusEl = document.getElementById('modal-save-status');
+  const saveBtn = document.getElementById('modal-save-btn');
+  saveBtn.disabled = true;
+  saveBtn.textContent = 'Saving…';
+  statusEl.textContent = '';
   try {
-    const res = await fetch(API + '/admin/toggle-reminder?token=' + encodeURIComponent(TOKEN), {
+    const res = await fetch(API + '/admin/save-client-message?token=' + encodeURIComponent(TOKEN), {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ bookingId, sendReminder: newVal }),
+      body: JSON.stringify({ bookingId: _modalBookingId, message: msg }),
     });
     if (!res.ok) throw new Error('Failed');
-    btn.style.background = newVal ? 'linear-gradient(135deg,#c9a96e,#9e7c4a)' : 'none';
-    btn.style.border = '1.5px solid ' + (newVal ? '#c9a96e' : '#d0b8b0');
-    btn.style.color = newVal ? '#fff' : '#9e7c4a';
-    btn.textContent = '🔔 ' + (newVal ? 'Reminder ON' : 'Send reminder?');
+    const b = ALL_BOOKINGS.find(x => x.id === _modalBookingId);
+    if (b) b.clientMessage = msg;
+    const preview = document.getElementById('msg-preview-' + _modalIdx);
+    if (preview) {
+      preview.textContent = msg;
+      preview.style.display = msg ? '' : 'none';
+    }
+    statusEl.style.color = '#2c6e3f';
+    statusEl.textContent = '✅ Saved!';
+    setTimeout(closeMessageModal, 800);
   } catch(e) {
-    btn.textContent = '❌ Error';
+    statusEl.style.color = '#c0392b';
+    statusEl.textContent = '❌ Could not save. Try again.';
   } finally {
-    btn.disabled = false;
+    saveBtn.disabled = false;
+    saveBtn.textContent = 'Save Message';
   }
 }
 
@@ -466,6 +500,30 @@ async function regenToken() {
   }
 }
 </script>
+
+<!-- Message Modal -->
+<div id="msg-modal-overlay" onclick="if(event.target===this)closeMessageModal()" style="display:none;position:fixed;inset:0;background:rgba(44,24,16,0.45);z-index:1000;align-items:center;justify-content:center;padding:20px;">
+  <div style="background:#fdf8f4;border:1px solid #e8c4bc;border-radius:12px;width:100%;max-width:480px;box-shadow:0 8px 32px rgba(0,0,0,0.18);overflow:hidden;">
+    <div style="background:linear-gradient(135deg,#c9a96e,#9e7c4a);padding:18px 24px;display:flex;align-items:center;justify-content:space-between;">
+      <div>
+        <h3 style="margin:0;color:#fff;font-family:Georgia,serif;font-size:1.05rem;">💬 Message for client</h3>
+        <p id="modal-client-name" style="margin:3px 0 0;color:rgba(255,255,255,0.85);font-size:0.82rem;"></p>
+      </div>
+      <button onclick="closeMessageModal()" style="background:none;border:none;color:#fff;font-size:1.3rem;cursor:pointer;padding:4px 8px;line-height:1;">✕</button>
+    </div>
+    <div style="padding:20px 24px;">
+      <p style="font-size:0.85rem;color:#6b3d2e;margin:0 0 12px;">This message will appear in the client's 9AM reminder email on the day of their appointment.</p>
+      <textarea id="modal-textarea" placeholder="e.g. Please arrive with a clean face, no eye makeup. Park on the street. See you soon! 🌸" style="width:100%;padding:10px 13px;border:1.5px solid #e0c8c0;border-radius:6px;font-size:0.92rem;color:#2c1810;background:#fff;font-family:inherit;outline:none;resize:vertical;min-height:120px;box-sizing:border-box;" onfocus="this.style.borderColor='#c9a96e'" onblur="this.style.borderColor='#e0c8c0'"></textarea>
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-top:14px;gap:10px;flex-wrap:wrap;">
+        <span id="modal-save-status" style="font-size:0.82rem;"></span>
+        <div style="display:flex;gap:8px;">
+          <button onclick="closeMessageModal()" style="background:none;border:1.5px solid #c9a96e;color:#9e7c4a;padding:8px 18px;border-radius:6px;font-size:0.88rem;font-weight:600;cursor:pointer;font-family:inherit;">Cancel</button>
+          <button id="modal-save-btn" onclick="saveClientMessage()" style="background:linear-gradient(135deg,#c9a96e,#9e7c4a);border:none;color:#fff;padding:8px 20px;border-radius:6px;font-size:0.88rem;font-weight:700;cursor:pointer;font-family:Georgia,serif;">Save Message</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
 </body>
 </html>`;
 
@@ -546,23 +604,23 @@ router.post("/admin/send-client-email", async (req, res) => {
   }
 });
 
-// ── POST /api/admin/toggle-reminder ─────────────────────────────
-router.post("/admin/toggle-reminder", async (req, res) => {
+// ── POST /api/admin/save-client-message ─────────────────────────
+router.post("/admin/save-client-message", async (req, res) => {
   const token = req.query.token as string;
   const valid = await validateToken(token).catch(() => false);
   if (!valid) { res.status(403).json({ error: "Unauthorized" }); return; }
 
-  const { bookingId, sendReminder } = req.body as { bookingId?: number; sendReminder?: boolean };
+  const { bookingId, message } = req.body as { bookingId?: number; message?: string };
   if (bookingId == null) { res.status(400).json({ error: "Missing bookingId" }); return; }
 
   try {
     await db.update(bookings)
-      .set({ sendReminder: sendReminder ? "true" : "false" })
+      .set({ clientMessage: message ?? null })
       .where(eq(bookings.id, bookingId));
     res.json({ ok: true });
   } catch (e) {
-    console.error("Admin toggle-reminder error:", e);
-    res.status(500).json({ error: "Failed to update reminder." });
+    console.error("Admin save-client-message error:", e);
+    res.status(500).json({ error: "Failed to save message." });
   }
 });
 

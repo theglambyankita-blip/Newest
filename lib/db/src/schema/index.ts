@@ -22,6 +22,7 @@ export const bookings = pgTable("bookings", {
   stripePaymentIntentId: text("stripe_payment_intent_id"),
   sendReminder: text("send_reminder").default("false"),
   reminderSent: text("reminder_sent").default("false"),
+  clientMessage: text("client_message"),
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 

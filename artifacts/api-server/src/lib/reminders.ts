@@ -96,12 +96,10 @@ async function sendReminders(): Promise<void> {
           <p style="font-size:0.9rem;color:#6b3d2e;line-height:1.7;margin:0 0 4px;">Here are your booking details:</p>
         </div>
         ${detailRows ? `<table style="width:100%;border-collapse:collapse;font-size:0.9rem;margin-top:4px;">${detailRows}</table>` : ""}
-        ${booking.sendReminder === "true" ? `
+        ${booking.clientMessage && booking.clientMessage.trim() ? `
         <div style="padding:20px 32px 16px;background:#fff9f5;border-top:1px solid #f0ddd6;">
-          <p style="font-size:0.88rem;color:#6b3d2e;line-height:1.7;margin:0;">
-            💡 <strong>Quick tip:</strong> Please arrive/be ready with a clean, moisturised face and no eye makeup for the best results.
-            If you have any questions, reply to this email or contact me directly.
-          </p>
+          <p style="font-size:0.88rem;color:#6b3d2e;line-height:1.7;margin:0 0 6px;font-weight:700;">💬 A note from Ankita:</p>
+          <p style="font-size:0.9rem;color:#4a2e22;line-height:1.75;margin:0;white-space:pre-line;">${booking.clientMessage.trim()}</p>
         </div>` : ""}
         <div style="padding:18px 32px;background:#f7e9d0;border-top:1px solid #e8c4bc;">
           <p style="font-size:0.9rem;color:#6b3d2e;margin:0;">
