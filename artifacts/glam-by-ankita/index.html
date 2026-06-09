@@ -1032,7 +1032,20 @@
                 <label class="check-item"><input type="checkbox"><span>Party &amp; Occasion</span></label>
                 <label class="check-item"><input type="checkbox"><span>Bridal &amp; Guest</span></label>
                 <label class="check-item"><input type="checkbox"><span>Festival &amp; Cultural</span></label>
-                <label class="check-item"><input type="checkbox"><span>Other</span></label>
+                <label class="check-item" id="svc-other-label"><input type="checkbox" id="svc-other-check" onchange="toggleOtherService(this)"><span>Other</span></label>
+              </div>
+              <input type="text" id="svc-other-text" placeholder="Please specify your service..." style="display:none;margin-top:0.6rem;width:100%;padding:0.7rem 1rem;border:1.5px solid var(--blush-deep);border-radius:6px;font-size:0.95rem;font-family:inherit;">
+            </div>
+            <div class="fgroup"><label>Appointment Location *</label>
+              <div class="check-grid" style="grid-template-columns: 1fr 1fr;">
+                <label class="check-item" style="border-radius:8px;">
+                  <input type="radio" name="appt-location" id="appt-mobile" value="I'll come to you (mobile service)">
+                  <span>📍 I'll come to you</span>
+                </label>
+                <label class="check-item" style="border-radius:8px;">
+                  <input type="radio" name="appt-location" id="appt-studio" value="Client comes to me (studio)">
+                  <span>🏠 I'll come to your studio</span>
+                </label>
               </div>
             </div>
             <div class="frow">
@@ -1071,7 +1084,7 @@
             <div class="fgroup"><label>Email *</label><input id="collab-email" type="email" placeholder="your@email.com" oninput="clearEmailError('collab-email-error')"><span class="field-error" id="collab-email-error"></span></div>
             <div class="fgroup"><label>Instagram Handle</label><input id="collab-ig" type="text" placeholder="@yourhandle"></div>
             <div class="fgroup"><label>Collaboration Type *</label>
-              <select id="collab-type">
+              <select id="collab-type" onchange="toggleOtherCollab(this)">
                 <option value="">Select...</option>
                 <option>UGC Creation</option>
                 <option>PR Gifting</option>
@@ -1080,6 +1093,7 @@
                 <option>Editorial / Magazine</option>
                 <option>Other</option>
               </select>
+              <input type="text" id="collab-type-other" placeholder="Please specify your collaboration type..." style="display:none;margin-top:0.6rem;width:100%;padding:0.7rem 1rem;border:1.5px solid var(--blush-deep);border-radius:6px;font-size:0.95rem;font-family:inherit;">
             </div>
             <div class="fgroup"><label>Tell Me About The Collaboration</label><textarea id="collab-desc" placeholder="Timeline, deliverables, product details..."></textarea></div>
             <div class="fgroup">
@@ -1821,38 +1835,62 @@
 
   // COLLECT BOOKING FORM DATA
   function getBookingData() {
-    const services = [...document.querySelectorAll('#tab-book input[type=checkbox]:checked')]
-      .map(c => c.closest('.check-item').querySelector('span').textContent).join(', ');
+    const checkedBoxes = [...document.querySelectorAll('#tab-book input[type=checkbox]:checked')];
+    const services = checkedBoxes.map(c => {
+      const label = c.closest('.check-item').querySelector('span').textContent;
+      if (label === 'Other') {
+        const spec = document.getElementById('svc-other-text').value.trim();
+        return spec ? 'Other: ' + spec : 'Other';
+      }
+      return label;
+    }).join(', ');
+    const apptLocationEl = document.querySelector('input[name="appt-location"]:checked');
     return {
-      first_name:    document.getElementById('book-first').value.trim(),
-      last_name:     document.getElementById('book-last').value.trim(),
-      client_email:  document.getElementById('book-email').value.trim(),
-      phone:         document.getElementById('book-phone').value.trim(),
-      contact_method: document.getElementById('book-contact-method').value,
-      preferred_date: document.getElementById('book-date').value,
-      num_people:    document.getElementById('book-people').value,
-      services:      services || 'Not specified',
-      location:      document.getElementById('book-location').value.trim(),
-      postcode:      document.getElementById('book-postcode').value.trim(),
-      referral:      document.getElementById('book-referral').value,
-      vision:        document.getElementById('book-vision').value.trim(),
-      owner_email:   'nishankn.ankita@gmail.com',
-      from_email:    'theglambyankita@gmail.com'
+      first_name:       document.getElementById('book-first').value.trim(),
+      last_name:        document.getElementById('book-last').value.trim(),
+      client_email:     document.getElementById('book-email').value.trim(),
+      phone:            document.getElementById('book-phone').value.trim(),
+      contact_method:   document.getElementById('book-contact-method').value,
+      preferred_date:   document.getElementById('book-date').value,
+      num_people:       document.getElementById('book-people').value,
+      services:         services || 'Not specified',
+      appt_location:    apptLocationEl ? apptLocationEl.value : 'Not specified',
+      location:         document.getElementById('book-location').value.trim(),
+      postcode:         document.getElementById('book-postcode').value.trim(),
+      referral:         document.getElementById('book-referral').value,
+      vision:           document.getElementById('book-vision').value.trim(),
+      owner_email:      'nishankn.ankita@gmail.com',
+      from_email:       'theglambyankita@gmail.com'
     };
   }
 
   // COLLECT COLLAB FORM DATA
   function getCollabData() {
+    const collabTypeVal = document.getElementById('collab-type').value;
+    const collabTypeOther = document.getElementById('collab-type-other').value.trim();
+    const collabType = collabTypeVal === 'Other' && collabTypeOther ? 'Other: ' + collabTypeOther : collabTypeVal;
     return {
       name:          document.getElementById('collab-name').value.trim(),
       brand:         document.getElementById('collab-brand').value.trim(),
       client_email:  document.getElementById('collab-email').value.trim(),
       instagram:     document.getElementById('collab-ig').value.trim(),
-      collab_type:   document.getElementById('collab-type').value,
+      collab_type:   collabType,
       project_desc:  document.getElementById('collab-desc').value.trim(),
       owner_email:   'nishankn.ankita@gmail.com',
       from_email:    'theglambyankita@gmail.com'
     };
+  }
+
+  function toggleOtherService(cb) {
+    const txt = document.getElementById('svc-other-text');
+    txt.style.display = cb.checked ? 'block' : 'none';
+    if (!cb.checked) txt.value = '';
+  }
+
+  function toggleOtherCollab(sel) {
+    const txt = document.getElementById('collab-type-other');
+    txt.style.display = sel.value === 'Other' ? 'block' : 'none';
+    if (sel.value !== 'Other') txt.value = '';
   }
 
   // VALIDATE BASIC FIELDS
