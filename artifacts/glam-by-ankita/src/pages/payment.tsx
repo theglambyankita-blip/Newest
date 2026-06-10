@@ -123,17 +123,6 @@ const BASE = import.meta.env.BASE_URL.replace(/\/$/, "");
 
 type Screen = "loading" | "choose" | "card-loading" | "card-ready" | "paying" | "success-card" | "success-cash" | "error";
 type Booking = ReturnType<typeof normalise>;
-type SavedDetails = { name: string; email: string; phone: string };
-
-function loadSavedDetails(): SavedDetails | null {
-  try {
-    const raw = localStorage.getItem("glamSavedDetails");
-    if (!raw) return null;
-    const d = JSON.parse(raw) as SavedDetails;
-    if (!d.name && !d.email && !d.phone) return null;
-    return d;
-  } catch { return null; }
-}
 
 const fadeUp = { initial: { opacity: 0, y: 18 }, animate: { opacity: 1, y: 0 }, exit: { opacity: 0, y: -10 } };
 const slideRight = { initial: { opacity: 0, x: 40 }, animate: { opacity: 1, x: 0 }, exit: { opacity: 0, x: -40 } };
@@ -149,13 +138,6 @@ export default function PaymentPage() {
   const [paying, setPaying] = useState(false);
   const [cashLoading, setCashLoading] = useState(false);
   const stripeLoaded = useRef(false);
-
-  const [savedDetails, setSavedDetails] = useState<SavedDetails | null>(null);
-  const [showSaveForm, setShowSaveForm] = useState(false);
-  const [saveForm, setSaveForm] = useState({ name: "", email: "", phone: "" });
-  const [detailsSaved, setDetailsSaved] = useState(false);
-
-  useEffect(() => { setSavedDetails(loadSavedDetails()); }, []);
 
   useEffect(() => {
     try {
@@ -173,15 +155,6 @@ export default function PaymentPage() {
       setScreen("choose");
     } catch { setErrorMsg("Something went wrong loading your booking. Please contact Ankita directly."); setScreen("error"); }
   }, []);
-
-  function handleSaveDetails() {
-    const details: SavedDetails = { name: saveForm.name.trim(), email: saveForm.email.trim(), phone: saveForm.phone.trim() };
-    if (!details.name && !details.email && !details.phone) return;
-    localStorage.setItem("glamSavedDetails", JSON.stringify(details));
-    setSavedDetails(details); setShowSaveForm(false); setDetailsSaved(true);
-  }
-
-  function handleClearDetails() { localStorage.removeItem("glamSavedDetails"); setSavedDetails(null); setDetailsSaved(false); }
 
   async function initStripe() {
     if (stripeLoaded.current) return;
@@ -336,24 +309,6 @@ export default function PaymentPage() {
 
       <div style={{ maxWidth: 560, margin: "0 auto", padding: "24px 16px 60px" }}>
 
-        {/* Fast checkout banner */}
-        <AnimatePresence>
-          {savedDetails && screen !== "loading" && (
-            <motion.div key="saved-banner" initial={{ opacity: 0, y: -12, height: 0 }} animate={{ opacity: 1, y: 0, height: "auto" }} exit={{ opacity: 0, y: -12, height: 0 }} transition={{ duration: 0.3 }}
-              style={{ background: "#fff", border: "1.5px solid #c9a96e", borderRadius: 10, padding: "14px 18px", marginBottom: 18, display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 10, overflow: "hidden" }}>
-              <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-                <motion.div animate={{ scale: [1, 1.1, 1] }} transition={{ repeat: Infinity, duration: 2.5, ease: "easeInOut" }}
-                  style={{ width: 36, height: 36, borderRadius: "50%", background: "linear-gradient(135deg,#c9a96e,#9e7c4a)", display: "flex", alignItems: "center", justifyContent: "center", color: "#fff", fontSize: "1rem", flexShrink: 0 }}>👤</motion.div>
-                <div>
-                  <div style={{ fontWeight: 700, color: "#2c1810", fontSize: "0.9rem" }}>Welcome back, {savedDetails.name || savedDetails.email}!</div>
-                  <div style={{ fontSize: "0.78rem", color: "#9e7c4a" }}>{[savedDetails.email, savedDetails.phone].filter(Boolean).join(" · ")}</div>
-                </div>
-              </div>
-              <motion.button whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }} onClick={handleClearDetails}
-                style={{ background: "none", border: "none", color: "#c9a96e", fontSize: "0.78rem", cursor: "pointer", textDecoration: "underline", flexShrink: 0 }}>Not you?</motion.button>
-            </motion.div>
-          )}
-        </AnimatePresence>
 
         {screen === "loading" && (
           <div style={{ textAlign: "center", padding: "48px 0", color: "#6b3d2e" }}>
@@ -460,45 +415,6 @@ export default function PaymentPage() {
                 )}
               </AnimatePresence>
 
-              {/* Save details for next time */}
-              <AnimatePresence>
-                {screen === "card-ready" && !savedDetails && !detailsSaved && (
-                  <motion.div key="save-form" initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: "auto" }} transition={{ duration: 0.3 }}
-                    style={{ marginTop: 18, border: "1px solid #e8c4bc", borderRadius: 8, overflow: "hidden" }}>
-                    <motion.button whileHover={{ background: "#fdeee6" }} onClick={() => setShowSaveForm(v => !v)}
-                      style={{ width: "100%", background: "#fdf5f0", border: "none", padding: "11px 16px", display: "flex", alignItems: "center", justifyContent: "space-between", cursor: "pointer", color: "#6b3d2e", fontSize: "0.85rem", fontWeight: 600, fontFamily: "inherit" }}>
-                      <span>💾 Save your details for faster checkout next time</span>
-                      <motion.span animate={{ rotate: showSaveForm ? 180 : 0 }} transition={{ duration: 0.25 }} style={{ fontSize: "0.78rem", color: "#c9a96e" }}>▼</motion.span>
-                    </motion.button>
-                    <AnimatePresence>
-                      {showSaveForm && (
-                        <motion.div key="save-fields" initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: "auto" }} exit={{ opacity: 0, height: 0 }} transition={{ duration: 0.25 }}
-                          style={{ padding: "14px 16px", background: "#fff", overflow: "hidden" }}>
-                          <p style={{ fontSize: "0.78rem", color: "#9e7c4a", margin: "0 0 12px", lineHeight: 1.5 }}>Saved on this device only — no account needed. Your card details are never stored here.</p>
-                          {(["name", "email", "phone"] as const).map((field, i) => (
-                            <motion.input key={field} initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.06 }}
-                              type={field === "email" ? "email" : field === "phone" ? "tel" : "text"}
-                              placeholder={field === "name" ? "Your name" : field === "email" ? "Email address" : "Phone number"}
-                              value={saveForm[field]} onChange={e => setSaveForm(f => ({ ...f, [field]: e.target.value }))}
-                              style={{ width: "100%", padding: "9px 12px", border: "1.5px solid #e0c8c0", borderRadius: 6, fontSize: "0.9rem", color: "#2c1810", background: "#fff", fontFamily: "inherit", outline: "none", marginBottom: 8, boxSizing: "border-box" }} />
-                          ))}
-                          <motion.button whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.97 }} onClick={handleSaveDetails}
-                            style={{ background: "linear-gradient(135deg,#c9a96e,#9e7c4a)", border: "none", color: "#fff", padding: "9px 20px", borderRadius: 6, fontSize: "0.88rem", fontWeight: 700, cursor: "pointer", fontFamily: "Georgia,serif" }}>
-                            Save Details
-                          </motion.button>
-                        </motion.div>
-                      )}
-                    </AnimatePresence>
-                  </motion.div>
-                )}
-                {screen === "card-ready" && (savedDetails || detailsSaved) && (
-                  <motion.div key="saved-confirm" initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}
-                    style={{ marginTop: 14, padding: "10px 14px", background: "#f0fff4", border: "1px solid #a8e6b8", borderRadius: 8, display: "flex", alignItems: "center", justifyContent: "space-between", fontSize: "0.82rem" }}>
-                    <span style={{ color: "#2c6e3f" }}>✅ Details saved for faster checkout next time</span>
-                    <button onClick={handleClearDetails} style={{ background: "none", border: "none", color: "#9e7c4a", fontSize: "0.78rem", cursor: "pointer", textDecoration: "underline" }}>Clear</button>
-                  </motion.div>
-                )}
-              </AnimatePresence>
 
               <motion.button onClick={handlePay} disabled={paying || screen !== "card-ready"}
                 whileHover={screen === "card-ready" && !paying ? { scale: 1.02, boxShadow: "0 6px 24px rgba(201,169,110,0.45)" } : {}}

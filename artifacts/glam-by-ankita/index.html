@@ -1402,28 +1402,6 @@
           </div>
           <p style="text-align:center;font-size:0.76rem;color:#bbb;margin-top:10px;">Secured by Stripe · Your card details are never stored by us.</p>
         </div>
-        <!-- Save details section (hidden if already saved) -->
-        <div id="sp-save-section" style="border:1px solid #e8c4bc;border-radius:8px;overflow:hidden;margin-top:4px;">
-          <button class="sp-save-toggle" onclick="toggleSaveForm()">
-            <span>💾 Save your details for faster checkout next time</span>
-            <span id="sp-save-arrow" style="color:#c9a96e;font-size:0.78rem;transition:transform 0.25s;">▼</span>
-          </button>
-          <div id="sp-save-form" style="display:none;padding:14px 16px;background:#fff;">
-            <p style="font-size:0.77rem;color:#9e7c4a;margin:0 0 10px;line-height:1.5;">Saved on this device only — no account needed. Your card details are never stored here.</p>
-            <input type="text" id="sp-save-name" placeholder="Your name" style="width:100%;padding:9px 12px;border:1.5px solid #e0c8c0;border-radius:6px;font-size:0.88rem;font-family:'Nunito',sans-serif;margin-bottom:8px;box-sizing:border-box;outline:none;">
-            <input type="email" id="sp-save-email" placeholder="Email address" style="width:100%;padding:9px 12px;border:1.5px solid #e0c8c0;border-radius:6px;font-size:0.88rem;font-family:'Nunito',sans-serif;margin-bottom:8px;box-sizing:border-box;outline:none;">
-            <input type="tel" id="sp-save-phone" placeholder="Phone number" style="width:100%;padding:9px 12px;border:1.5px solid #e0c8c0;border-radius:6px;font-size:0.88rem;font-family:'Nunito',sans-serif;margin-bottom:8px;box-sizing:border-box;outline:none;">
-            <div style="position:relative;">
-              <input type="password" id="sp-save-pin" placeholder="4-digit PIN (optional)" maxlength="4" inputmode="numeric" pattern="[0-9]*" style="width:100%;padding:9px 12px;border:1.5px solid #e0c8c0;border-radius:6px;font-size:0.88rem;font-family:'Nunito',sans-serif;margin-bottom:4px;box-sizing:border-box;outline:none;" oninput="this.value=this.value.replace(/[^0-9]/g,'').slice(0,4)">
-              <p style="font-size:0.72rem;color:#bbb;margin:0 0 10px;line-height:1.4;">Protects your details on shared devices. Skip if this is your personal phone.</p>
-            </div>
-            <button onclick="saveDetails()" style="background:linear-gradient(135deg,#c9a96e,#9e7c4a);border:none;color:#fff;padding:9px 20px;border-radius:6px;font-size:0.87rem;font-weight:700;cursor:pointer;font-family:'Playfair Display',serif;">Save Details</button>
-          </div>
-        </div>
-        <div id="sp-saved-confirm" style="display:none;margin-top:8px;padding:10px 14px;background:#f0fff4;border:1px solid #a8e6b8;border-radius:8px;display:none;align-items:center;justify-content:space-between;font-size:0.81rem;">
-          <span style="color:#2c6e3f;">✅ Details saved for faster checkout next time</span>
-          <button onclick="clearSavedDetails()" style="background:none;border:none;color:#9e7c4a;font-size:0.77rem;cursor:pointer;text-decoration:underline;font-family:'Nunito',sans-serif;">Clear</button>
-        </div>
       </div>
 
       <!-- ③a Success: card payment -->
