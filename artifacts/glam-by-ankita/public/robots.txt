@@ -1,3 +1,7 @@
 User-agent: *
 Allow: /
+Disallow: /sign-in
+Disallow: /sign-up
+Disallow: /account
+Disallow: /api/
 Sitemap: https://www.theglambyankita.com/sitemap.xml
