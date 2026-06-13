@@ -109,6 +109,7 @@ router.get("/admin", async (req, res) => {
     .catch(() => []);
 
   const today = new Date().toISOString().split("T")[0];
+  const thisMonthPrefix = today.slice(0, 7);
 
   const upcoming = allBookings.filter(
     (b) => b.bookingDate && b.bookingDate >= today,
@@ -116,6 +117,29 @@ router.get("/admin", async (req, res) => {
   const past = allBookings.filter(
     (b) => !b.bookingDate || b.bookingDate < today,
   );
+  const cardPayments = allBookings.filter((b) => b.paymentMethod === "card");
+  const thisMonth = allBookings.filter(
+    (b) => b.bookingDate && b.bookingDate.startsWith(thisMonthPrefix),
+  );
+
+  const view = ((req.query.view as string) || "all").toLowerCase();
+  const displayedBookings =
+    view === "upcoming" ? upcoming
+    : view === "past" ? past
+    : view === "card" ? cardPayments
+    : view === "thismonth" ? thisMonth
+    : allBookings;
+
+  const viewLabels: Record<string, string> = {
+    all: "All Bookings",
+    upcoming: "Upcoming Bookings",
+    past: "Past Bookings",
+    card: "Card Payments",
+    thismonth: "This Month's Bookings",
+  };
+
+  const baseUrl = `/api/admin?token=${encodeURIComponent(token)}`;
+  const viewUrl = (v: string) => v === "all" ? baseUrl : `${baseUrl}&view=${v}`;
 
   function bookingRow(b: (typeof allBookings)[0], idx: number) {
     const badge =
@@ -156,17 +180,15 @@ router.get("/admin", async (req, res) => {
     </tr>`;
   }
 
-  const allBookingRows = allBookings.map((b, i) => bookingRow(b, i)).join("");
+  const allBookingRows = displayedBookings.map((b, i) => bookingRow(b, i)).join("");
 
   const totalRevenue = allBookings
     .filter((b) => b.paymentMethod === "card" && b.totalAud)
     .reduce((sum, b) => sum + Number(b.totalAud || 0), 0);
 
-  const thisMonthPrefix = today.slice(0, 7);
-  const thisMonthRevenue = allBookings
-    .filter((b) => b.totalAud && b.bookingDate && b.bookingDate.startsWith(thisMonthPrefix))
+  const thisMonthRevenue = thisMonth
+    .filter((b) => b.totalAud)
     .reduce((sum, b) => sum + Number(b.totalAud || 0), 0);
-  const thisMonthCount = allBookings.filter((b) => b.bookingDate && b.bookingDate.startsWith(thisMonthPrefix)).length;
 
   const html = `<!DOCTYPE html>
 <html lang="en">
@@ -185,7 +207,7 @@ router.get("/admin", async (req, res) => {
   .header h1{font-family:Georgia,serif;font-size:1.5rem;margin-bottom:4px;}
   .header p{font-size:0.85rem;opacity:0.88;}
   .stats{display:flex;gap:16px;flex-wrap:wrap;margin-top:20px;}
-  .stat{background:rgba(255,255,255,0.18);border-radius:8px;padding:12px 20px;text-align:center;min-width:100px;cursor:pointer;transition:background .2s,transform .15s;border:2px solid transparent;user-select:none;}
+  .stat{background:rgba(255,255,255,0.18);border-radius:8px;padding:12px 20px;text-align:center;min-width:100px;cursor:pointer;transition:background .2s,transform .15s;border:2px solid transparent;user-select:none;text-decoration:none;color:inherit;display:block;}
   .stat:hover{background:rgba(255,255,255,0.28);transform:translateY(-1px);}
   .stat.active{background:rgba(255,255,255,0.35);border-color:rgba(255,255,255,0.55);}
   .stat-val{font-family:Georgia,serif;font-size:1.6rem;font-weight:700;}
@@ -197,7 +219,7 @@ router.get("/admin", async (req, res) => {
   .search-input{padding:8px 13px;border:1.5px solid #e0c8c0;border-radius:6px;font-size:0.88rem;color:#2c1810;background:#fff;outline:none;transition:border-color .2s;flex:1;min-width:200px;}
   .search-input:focus{border-color:#c9a96e;}
   select.filter-sel{padding:8px 12px;border:1.5px solid #e0c8c0;border-radius:6px;font-size:0.88rem;color:#2c1810;background:#fff;outline:none;cursor:pointer;}
-  .tab-btn{padding:7px 14px;border:1.5px solid #e0c8c0;border-radius:6px;font-size:0.85rem;font-weight:600;color:#6b3d2e;background:#fff;cursor:pointer;transition:all .18s;font-family:inherit;white-space:nowrap;}
+  .tab-btn{padding:7px 14px;border:1.5px solid #e0c8c0;border-radius:6px;font-size:0.85rem;font-weight:600;color:#6b3d2e;background:#fff;cursor:pointer;transition:all .18s;font-family:inherit;white-space:nowrap;text-decoration:none;display:inline-block;}
   .tab-btn:hover{border-color:#c9a96e;background:#fdf5f0;}
   .tab-btn.tab-active{background:linear-gradient(135deg,#c9a96e,#9e7c4a);color:#fff;border-color:transparent;}
   .tab-btn.tab-csv{border-color:#c9a96e;color:#9e7c4a;}
@@ -240,22 +262,22 @@ router.get("/admin", async (req, res) => {
   <h1>✦ Admin Dashboard</h1>
   <p>View and manage all bookings, send emails to clients.</p>
   <div class="stats">
-    <div class="stat active" id="stat-all" onclick="statClick('all')" title="Show all bookings"><div class="stat-val">${allBookings.length}</div><div class="stat-lbl">Total Bookings</div></div>
-    <div class="stat" id="stat-upcoming" onclick="statClick('upcoming')" title="Filter to upcoming bookings"><div class="stat-val">${upcoming.length}</div><div class="stat-lbl">Upcoming</div></div>
-    <div class="stat" id="stat-revenue" onclick="statClick('card')" title="Filter to card payments"><div class="stat-val">A$${totalRevenue.toFixed(2)}</div><div class="stat-lbl">Total Revenue</div></div>
-    <div class="stat" id="stat-month" onclick="statClick('thismonth')" title="Filter to this month"><div class="stat-val">A$${thisMonthRevenue.toFixed(2)}</div><div class="stat-lbl">This Month</div></div>
+    <a class="stat ${view==='all'?'active':''}" href="${viewUrl('all')}"><div class="stat-val">${allBookings.length}</div><div class="stat-lbl">Total Bookings</div></a>
+    <a class="stat ${view==='upcoming'?'active':''}" href="${viewUrl('upcoming')}"><div class="stat-val">${upcoming.length}</div><div class="stat-lbl">Upcoming</div></a>
+    <a class="stat ${view==='card'?'active':''}" href="${viewUrl('card')}"><div class="stat-val">A$${totalRevenue.toFixed(2)}</div><div class="stat-lbl">Total Revenue</div></a>
+    <a class="stat ${view==='thismonth'?'active':''}" href="${viewUrl('thismonth')}"><div class="stat-val">A$${thisMonthRevenue.toFixed(2)}</div><div class="stat-lbl">This Month</div></a>
   </div>
 </div>
 
 <div class="content">
 
   <div class="section">
-    <div class="section-title">📋 All Bookings</div>
+    <div class="section-title">📋 ${viewLabels[view] || "All Bookings"} <span style="font-size:0.8rem;font-weight:400;color:#9e7c4a;font-family:'Nunito',sans-serif;">(${displayedBookings.length})</span></div>
     <div class="toolbar">
       <input class="search-input" id="search-input" type="text" placeholder="🔍 Search name, email, service or booking ID…" oninput="filterTable()">
-      <button class="tab-btn tab-active" id="tab-all" onclick="setTimeTab('')">All (${allBookings.length})</button>
-      <button class="tab-btn" id="tab-upcoming" onclick="setTimeTab('upcoming')">Upcoming (${upcoming.length})</button>
-      <button class="tab-btn" id="tab-past" onclick="setTimeTab('past')">Past (${past.length})</button>
+      <a class="tab-btn ${view==='all'?'tab-active':''}" href="${viewUrl('all')}">All (${allBookings.length})</a>
+      <a class="tab-btn ${view==='upcoming'?'tab-active':''}" href="${viewUrl('upcoming')}">Upcoming (${upcoming.length})</a>
+      <a class="tab-btn ${view==='past'?'tab-active':''}" href="${viewUrl('past')}">Past (${past.length})</a>
       <button class="tab-btn tab-csv" onclick="exportCSV()">⬇ CSV</button>
     </div>
     <div class="card">
@@ -391,55 +413,6 @@ function toggleDetails(idx) {
   if (row) row.style.display = row.style.display === 'none' ? '' : 'none';
 }
 
-let _filterTime = '';
-let _filterPm = '';
-
-function _matchFilter(b, q, pm, ft) {
-  const matchQ = !q || [b.clientName, b.clientEmail, b.service, b.location, String(b.id||'')].join(' ').toLowerCase().includes(q);
-  const matchPm = !pm || b.paymentMethod === pm;
-  const matchFt = !ft ||
-    (ft === 'upcoming' && b.bookingDate >= TODAY) ||
-    (ft === 'past' && (!b.bookingDate || b.bookingDate < TODAY)) ||
-    (ft === 'thismonth' && b.bookingDate && b.bookingDate.startsWith(TODAY.slice(0,7))) ||
-    (ft === 'card' && b.paymentMethod === 'card');
-  return matchQ && matchPm && matchFt;
-}
-
-function setTimeTab(val) {
-  _filterTime = val;
-  _filterPm = '';
-  ['tab-all','tab-upcoming','tab-past'].forEach(id => {
-    const el = document.getElementById(id);
-    if (el) el.classList.remove('tab-active');
-  });
-  const tabMap = {'':'tab-all','upcoming':'tab-upcoming','past':'tab-past'};
-  const activeTab = tabMap[val];
-  if (activeTab) document.getElementById(activeTab).classList.add('tab-active');
-  ['stat-all','stat-upcoming','stat-revenue','stat-month'].forEach(id => {
-    const el = document.getElementById(id);
-    if (el) el.classList.remove('active');
-  });
-  if (val === '') document.getElementById('stat-all').classList.add('active');
-  if (val === 'upcoming') document.getElementById('stat-upcoming').classList.add('active');
-  filterTable();
-}
-
-function statClick(type) {
-  ['stat-all','stat-upcoming','stat-revenue','stat-month'].forEach(id => {
-    const el = document.getElementById(id);
-    if (el) el.classList.remove('active');
-  });
-  ['tab-all','tab-upcoming','tab-past'].forEach(id => {
-    const el = document.getElementById(id);
-    if (el) el.classList.remove('tab-active');
-  });
-  if (type === 'all') { _filterTime = ''; _filterPm = ''; document.getElementById('stat-all').classList.add('active'); document.getElementById('tab-all').classList.add('tab-active'); }
-  else if (type === 'upcoming') { _filterTime = 'upcoming'; _filterPm = ''; document.getElementById('stat-upcoming').classList.add('active'); document.getElementById('tab-upcoming').classList.add('tab-active'); }
-  else if (type === 'card') { _filterTime = 'card'; _filterPm = ''; document.getElementById('stat-revenue').classList.add('active'); }
-  else if (type === 'thismonth') { _filterTime = 'thismonth'; _filterPm = ''; document.getElementById('stat-month').classList.add('active'); }
-  filterTable();
-}
-
 function filterTable() {
   const q = document.getElementById('search-input').value.toLowerCase();
   const rows = document.querySelectorAll('.brow');
@@ -448,7 +421,7 @@ function filterTable() {
   rows.forEach((row, i) => {
     const b = ALL_BOOKINGS[i];
     if (!b) return;
-    const show = _matchFilter(b, q, _filterPm, _filterTime);
+    const show = !q || [b.clientName, b.clientEmail, b.service, b.location, String(b.id||'')].join(' ').toLowerCase().includes(q);
     row.style.display = show ? '' : 'none';
     if (details[i]) details[i].style.display = 'none';
     if (show) visible++;
@@ -458,7 +431,9 @@ function filterTable() {
 
 function exportCSV() {
   const q = document.getElementById('search-input').value.toLowerCase();
-  const filtered = ALL_BOOKINGS.filter(b => _matchFilter(b, q, _filterPm, _filterTime));
+  const filtered = ALL_BOOKINGS.filter(b =>
+    !q || [b.clientName, b.clientEmail, b.service, b.location, String(b.id||'')].join(' ').toLowerCase().includes(q)
+  );
   const headers = ['Name','Email','Service','Date','Time','Location','People','Amount (AUD)','Payment','Status','Booked On'];
   const rows = filtered.map(b => [
     b.clientName, b.clientEmail, b.service, b.bookingDate, b.bookingTime,
