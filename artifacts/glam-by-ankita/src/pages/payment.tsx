@@ -294,7 +294,7 @@ export default function PaymentPage() {
   );
 
   const isCardScreen = screen === "card-loading" || screen === "card-ready" || screen === "paying";
-  const progressStep: 1 | 2 | 3 = screen === "success-card" || screen === "success-cash" ? 3 : isCardScreen ? 2 : 1;
+  const progressStep: 1 | 2 | 3 = isCardScreen ? 2 : 1;
 
   return (
     <div style={page}>
