@@ -578,29 +578,80 @@ async function sendEmail() {
   }
 }
 
-async function loadGallery() {
-  const grid = document.getElementById('gal-grid');
-  try {
-    const res = await fetch(API + '/gallery/list');
-    const photos = await res.json();
-    if (!photos.length) {
-      grid.innerHTML = '<div style="color:#9e7c4a;font-size:0.85rem;padding:20px 0;">No photos uploaded yet. Use the form above to add your first photo.</div>';
-      return;
-    }
-    grid.innerHTML = photos.map(function(p) {
-      return '<div style="position:relative;border-radius:8px;overflow:hidden;aspect-ratio:3/4;background:#f0ddd6;box-shadow:0 2px 8px rgba(0,0,0,0.08);">' +
-        '<img src="/gallery/' + p.filename + '" alt="' + p.title + '" style="width:100%;height:100%;object-fit:cover;display:block;">' +
-        '<div class="gal-overlay" style="position:absolute;inset:0;background:linear-gradient(to top,rgba(0,0,0,0.78) 0%,transparent 55%);opacity:0;transition:opacity 0.2s;display:flex;flex-direction:column;justify-content:flex-end;padding:10px;">' +
-          '<div style="font-size:0.73rem;color:#fff;font-weight:700;line-height:1.3;">' + p.title + '</div>' +
-          '<div style="font-size:0.68rem;color:rgba(255,255,255,0.8);margin-top:2px;text-transform:capitalize;">' + p.category + '</div>' +
-          '<button onclick="deleteGalleryPhoto(\'' + p.filename + '\')" style="margin-top:6px;background:rgba(200,50,50,0.9);color:#fff;border:none;padding:4px 10px;border-radius:4px;font-size:0.7rem;cursor:pointer;font-family:inherit;">🗑 Delete</button>' +
-        '</div></div>';
-    }).join('');
-    grid.querySelectorAll('.gal-overlay').forEach(function(overlay) {
-      const card = overlay.parentElement;
+var _galleryPhotos = [];
+var _dragSrcIdx = null;
+
+function renderGallery() {
+  var grid = document.getElementById('gal-grid');
+  if (!_galleryPhotos.length) {
+    grid.innerHTML = '<div style="color:#9e7c4a;font-size:0.85rem;padding:20px 0;">No photos uploaded yet. Use the form above to add your first photo.</div>';
+    return;
+  }
+  grid.innerHTML = _galleryPhotos.map(function(p, i) {
+    return '<div class="gal-card" draggable="true" data-idx="' + i + '" data-filename="' + p.filename + '" ' +
+      'style="position:relative;border-radius:8px;overflow:hidden;aspect-ratio:3/4;background:#f0ddd6;box-shadow:0 2px 8px rgba(0,0,0,0.08);cursor:grab;transition:outline 0.1s;">' +
+      '<div style="position:absolute;top:6px;right:6px;z-index:2;background:rgba(255,255,255,0.75);border-radius:4px;padding:2px 5px;font-size:0.8rem;color:#9e7c4a;cursor:grab;line-height:1;">⠿</div>' +
+      '<img src="/gallery/' + p.filename + '" alt="' + p.title + '" style="width:100%;height:100%;object-fit:cover;display:block;pointer-events:none;">' +
+      '<div class="gal-overlay" style="position:absolute;inset:0;background:linear-gradient(to top,rgba(0,0,0,0.78) 0%,transparent 55%);opacity:0;transition:opacity 0.2s;display:flex;flex-direction:column;justify-content:flex-end;padding:10px;">' +
+        '<div style="font-size:0.73rem;color:#fff;font-weight:700;line-height:1.3;">' + p.title + '</div>' +
+        '<div style="font-size:0.68rem;color:rgba(255,255,255,0.8);margin-top:2px;text-transform:capitalize;">' + p.category + '</div>' +
+        '<button onclick="deleteGalleryPhoto(\'' + p.filename + '\')" style="margin-top:6px;background:rgba(200,50,50,0.9);color:#fff;border:none;padding:4px 10px;border-radius:4px;font-size:0.7rem;cursor:pointer;font-family:inherit;">🗑 Delete</button>' +
+      '</div>' +
+    '</div>';
+  }).join('');
+
+  grid.querySelectorAll('.gal-card').forEach(function(card) {
+    card.addEventListener('dragstart', function(e) {
+      _dragSrcIdx = parseInt(card.dataset.idx);
+      card.style.opacity = '0.45';
+      e.dataTransfer.effectAllowed = 'move';
+    });
+    card.addEventListener('dragend', function() {
+      card.style.opacity = '';
+      grid.querySelectorAll('.gal-card').forEach(function(c) { c.style.outline = ''; });
+    });
+    card.addEventListener('dragover', function(e) {
+      e.preventDefault();
+      e.dataTransfer.dropEffect = 'move';
+      grid.querySelectorAll('.gal-card').forEach(function(c) { c.style.outline = ''; });
+      card.style.outline = '2px solid #c9a96e';
+    });
+    card.addEventListener('dragleave', function() { card.style.outline = ''; });
+    card.addEventListener('drop', function(e) {
+      e.preventDefault();
+      var targetIdx = parseInt(card.dataset.idx);
+      if (_dragSrcIdx === null || _dragSrcIdx === targetIdx) return;
+      var moved = _galleryPhotos.splice(_dragSrcIdx, 1)[0];
+      _galleryPhotos.splice(targetIdx, 0, moved);
+      _dragSrcIdx = null;
+      renderGallery();
+      saveGalleryOrder();
+    });
+    var overlay = card.querySelector('.gal-overlay');
+    if (overlay) {
       card.addEventListener('mouseenter', function() { overlay.style.opacity = '1'; });
       card.addEventListener('mouseleave', function() { overlay.style.opacity = '0'; });
+    }
+  });
+}
+
+async function saveGalleryOrder() {
+  var filenames = _galleryPhotos.map(function(p) { return p.filename; });
+  try {
+    await fetch(API + '/admin/gallery/reorder?token=' + encodeURIComponent(TOKEN), {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ filenames: filenames })
     });
+  } catch(e) {}
+}
+
+async function loadGallery() {
+  var grid = document.getElementById('gal-grid');
+  try {
+    var res = await fetch(API + '/gallery/list');
+    _galleryPhotos = await res.json();
+    renderGallery();
   } catch(e) {
     grid.innerHTML = '<div style="color:#c0392b;font-size:0.85rem;padding:20px 0;">Failed to load gallery.</div>';
   }
@@ -834,6 +885,28 @@ router.post(
     res.json({ ok: true, filename: req.file.filename });
   }
 );
+
+// ── PUT /api/admin/gallery/reorder ───────────────────────────────
+router.put("/admin/gallery/reorder", async (req, res) => {
+  const token = req.query.token as string;
+  const valid = await validateToken(token).catch(() => false);
+  if (!valid) { res.status(403).json({ error: "Unauthorized" }); return; }
+
+  const { filenames } = req.body as { filenames?: string[] };
+  if (!Array.isArray(filenames)) { res.status(400).json({ error: "Invalid request" }); return; }
+
+  const meta = readGalleryMeta();
+  const reordered: GalleryMeta[] = [];
+  filenames.forEach((fn) => {
+    const item = meta.find((m) => m.filename === fn);
+    if (item) reordered.push(item);
+  });
+  meta.forEach((m) => {
+    if (!reordered.find((r) => r.filename === m.filename)) reordered.push(m);
+  });
+  writeGalleryMeta(reordered);
+  res.json({ ok: true });
+});
 
 // ── DELETE /api/admin/gallery/:filename ──────────────────────────
 router.delete("/admin/gallery/:filename", async (req, res) => {
