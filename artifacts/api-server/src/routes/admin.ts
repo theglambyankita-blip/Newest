@@ -390,9 +390,32 @@ router.get("/admin", async (req, res) => {
           </div>
         </div>
       </div>
-      <h3 style="font-size:0.95rem;color:#6b3d2e;margin:0 0 14px;font-family:Georgia,serif;">Uploaded Photos</h3>
+      <h3 style="font-size:0.95rem;color:#6b3d2e;margin:0 0 14px;font-family:Georgia,serif;">Uploaded Photos <span style="font-size:0.8rem;font-weight:400;color:#9e7c4a;font-family:'Nunito',sans-serif;">— drag to reorder, hover to edit or delete</span></h3>
       <div id="gal-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:12px;">
         <div style="color:#9e7c4a;font-size:0.85rem;padding:20px 0;">Loading…</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- GALLERY EDIT MODAL -->
+  <div id="gal-edit-overlay" style="display:none;position:fixed;inset:0;background:rgba(44,24,16,0.55);z-index:999;align-items:center;justify-content:center;padding:20px;">
+    <div style="background:#fff;border-radius:10px;padding:28px 28px 22px;max-width:400px;width:100%;box-shadow:0 8px 40px rgba(0,0,0,0.22);position:relative;">
+      <button onclick="closeGalEditModal()" style="position:absolute;top:14px;right:16px;background:none;border:none;font-size:1.3rem;color:#9e7c4a;cursor:pointer;line-height:1;">✕</button>
+      <h3 style="font-family:Georgia,serif;color:#6b3d2e;margin:0 0 18px;font-size:1.05rem;">✏️ Edit Photo Details</h3>
+      <div class="field"><label>Title</label><input type="text" id="gal-edit-title" placeholder="e.g. Soft Glam"></div>
+      <div class="field"><label>Category</label>
+        <select id="gal-edit-cat" class="filter-sel" style="width:100%;">
+          <option value="glam">Glam</option>
+          <option value="bridal">Bridal</option>
+          <option value="editorial">Editorial</option>
+          <option value="festival">Festival</option>
+        </select>
+      </div>
+      <div class="field"><label>Description (optional)</label><input type="text" id="gal-edit-desc" placeholder="Brief description of the look"></div>
+      <div style="display:flex;gap:10px;margin-top:18px;align-items:center;flex-wrap:wrap;">
+        <button class="btn" onclick="saveGalEdit()">Save Changes ✦</button>
+        <button class="btn-outline" onclick="closeGalEditModal()">Cancel</button>
+        <span id="gal-edit-status" style="font-size:0.83rem;"></span>
       </div>
     </div>
   </div>
@@ -592,10 +615,13 @@ function renderGallery() {
       'style="position:relative;border-radius:8px;overflow:hidden;aspect-ratio:3/4;background:#f0ddd6;box-shadow:0 2px 8px rgba(0,0,0,0.08);cursor:grab;transition:outline 0.1s;">' +
       '<div style="position:absolute;top:6px;right:6px;z-index:2;background:rgba(255,255,255,0.75);border-radius:4px;padding:2px 5px;font-size:0.8rem;color:#9e7c4a;cursor:grab;line-height:1;">⠿</div>' +
       '<img src="/gallery/' + p.filename + '" alt="' + p.title + '" style="width:100%;height:100%;object-fit:cover;display:block;pointer-events:none;">' +
-      '<div class="gal-overlay" style="position:absolute;inset:0;background:linear-gradient(to top,rgba(0,0,0,0.78) 0%,transparent 55%);opacity:0;transition:opacity 0.2s;display:flex;flex-direction:column;justify-content:flex-end;padding:10px;">' +
+      '<div class="gal-overlay" style="position:absolute;inset:0;background:linear-gradient(to top,rgba(0,0,0,0.78) 0%,transparent 50%);opacity:0;transition:opacity 0.2s;display:flex;flex-direction:column;justify-content:flex-end;padding:10px;">' +
         '<div style="font-size:0.73rem;color:#fff;font-weight:700;line-height:1.3;">' + p.title + '</div>' +
         '<div style="font-size:0.68rem;color:rgba(255,255,255,0.8);margin-top:2px;text-transform:capitalize;">' + p.category + '</div>' +
-        '<button onclick="deleteGalleryPhoto(\'' + p.filename + '\')" style="margin-top:6px;background:rgba(200,50,50,0.9);color:#fff;border:none;padding:4px 10px;border-radius:4px;font-size:0.7rem;cursor:pointer;font-family:inherit;">🗑 Delete</button>' +
+        '<div style="display:flex;gap:5px;margin-top:7px;">' +
+          '<button onclick="openGalEditModal(\'' + p.filename + '\',' + i + ',event)" style="background:rgba(201,169,110,0.92);color:#fff;border:none;padding:4px 9px;border-radius:4px;font-size:0.7rem;cursor:pointer;font-family:inherit;">✏️ Edit</button>' +
+          '<button onclick="deleteGalleryPhoto(\'' + p.filename + '\')" style="background:rgba(200,50,50,0.9);color:#fff;border:none;padding:4px 9px;border-radius:4px;font-size:0.7rem;cursor:pointer;font-family:inherit;">🗑</button>' +
+        '</div>' +
       '</div>' +
     '</div>';
   }).join('');
@@ -644,6 +670,54 @@ async function saveGalleryOrder() {
       body: JSON.stringify({ filenames: filenames })
     });
   } catch(e) {}
+}
+
+var _galEditFilename = null;
+
+function openGalEditModal(filename, idx, ev) {
+  ev.stopPropagation();
+  _galEditFilename = filename;
+  var p = _galleryPhotos[idx];
+  document.getElementById('gal-edit-title').value = p ? p.title : '';
+  document.getElementById('gal-edit-desc').value = p ? (p.desc || '') : '';
+  var catSel = document.getElementById('gal-edit-cat');
+  catSel.value = p ? (p.category || 'glam') : 'glam';
+  document.getElementById('gal-edit-status').textContent = '';
+  var overlay = document.getElementById('gal-edit-overlay');
+  overlay.style.display = 'flex';
+  document.getElementById('gal-edit-title').focus();
+}
+
+function closeGalEditModal() {
+  document.getElementById('gal-edit-overlay').style.display = 'none';
+  _galEditFilename = null;
+}
+
+async function saveGalEdit() {
+  var status = document.getElementById('gal-edit-status');
+  var title = document.getElementById('gal-edit-title').value.trim();
+  var category = document.getElementById('gal-edit-cat').value;
+  var desc = document.getElementById('gal-edit-desc').value.trim();
+  if (!title) { status.textContent = '⚠️ Title required'; status.style.color = '#c0392b'; return; }
+  status.textContent = 'Saving…'; status.style.color = '#9e7c4a';
+  try {
+    var res = await fetch(API + '/admin/gallery/' + encodeURIComponent(_galEditFilename) + '/meta?token=' + encodeURIComponent(TOKEN), {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ title: title, category: category, desc: desc })
+    });
+    var data = await res.json();
+    if (data.ok) {
+      var idx = _galleryPhotos.findIndex(function(p) { return p.filename === _galEditFilename; });
+      if (idx !== -1) { _galleryPhotos[idx].title = title; _galleryPhotos[idx].category = category; _galleryPhotos[idx].desc = desc; }
+      closeGalEditModal();
+      renderGallery();
+    } else {
+      status.textContent = '❌ ' + (data.error || 'Failed'); status.style.color = '#c0392b';
+    }
+  } catch(e) {
+    status.textContent = '❌ Failed'; status.style.color = '#c0392b';
+  }
 }
 
 async function loadGallery() {
@@ -885,6 +959,31 @@ router.post(
     res.json({ ok: true, filename: req.file.filename });
   }
 );
+
+// ── PUT /api/admin/gallery/:filename/meta ────────────────────────
+router.put("/admin/gallery/:filename/meta", async (req, res) => {
+  const token = req.query.token as string;
+  const valid = await validateToken(token).catch(() => false);
+  if (!valid) { res.status(403).json({ error: "Unauthorized" }); return; }
+
+  const { filename } = req.params;
+  if (!filename || filename.includes("/") || filename.includes("..")) {
+    res.status(400).json({ error: "Invalid filename" }); return;
+  }
+
+  const { title, category, desc } = req.body as { title?: string; category?: string; desc?: string };
+  if (!title) { res.status(400).json({ error: "Title is required" }); return; }
+
+  const meta = readGalleryMeta();
+  const idx = meta.findIndex((m) => m.filename === filename);
+  if (idx === -1) { res.status(404).json({ error: "Photo not found" }); return; }
+
+  meta[idx].title = title;
+  meta[idx].category = category || meta[idx].category;
+  meta[idx].desc = desc ?? "";
+  writeGalleryMeta(meta);
+  res.json({ ok: true });
+});
 
 // ── PUT /api/admin/gallery/reorder ───────────────────────────────
 router.put("/admin/gallery/reorder", async (req, res) => {
