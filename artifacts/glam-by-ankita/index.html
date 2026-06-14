@@ -965,6 +965,10 @@
       <div class="photo-item" data-cat="festival" data-title="Festival Vibes" data-desc="Festival glitter and glow" onclick="openLightbox(this)">
         <div class="photo-ph">✨<div style="font-size:0.7rem;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;color:var(--text-light);margin-top:0.5rem;">Coming Soon</div></div>
       </div>
+      <div class="photo-item" data-cat="glam" data-title="Soft Glam with a Pop of Blue Liner" data-desc="Soft pink mauve eyeshadow with a sharp blue-violet wing liner" onclick="openLightbox(this)">
+        <img src="/gallery/image_1781426379509.jpeg" alt="Soft Glam with Blue Wing Liner">
+        <div class="photo-overlay"><div class="photo-overlay-txt">Soft Glam ✦ Blue Wing<br><small>Pastel Pink &amp; Graphic Liner</small></div></div>
+      </div>
       <div class="photo-item" data-cat="glam" data-title="Soft Glam" data-desc="Everyday soft glam look" onclick="openLightbox(this)">
         <img src="/soft-glam-1.jpeg" alt="Soft Glam">
         <div class="photo-overlay"><div class="photo-overlay-txt">Soft Glam</div></div>
@@ -1471,6 +1475,28 @@
   // PAGE NAVIGATION
   const validPages = ['home','about','services','gallery','contact'];
 
+  let _galleryLoaded = false;
+  async function loadDynamicGallery() {
+    if (_galleryLoaded) return;
+    _galleryLoaded = true;
+    try {
+      const res = await fetch('/api/gallery/list');
+      const photos = await res.json();
+      if (!photos || !photos.length) return;
+      const grid = document.getElementById('photoGrid');
+      photos.forEach(p => {
+        const el = document.createElement('div');
+        el.className = 'photo-item';
+        el.dataset.cat = p.category || 'glam';
+        el.dataset.title = p.title || '';
+        el.dataset.desc = p.desc || '';
+        el.onclick = () => openLightbox(el);
+        el.innerHTML = `<img src="/gallery/${p.filename}" alt="${p.title}"><div class="photo-overlay"><div class="photo-overlay-txt">${p.title}</div></div>`;
+        grid.appendChild(el);
+      });
+    } catch(e) {}
+  }
+
   function showPage(pageId, btn, pushState) {
     if (!validPages.includes(pageId)) pageId = 'home';
     document.querySelectorAll('.page').forEach(p => { p.classList.remove('active'); p.style.display = ''; });
@@ -1483,6 +1509,7 @@
       const btns = document.querySelectorAll('.sitenav-tabs button');
       if (btns[map[pageId]]) btns[map[pageId]].classList.add('active');
     }
+    if (pageId === 'gallery') loadDynamicGallery();
     window.scrollTo({top:0, behavior:'smooth'});
     setTimeout(() => triggerAnims(), 100);
     if (pushState !== false) {

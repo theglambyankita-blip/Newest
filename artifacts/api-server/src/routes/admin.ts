@@ -3,10 +3,52 @@ import nodemailer from "nodemailer";
 import { randomUUID } from "crypto";
 import { db, adminTokens, bookings } from "@workspace/db";
 import { eq, desc } from "drizzle-orm";
+import multer from "multer";
+import path from "path";
+import fs from "fs";
 
 const router = Router();
 
 const ADMIN_EMAIL = "nishankn.ankita@gmail.com";
+
+// ── Gallery setup ─────────────────────────────────────────────────
+const GALLERY_DIR = path.join(process.cwd(), "artifacts/glam-by-ankita/public/gallery");
+if (!fs.existsSync(GALLERY_DIR)) fs.mkdirSync(GALLERY_DIR, { recursive: true });
+
+const galleryStorage = multer.diskStorage({
+  destination: (_req, _file, cb) => cb(null, GALLERY_DIR),
+  filename: (_req, file, cb) => {
+    const ext = path.extname(file.originalname).toLowerCase() || ".jpg";
+    cb(null, `gallery-${Date.now()}${ext}`);
+  },
+});
+const uploadMiddleware = multer({
+  storage: galleryStorage,
+  limits: { fileSize: 15 * 1024 * 1024 },
+  fileFilter: (_req, file, cb) => {
+    if (file.mimetype.startsWith("image/")) cb(null, true);
+    else cb(new Error("Only image files are allowed"));
+  },
+});
+
+interface GalleryMeta {
+  filename: string;
+  title: string;
+  category: string;
+  desc: string;
+  uploadedAt: string;
+}
+
+function readGalleryMeta(): GalleryMeta[] {
+  const metaPath = path.join(GALLERY_DIR, "gallery.json");
+  if (!fs.existsSync(metaPath)) return [];
+  try { return JSON.parse(fs.readFileSync(metaPath, "utf8")); }
+  catch { return []; }
+}
+
+function writeGalleryMeta(items: GalleryMeta[]) {
+  fs.writeFileSync(path.join(GALLERY_DIR, "gallery.json"), JSON.stringify(items, null, 2));
+}
 const SITE_URL = "https://www.theglambyankita.com";
 
 function createTransporter() {
@@ -317,6 +359,45 @@ router.get("/admin", async (req, res) => {
   </div>
 
   <div class="section">
+    <div class="section-title">🖼️ Gallery Manager</div>
+    <div class="card" style="padding:20px 24px;">
+      <div style="margin-bottom:24px;padding-bottom:20px;border-bottom:1px solid #f0ddd6;">
+        <h3 style="font-size:0.95rem;color:#6b3d2e;margin:0 0 14px;font-family:Georgia,serif;">Upload New Photo</h3>
+        <div style="display:grid;gap:10px;">
+          <div style="display:flex;gap:10px;flex-wrap:wrap;">
+            <div class="field" style="margin:0;flex:1;min-width:180px;">
+              <label style="font-size:0.8rem;">Photo Title</label>
+              <input type="text" id="gal-title" placeholder="e.g. Soft Glam with Blue Liner">
+            </div>
+            <div class="field" style="margin:0;">
+              <label style="font-size:0.8rem;">Category</label>
+              <select id="gal-cat" class="filter-sel">
+                <option value="glam">Glam</option>
+                <option value="bridal">Bridal</option>
+                <option value="editorial">Editorial</option>
+                <option value="festival">Festival</option>
+              </select>
+            </div>
+          </div>
+          <div class="field" style="margin:0;">
+            <label style="font-size:0.8rem;">Description (optional)</label>
+            <input type="text" id="gal-desc" placeholder="Brief description of the look">
+          </div>
+          <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;">
+            <input type="file" id="gal-file" accept="image/*" style="font-size:0.85rem;color:#4a2e22;">
+            <button class="btn" id="gal-upload-btn" onclick="uploadGalleryPhoto()">Upload Photo ✦</button>
+            <span id="gal-upload-status" style="font-size:0.83rem;"></span>
+          </div>
+        </div>
+      </div>
+      <h3 style="font-size:0.95rem;color:#6b3d2e;margin:0 0 14px;font-family:Georgia,serif;">Uploaded Photos</h3>
+      <div id="gal-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:12px;">
+        <div style="color:#9e7c4a;font-size:0.85rem;padding:20px 0;">Loading…</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="section">
     <div class="section-title">🔑 Admin Access Link</div>
     <div class="card" style="padding:20px 24px;">
       <p style="font-size:0.9rem;color:#4a2e22;margin-bottom:16px;">Regenerate your admin link. The new link will be emailed to you, and this one will stop working immediately.</p>
@@ -497,6 +578,79 @@ async function sendEmail() {
   }
 }
 
+async function loadGallery() {
+  const grid = document.getElementById('gal-grid');
+  try {
+    const res = await fetch(API + '/gallery/list');
+    const photos = await res.json();
+    if (!photos.length) {
+      grid.innerHTML = '<div style="color:#9e7c4a;font-size:0.85rem;padding:20px 0;">No photos uploaded yet. Use the form above to add your first photo.</div>';
+      return;
+    }
+    grid.innerHTML = photos.map(function(p) {
+      return '<div style="position:relative;border-radius:8px;overflow:hidden;aspect-ratio:3/4;background:#f0ddd6;box-shadow:0 2px 8px rgba(0,0,0,0.08);">' +
+        '<img src="/gallery/' + p.filename + '" alt="' + p.title + '" style="width:100%;height:100%;object-fit:cover;display:block;">' +
+        '<div class="gal-overlay" style="position:absolute;inset:0;background:linear-gradient(to top,rgba(0,0,0,0.78) 0%,transparent 55%);opacity:0;transition:opacity 0.2s;display:flex;flex-direction:column;justify-content:flex-end;padding:10px;">' +
+          '<div style="font-size:0.73rem;color:#fff;font-weight:700;line-height:1.3;">' + p.title + '</div>' +
+          '<div style="font-size:0.68rem;color:rgba(255,255,255,0.8);margin-top:2px;text-transform:capitalize;">' + p.category + '</div>' +
+          '<button onclick="deleteGalleryPhoto(\'' + p.filename + '\')" style="margin-top:6px;background:rgba(200,50,50,0.9);color:#fff;border:none;padding:4px 10px;border-radius:4px;font-size:0.7rem;cursor:pointer;font-family:inherit;">🗑 Delete</button>' +
+        '</div></div>';
+    }).join('');
+    grid.querySelectorAll('.gal-overlay').forEach(function(overlay) {
+      const card = overlay.parentElement;
+      card.addEventListener('mouseenter', function() { overlay.style.opacity = '1'; });
+      card.addEventListener('mouseleave', function() { overlay.style.opacity = '0'; });
+    });
+  } catch(e) {
+    grid.innerHTML = '<div style="color:#c0392b;font-size:0.85rem;padding:20px 0;">Failed to load gallery.</div>';
+  }
+}
+
+async function uploadGalleryPhoto() {
+  const file = document.getElementById('gal-file').files[0];
+  const title = document.getElementById('gal-title').value.trim();
+  const category = document.getElementById('gal-cat').value;
+  const desc = document.getElementById('gal-desc').value.trim();
+  const status = document.getElementById('gal-upload-status');
+  if (!file) { status.textContent = '⚠️ Please select a photo'; status.style.color='#c0392b'; return; }
+  if (!title) { status.textContent = '⚠️ Please add a title'; status.style.color='#c0392b'; return; }
+  const btn = document.getElementById('gal-upload-btn');
+  btn.disabled = true; btn.textContent = 'Uploading…';
+  status.textContent = '';
+  const formData = new FormData();
+  formData.append('photo', file);
+  formData.append('title', title);
+  formData.append('category', category);
+  formData.append('desc', desc);
+  try {
+    const res = await fetch(API + '/admin/upload-gallery?token=' + encodeURIComponent(TOKEN), { method:'POST', body:formData });
+    const data = await res.json();
+    if (data.ok) {
+      status.textContent = '✅ Uploaded!'; status.style.color='#2c6e3f';
+      document.getElementById('gal-file').value='';
+      document.getElementById('gal-title').value='';
+      document.getElementById('gal-desc').value='';
+      loadGallery();
+    } else {
+      status.textContent = '❌ ' + (data.error||'Upload failed'); status.style.color='#c0392b';
+    }
+  } catch(e) {
+    status.textContent = '❌ Upload failed'; status.style.color='#c0392b';
+  } finally {
+    btn.disabled=false; btn.textContent='Upload Photo ✦';
+  }
+}
+
+async function deleteGalleryPhoto(filename) {
+  if (!confirm('Delete this photo from the gallery?')) return;
+  const res = await fetch(API + '/admin/gallery/' + encodeURIComponent(filename) + '?token=' + encodeURIComponent(TOKEN), { method:'DELETE' });
+  const data = await res.json();
+  if (data.ok) loadGallery();
+  else alert('Delete failed: ' + (data.error||'Unknown error'));
+}
+
+loadGallery();
+
 async function regenToken() {
   const btn = document.getElementById('regen-btn');
   const status = document.getElementById('regen-status');
@@ -654,6 +808,50 @@ router.post("/admin/regenerate-token", async (req, res) => {
     console.error("Admin regen token error:", e);
     res.status(500).json({ error: "Failed to regenerate token." });
   }
+});
+
+// ── GET /api/gallery/list — public, used by frontend ────────────
+router.get("/gallery/list", (_req, res) => {
+  res.json(readGalleryMeta());
+});
+
+// ── POST /api/admin/upload-gallery ───────────────────────────────
+router.post(
+  "/admin/upload-gallery",
+  async (req, res, next) => {
+    const token = req.query.token as string;
+    const valid = await validateToken(token).catch(() => false);
+    if (!valid) { res.status(403).json({ error: "Unauthorized" }); return; }
+    next();
+  },
+  uploadMiddleware.single("photo"),
+  (req, res) => {
+    if (!req.file) { res.status(400).json({ error: "No file uploaded" }); return; }
+    const { title = "Untitled", category = "glam", desc = "" } = req.body as Record<string, string>;
+    const meta = readGalleryMeta();
+    meta.unshift({ filename: req.file.filename, title, category, desc, uploadedAt: new Date().toISOString() });
+    writeGalleryMeta(meta);
+    res.json({ ok: true, filename: req.file.filename });
+  }
+);
+
+// ── DELETE /api/admin/gallery/:filename ──────────────────────────
+router.delete("/admin/gallery/:filename", async (req, res) => {
+  const token = req.query.token as string;
+  const valid = await validateToken(token).catch(() => false);
+  if (!valid) { res.status(403).json({ error: "Unauthorized" }); return; }
+
+  const { filename } = req.params;
+  if (!filename || filename.includes("/") || filename.includes("..")) {
+    res.status(400).json({ error: "Invalid filename" }); return;
+  }
+
+  const filepath = path.join(GALLERY_DIR, filename);
+  if (fs.existsSync(filepath)) fs.unlinkSync(filepath);
+
+  const meta = readGalleryMeta().filter((p) => p.filename !== filename);
+  writeGalleryMeta(meta);
+  res.json({ ok: true });
 });
 
 // ── POST /api/admin/init — create first token if none exists ─────
