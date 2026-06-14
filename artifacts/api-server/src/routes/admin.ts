@@ -43,6 +43,7 @@ interface GalleryMeta {
   desc: string;
   uploadedAt: string;
   featured?: boolean;
+  objectPosition?: string;
 }
 
 function readGalleryMeta(): GalleryMeta[] {
@@ -418,6 +419,16 @@ router.get("/admin", async (req, res) => {
         </select>
       </div>
       <div class="field"><label>Description (optional)</label><input type="text" id="gal-edit-desc" placeholder="Brief description of the look"></div>
+      <div class="field" style="margin-top:14px;">
+        <label style="display:block;margin-bottom:7px;">Focus Point <span style="font-weight:400;color:#9e7c4a;font-size:0.78rem;">(click dot to recentre)</span></label>
+        <div style="display:flex;gap:12px;align-items:center;">
+          <div id="gal-pos-grid" style="display:grid;grid-template-columns:repeat(3,30px);gap:5px;flex-shrink:0;"></div>
+          <div style="flex:1;height:90px;border-radius:6px;overflow:hidden;background:#f0ddd6;border:1px solid #e8c4bc;position:relative;">
+            <img id="gal-pos-preview-img" src="" alt="" style="width:100%;height:100%;object-fit:cover;display:block;transition:object-position 0.25s;">
+          </div>
+        </div>
+        <p style="font-size:0.72rem;color:#9e7c4a;margin:5px 0 0;">Adjust which part of the photo is visible in the card</p>
+      </div>
       <div style="display:flex;gap:10px;margin-top:18px;align-items:center;flex-wrap:wrap;">
         <button class="btn" onclick="saveGalEdit()">Save Changes ✦</button>
         <button class="btn-outline" onclick="closeGalEditModal()">Cancel</button>
@@ -621,7 +632,7 @@ function renderGallery() {
       'style="position:relative;border-radius:8px;overflow:hidden;aspect-ratio:3/4;background:#f0ddd6;box-shadow:0 2px 8px rgba(0,0,0,0.08);cursor:grab;transition:outline 0.1s;">' +
       '<div style="position:absolute;top:6px;right:6px;z-index:2;background:rgba(255,255,255,0.75);border-radius:4px;padding:2px 5px;font-size:0.8rem;color:#9e7c4a;cursor:grab;line-height:1;">⠿</div>' +
       (p.featured ? '<div style="position:absolute;top:6px;left:6px;z-index:2;background:rgba(201,169,110,0.95);border-radius:4px;padding:2px 7px;font-size:0.68rem;color:#fff;font-weight:700;line-height:1.4;">⭐ Featured</div>' : '') +
-      '<img src="/gallery/' + p.filename + '" alt="' + p.title + '" style="width:100%;height:100%;object-fit:cover;display:block;pointer-events:none;">' +
+      '<img src="/gallery/' + p.filename + '" alt="' + p.title + '" style="width:100%;height:100%;object-fit:cover;object-position:' + (p.objectPosition || 'center center') + ';display:block;pointer-events:none;">' +
       '<div class="gal-overlay" style="position:absolute;inset:0;background:linear-gradient(to top,rgba(0,0,0,0.78) 0%,transparent 50%);opacity:0;transition:opacity 0.2s;display:flex;flex-direction:column;justify-content:flex-end;padding:10px;">' +
         '<div style="font-size:0.73rem;color:#fff;font-weight:700;line-height:1.3;">' + p.title + '</div>' +
         '<div style="font-size:0.68rem;color:rgba(255,255,255,0.8);margin-top:2px;text-transform:capitalize;">' + p.category + '</div>' +
@@ -692,6 +703,48 @@ async function toggleFeatured(filename, idx, ev) {
   } catch(e) {}
 }
 
+var _galEditPos = 'center center';
+var _galPosOptions = [
+  ['left top','center top','right top'],
+  ['left center','center center','right center'],
+  ['left bottom','center bottom','right bottom']
+];
+
+function initPosGrid(filename, currentPos) {
+  _galEditPos = currentPos || 'center center';
+  var previewImg = document.getElementById('gal-pos-preview-img');
+  previewImg.src = '/gallery/' + filename;
+  previewImg.style.objectPosition = _galEditPos;
+  var grid = document.getElementById('gal-pos-grid');
+  grid.innerHTML = '';
+  for (var row = 0; row < 3; row++) {
+    for (var col = 0; col < 3; col++) {
+      (function(pos) {
+        var btn = document.createElement('button');
+        btn.type = 'button';
+        btn.dataset.pos = pos;
+        btn.title = pos;
+        var sel = pos === _galEditPos;
+        btn.style.cssText = 'width:30px;height:30px;border-radius:5px;border:2px solid ' + (sel ? '#c9a96e' : '#e8c4bc') + ';background:' + (sel ? '#fdf2e0' : '#fff') + ';cursor:pointer;display:flex;align-items:center;justify-content:center;padding:0;';
+        var dot = document.createElement('div');
+        dot.style.cssText = 'width:8px;height:8px;border-radius:50%;background:' + (sel ? '#c9a96e' : '#cbb89a') + ';pointer-events:none;';
+        btn.appendChild(dot);
+        btn.onclick = function() {
+          _galEditPos = pos;
+          document.getElementById('gal-pos-preview-img').style.objectPosition = pos;
+          grid.querySelectorAll('button').forEach(function(b) {
+            var active = b.dataset.pos === pos;
+            b.style.border = '2px solid ' + (active ? '#c9a96e' : '#e8c4bc');
+            b.style.background = active ? '#fdf2e0' : '#fff';
+            b.querySelector('div').style.background = active ? '#c9a96e' : '#cbb89a';
+          });
+        };
+        grid.appendChild(btn);
+      })(_galPosOptions[row][col]);
+    }
+  }
+}
+
 var _galEditFilename = null;
 
 function openGalEditModal(filename, idx, ev) {
@@ -703,6 +756,7 @@ function openGalEditModal(filename, idx, ev) {
   var catSel = document.getElementById('gal-edit-cat');
   catSel.value = p ? (p.category || 'glam') : 'glam';
   document.getElementById('gal-edit-status').textContent = '';
+  initPosGrid(filename, p ? (p.objectPosition || 'center center') : 'center center');
   var overlay = document.getElementById('gal-edit-overlay');
   overlay.style.display = 'flex';
   document.getElementById('gal-edit-title').focus();
@@ -724,12 +778,12 @@ async function saveGalEdit() {
     var res = await fetch(API + '/admin/gallery/' + encodeURIComponent(_galEditFilename) + '/meta?token=' + encodeURIComponent(TOKEN), {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ title: title, category: category, desc: desc })
+      body: JSON.stringify({ title: title, category: category, desc: desc, objectPosition: _galEditPos })
     });
     var data = await res.json();
     if (data.ok) {
       var idx = _galleryPhotos.findIndex(function(p) { return p.filename === _galEditFilename; });
-      if (idx !== -1) { _galleryPhotos[idx].title = title; _galleryPhotos[idx].category = category; _galleryPhotos[idx].desc = desc; }
+      if (idx !== -1) { _galleryPhotos[idx].title = title; _galleryPhotos[idx].category = category; _galleryPhotos[idx].desc = desc; _galleryPhotos[idx].objectPosition = _galEditPos; }
       closeGalEditModal();
       renderGallery();
     } else {
@@ -1013,7 +1067,7 @@ router.put("/admin/gallery/:filename/meta", async (req, res) => {
     res.status(400).json({ error: "Invalid filename" }); return;
   }
 
-  const { title, category, desc } = req.body as { title?: string; category?: string; desc?: string };
+  const { title, category, desc, objectPosition } = req.body as { title?: string; category?: string; desc?: string; objectPosition?: string };
   if (!title) { res.status(400).json({ error: "Title is required" }); return; }
 
   const meta = readGalleryMeta();
@@ -1023,6 +1077,7 @@ router.put("/admin/gallery/:filename/meta", async (req, res) => {
   meta[idx].title = title;
   meta[idx].category = category || meta[idx].category;
   meta[idx].desc = desc ?? "";
+  if (objectPosition !== undefined) meta[idx].objectPosition = objectPosition;
   writeGalleryMeta(meta);
   res.json({ ok: true });
 });

@@ -1,11 +1,12 @@
 [
   {
     "filename": "image_1781426299431.jpeg",
-    "title": "Smokey Editorial Look",
+    "title": "Editorial Look",
     "category": "editorial",
-    "desc": "Bold smokey editorial makeup look",
+    "desc": "Bold editorial eye makeup look",
     "uploadedAt": "2025-05-10T00:00:00.000Z",
-    "featured": false
+    "featured": false,
+    "objectPosition": "center top"
   },
   {
     "filename": "image_1781426379509.jpeg",
@@ -13,6 +14,7 @@
     "category": "glam",
     "desc": "Soft glam with blue wing liner accent",
     "uploadedAt": "2025-05-10T00:00:00.000Z",
-    "featured": false
+    "featured": false,
+    "objectPosition": "center center"
   }
 ]

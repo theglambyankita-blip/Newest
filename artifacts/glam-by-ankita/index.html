@@ -958,16 +958,8 @@
         <img src="/full-glam-city.png" alt="Full Glam — Melbourne city sunset" style="object-position: center 70%;">
         <div class="photo-overlay"><div class="photo-overlay-txt">Full Glam<br><small>City Sunset ✦</small></div></div>
       </div>
-      <div class="photo-item" data-cat="editorial" data-title="Smokey Editorial" data-desc="Dark smokey eye editorial look" onclick="openLightbox(this)">
-        <img src="/gallery/image_1781426299431.jpeg" alt="Smokey Editorial Look">
-        <div class="photo-overlay"><div class="photo-overlay-txt">Smokey Editorial<br><small>Dark &amp; Dramatic</small></div></div>
-      </div>
       <div class="photo-item" data-cat="festival" data-title="Festival Vibes" data-desc="Festival glitter and glow" onclick="openLightbox(this)">
         <div class="photo-ph">✨<div style="font-size:0.7rem;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;color:var(--text-light);margin-top:0.5rem;">Coming Soon</div></div>
-      </div>
-      <div class="photo-item" data-cat="glam" data-title="Soft Glam with a Pop of Blue Liner" data-desc="Soft pink mauve eyeshadow with a sharp blue-violet wing liner" onclick="openLightbox(this)">
-        <img src="/gallery/image_1781426379509.jpeg" alt="Soft Glam with Blue Wing Liner">
-        <div class="photo-overlay"><div class="photo-overlay-txt">Soft Glam ✦ Blue Wing<br><small>Pastel Pink &amp; Graphic Liner</small></div></div>
       </div>
       <div class="photo-item" data-cat="glam" data-title="Soft Glam" data-desc="Everyday soft glam look" onclick="openLightbox(this)">
         <img src="/soft-glam-1.jpeg" alt="Soft Glam">
@@ -1493,7 +1485,8 @@
         el.dataset.desc = p.desc || '';
         el.onclick = () => openLightbox(el);
         const overlayTxt = p.featured ? (p.title + '<br><small>⭐ Featured</small>') : p.title;
-        el.innerHTML = '<img src="/gallery/' + p.filename + '" alt="' + (p.title||'') + '">' +
+        const imgStyle = p.objectPosition ? 'object-position:' + p.objectPosition + ';' : '';
+        el.innerHTML = '<img src="/gallery/' + p.filename + '" alt="' + (p.title||'') + '" style="' + imgStyle + '">' +
           '<div class="photo-overlay"><div class="photo-overlay-txt">' + overlayTxt + '</div></div>';
         if (p.featured) {
           grid.insertBefore(el, grid.firstChild);
