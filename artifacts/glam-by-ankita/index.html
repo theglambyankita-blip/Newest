@@ -1478,21 +1478,28 @@
   let _galleryLoaded = false;
   async function loadDynamicGallery() {
     if (_galleryLoaded) return;
-    _galleryLoaded = true;
     try {
       const res = await fetch('/api/gallery/list');
+      if (!res.ok) return;
       const photos = await res.json();
       if (!photos || !photos.length) return;
+      _galleryLoaded = true;
       const grid = document.getElementById('photoGrid');
       photos.forEach(p => {
         const el = document.createElement('div');
-        el.className = 'photo-item';
+        el.className = 'photo-item' + (p.featured ? ' featured' : '');
         el.dataset.cat = p.category || 'glam';
         el.dataset.title = p.title || '';
         el.dataset.desc = p.desc || '';
         el.onclick = () => openLightbox(el);
-        el.innerHTML = `<img src="/gallery/${p.filename}" alt="${p.title}"><div class="photo-overlay"><div class="photo-overlay-txt">${p.title}</div></div>`;
-        grid.appendChild(el);
+        const overlayTxt = p.featured ? (p.title + '<br><small>⭐ Featured</small>') : p.title;
+        el.innerHTML = '<img src="/gallery/' + p.filename + '" alt="' + (p.title||'') + '">' +
+          '<div class="photo-overlay"><div class="photo-overlay-txt">' + overlayTxt + '</div></div>';
+        if (p.featured) {
+          grid.insertBefore(el, grid.firstChild);
+        } else {
+          grid.appendChild(el);
+        }
       });
     } catch(e) {}
   }

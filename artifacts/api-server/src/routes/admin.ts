@@ -1,6 +1,7 @@
 import { Router } from "express";
 import nodemailer from "nodemailer";
 import { randomUUID } from "crypto";
+import { fileURLToPath } from "url";
 import { db, adminTokens, bookings } from "@workspace/db";
 import { eq, desc } from "drizzle-orm";
 import multer from "multer";
@@ -12,7 +13,11 @@ const router = Router();
 const ADMIN_EMAIL = "nishankn.ankita@gmail.com";
 
 // ── Gallery setup ─────────────────────────────────────────────────
-const GALLERY_DIR = path.join(process.cwd(), "artifacts/glam-by-ankita/public/gallery");
+// Use import.meta.url so the path resolves correctly regardless of cwd.
+// At runtime, import.meta.url = file:///.../artifacts/api-server/dist/index.mjs
+// so 3 levels up reaches the workspace root.
+const _adminDir = path.dirname(fileURLToPath(import.meta.url));
+const GALLERY_DIR = path.join(_adminDir, "../../../artifacts/glam-by-ankita/public/gallery");
 if (!fs.existsSync(GALLERY_DIR)) fs.mkdirSync(GALLERY_DIR, { recursive: true });
 
 const galleryStorage = multer.diskStorage({
@@ -37,6 +42,7 @@ interface GalleryMeta {
   category: string;
   desc: string;
   uploadedAt: string;
+  featured?: boolean;
 }
 
 function readGalleryMeta(): GalleryMeta[] {
@@ -614,12 +620,14 @@ function renderGallery() {
     return '<div class="gal-card" draggable="true" data-idx="' + i + '" data-filename="' + p.filename + '" ' +
       'style="position:relative;border-radius:8px;overflow:hidden;aspect-ratio:3/4;background:#f0ddd6;box-shadow:0 2px 8px rgba(0,0,0,0.08);cursor:grab;transition:outline 0.1s;">' +
       '<div style="position:absolute;top:6px;right:6px;z-index:2;background:rgba(255,255,255,0.75);border-radius:4px;padding:2px 5px;font-size:0.8rem;color:#9e7c4a;cursor:grab;line-height:1;">⠿</div>' +
+      (p.featured ? '<div style="position:absolute;top:6px;left:6px;z-index:2;background:rgba(201,169,110,0.95);border-radius:4px;padding:2px 7px;font-size:0.68rem;color:#fff;font-weight:700;line-height:1.4;">⭐ Featured</div>' : '') +
       '<img src="/gallery/' + p.filename + '" alt="' + p.title + '" style="width:100%;height:100%;object-fit:cover;display:block;pointer-events:none;">' +
       '<div class="gal-overlay" style="position:absolute;inset:0;background:linear-gradient(to top,rgba(0,0,0,0.78) 0%,transparent 50%);opacity:0;transition:opacity 0.2s;display:flex;flex-direction:column;justify-content:flex-end;padding:10px;">' +
         '<div style="font-size:0.73rem;color:#fff;font-weight:700;line-height:1.3;">' + p.title + '</div>' +
         '<div style="font-size:0.68rem;color:rgba(255,255,255,0.8);margin-top:2px;text-transform:capitalize;">' + p.category + '</div>' +
-        '<div style="display:flex;gap:5px;margin-top:7px;">' +
-          '<button onclick="openGalEditModal(\'' + p.filename + '\',' + i + ',event)" style="background:rgba(201,169,110,0.92);color:#fff;border:none;padding:4px 9px;border-radius:4px;font-size:0.7rem;cursor:pointer;font-family:inherit;">✏️ Edit</button>' +
+        '<div style="display:flex;gap:5px;margin-top:7px;flex-wrap:wrap;">' +
+          '<button onclick="toggleFeatured(\'' + p.filename + '\',' + i + ',event)" style="background:' + (p.featured ? 'rgba(201,169,110,0.95)' : 'rgba(80,60,40,0.7)') + ';color:#fff;border:none;padding:4px 9px;border-radius:4px;font-size:0.7rem;cursor:pointer;font-family:inherit;">' + (p.featured ? '⭐ Unfeature' : '☆ Feature') + '</button>' +
+          '<button onclick="openGalEditModal(\'' + p.filename + '\',' + i + ',event)" style="background:rgba(60,100,160,0.85);color:#fff;border:none;padding:4px 9px;border-radius:4px;font-size:0.7rem;cursor:pointer;font-family:inherit;">✏️</button>' +
           '<button onclick="deleteGalleryPhoto(\'' + p.filename + '\')" style="background:rgba(200,50,50,0.9);color:#fff;border:none;padding:4px 9px;border-radius:4px;font-size:0.7rem;cursor:pointer;font-family:inherit;">🗑</button>' +
         '</div>' +
       '</div>' +
@@ -669,6 +677,18 @@ async function saveGalleryOrder() {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ filenames: filenames })
     });
+  } catch(e) {}
+}
+
+async function toggleFeatured(filename, idx, ev) {
+  ev.stopPropagation();
+  try {
+    var res = await fetch(API + '/admin/gallery/' + encodeURIComponent(filename) + '/featured?token=' + encodeURIComponent(TOKEN), { method: 'PUT' });
+    var data = await res.json();
+    if (data.ok) {
+      _galleryPhotos[idx].featured = data.featured;
+      renderGallery();
+    }
   } catch(e) {}
 }
 
@@ -937,7 +957,29 @@ router.post("/admin/regenerate-token", async (req, res) => {
 
 // ── GET /api/gallery/list — public, used by frontend ────────────
 router.get("/gallery/list", (_req, res) => {
-  res.json(readGalleryMeta());
+  const meta = readGalleryMeta();
+  meta.sort((a, b) => (b.featured ? 1 : 0) - (a.featured ? 1 : 0));
+  res.json(meta);
+});
+
+// ── PUT /api/admin/gallery/:filename/featured — toggle ───────────
+router.put("/admin/gallery/:filename/featured", async (req, res) => {
+  const token = req.query.token as string;
+  const valid = await validateToken(token).catch(() => false);
+  if (!valid) { res.status(403).json({ error: "Unauthorized" }); return; }
+
+  const { filename } = req.params;
+  if (!filename || filename.includes("/") || filename.includes("..")) {
+    res.status(400).json({ error: "Invalid filename" }); return;
+  }
+
+  const meta = readGalleryMeta();
+  const idx = meta.findIndex((m) => m.filename === filename);
+  if (idx === -1) { res.status(404).json({ error: "Photo not found" }); return; }
+
+  meta[idx].featured = !meta[idx].featured;
+  writeGalleryMeta(meta);
+  res.json({ ok: true, featured: meta[idx].featured });
 });
 
 // ── POST /api/admin/upload-gallery ───────────────────────────────
