@@ -1512,29 +1512,29 @@
         }
       });
       grid.classList.remove('gallery-loading');
-      // Auto-fill empty grid slots with Coming Soon placeholders
-      // A 3-col grid with 1 featured (2×2) needs 5 non-featured items to fill perfectly (3×3 layout)
-      const hasFeatured = photos.some(p => p.featured);
-      const nonFeaturedCount = photos.filter(p => !p.featured).length;
-      const targetNonFeatured = hasFeatured ? 5 : 6;
-      const placeholders = [
-        { emoji: '👰', label: 'Bridal', cat: 'bridal' },
-        { emoji: '✨', label: 'Festival', cat: 'festival' },
-        { emoji: '💐', label: 'Bridal Party', cat: 'bridal' },
-        { emoji: '🎭', label: 'Editorial', cat: 'editorial' },
-        { emoji: '🌸', label: 'Coming Soon', cat: 'glam' },
+      // Category-specific placeholders — hidden in All view, shown only when that category is filtered
+      const categoryPlaceholders = [
+        { emoji: '👰', label: 'Bridal Glam',    cat: 'bridal' },
+        { emoji: '🌸', label: 'Bridal Party',   cat: 'bridal' },
+        { emoji: '💐', label: 'Soft Bridal',    cat: 'bridal' },
+        { emoji: '🎨', label: 'Editorial',      cat: 'editorial' },
+        { emoji: '🎭', label: 'Creative Look',  cat: 'editorial' },
+        { emoji: '✨', label: 'Avant-Garde',    cat: 'editorial' },
+        { emoji: '💫', label: 'Festival Glam',  cat: 'festival' },
+        { emoji: '🌟', label: 'Festival Glow',  cat: 'festival' },
+        { emoji: '🎆', label: 'Glitter & Glow', cat: 'festival' },
       ];
-      const needed = Math.max(0, targetNonFeatured - nonFeaturedCount);
-      for (let i = 0; i < needed; i++) {
-        const ph = placeholders[i % placeholders.length];
+      categoryPlaceholders.forEach(ph => {
         const el = document.createElement('div');
         el.className = 'photo-item';
         el.dataset.cat = ph.cat;
         el.dataset.title = ph.label;
         el.dataset.desc = '';
+        el.dataset.placeholder = 'true';
+        el.style.display = 'none';
         el.innerHTML = '<div class="photo-ph">' + ph.emoji + '<div style="font-size:0.7rem;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;color:var(--text-light);margin-top:0.5rem;">Coming Soon</div></div>';
         grid.appendChild(el);
-      }
+      });
     } catch(e) {}
   }
 
@@ -2198,7 +2198,12 @@
     document.querySelectorAll('.gfbtn').forEach(b => b.classList.remove('active'));
     btn.classList.add('active');
     document.querySelectorAll('.photo-item').forEach(item => {
-      item.style.display = (cat === 'all' || item.dataset.cat === cat) ? '' : 'none';
+      const isPlaceholder = item.dataset.placeholder === 'true';
+      if (cat === 'all') {
+        item.style.display = isPlaceholder ? 'none' : '';
+      } else {
+        item.style.display = (item.dataset.cat === cat) ? '' : 'none';
+      }
     });
   }
 
