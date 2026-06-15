@@ -301,6 +301,7 @@
     .view-btn { background: var(--white); border: 1.5px solid var(--blush-deep); color: var(--text-mid); font-size: 0.82rem; font-weight: 600; padding: 0.45rem 0.8rem; border-radius: 4px; cursor: pointer; }
     .view-btn.active { background: var(--gold-dark); color: var(--white); border-color: var(--gold-dark); }
     .photo-grid { display: grid; gap: 0; transition: all 0.4s ease; }
+    .photo-grid.gallery-loading { visibility: hidden; min-height: 420px; }
     .photo-grid.grid-3 { grid-template-columns: repeat(3, 1fr); }
     .photo-grid.grid-2 { grid-template-columns: repeat(2, 1fr); }
     .photo-item { aspect-ratio: 1; position: relative; overflow: hidden; background: var(--blush); cursor: pointer; }
@@ -312,6 +313,7 @@
     .photo-overlay { position: absolute; inset: 0; background: rgba(44,24,16,0); display: flex; flex-direction: column; align-items: center; justify-content: center; transition: background 0.3s; }
     .photo-item:hover .photo-overlay { background: rgba(44,24,16,0.42); }
     .photo-overlay-txt { opacity: 0; font-family: 'Playfair Display', serif; font-style: italic; font-size: 1rem; color: var(--white); transition: opacity 0.3s, transform 0.3s; transform: translateY(8px); text-align: center; padding: 0.5rem; }
+    .photo-overlay-txt small { display: block; font-family: 'Nunito', sans-serif; font-style: normal; font-size: 0.72rem; letter-spacing: 0.04em; opacity: 0.88; margin-top: 0.25rem; }
     .photo-item:hover .photo-overlay-txt { opacity: 1; transform: translateY(0); }
 
     /* BTS GRID */
@@ -959,7 +961,7 @@
       </div>
     </div>
 
-    <div class="photo-grid grid-3" id="photoGrid" data-stagger>
+    <div class="photo-grid grid-3 gallery-loading" id="photoGrid" data-stagger>
       <div class="photo-item featured" data-cat="bridal" data-title="Bridal Glam" data-desc="Soft, long-wear bridal look" onclick="openLightbox(this)">
         <div class="photo-ph">👰<div style="font-size:0.7rem;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;color:var(--text-light);margin-top:0.5rem;">Coming Soon</div></div>
       </div>
@@ -1499,16 +1501,17 @@
         el.dataset.title = p.title || '';
         el.dataset.desc = p.desc || '';
         el.onclick = () => openLightbox(el);
-        const overlayTxt = p.featured ? p.title : p.title;
         const imgStyle = p.objectPosition ? 'object-position:' + p.objectPosition + ';' : '';
+        const descHtml = p.desc ? '<small>' + p.desc + '</small>' : '';
         el.innerHTML = '<img src="' + (p.url || '/gallery/' + p.filename) + '" alt="' + (p.title||'') + '" style="' + imgStyle + '">' +
-          '<div class="photo-overlay"><div class="photo-overlay-txt">' + overlayTxt + '</div></div>';
+          '<div class="photo-overlay"><div class="photo-overlay-txt">' + (p.title||'') + descHtml + '</div></div>';
         if (p.featured) {
           grid.insertBefore(el, grid.firstChild);
         } else {
           grid.appendChild(el);
         }
       });
+      grid.classList.remove('gallery-loading');
       // Auto-fill empty grid slots with Coming Soon placeholders
       // A 3-col grid with 1 featured (2×2) needs 5 non-featured items to fill perfectly (3×3 layout)
       const hasFeatured = photos.some(p => p.featured);
