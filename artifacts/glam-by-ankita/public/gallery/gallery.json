@@ -34,5 +34,25 @@
     "uploadedAt": "2025-05-10T00:00:00.000Z",
     "featured": false,
     "objectPosition": "center center"
+  },
+  {
+    "filename": "full-glam-city.png",
+    "url": "/full-glam-city.png",
+    "title": "Full Glam",
+    "category": "glam",
+    "desc": "Bold red lip & city sunset vibes",
+    "uploadedAt": "2025-05-01T00:00:00.000Z",
+    "featured": false,
+    "objectPosition": "center 70%"
+  },
+  {
+    "filename": "soft-glam-1.jpeg",
+    "url": "/soft-glam-1.jpeg",
+    "title": "Soft Glam",
+    "category": "glam",
+    "desc": "Everyday soft glam look",
+    "uploadedAt": "2025-05-01T00:00:00.000Z",
+    "featured": false,
+    "objectPosition": "center center"
   }
 ]
