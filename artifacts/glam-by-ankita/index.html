@@ -307,7 +307,7 @@
     .photo-item.featured { grid-column: span 2; grid-row: span 2; aspect-ratio: auto; }
     .photo-ph { width: 100%; height: 100%; min-height: 180px; transition: transform 0.6s cubic-bezier(0.16,1,0.3,1); background: linear-gradient(135deg, var(--blush), var(--champagne)); display: flex; align-items: center; justify-content: center; font-size: 3rem; }
     .photo-item:hover .photo-ph { transform: scale(1.06); }
-    .photo-item img { width:100%; height:100%; object-fit:cover; object-position:center top; display:block; transition:transform 0.6s cubic-bezier(0.16,1,0.3,1); }
+    .photo-item img { width:100%; height:100%; object-fit:contain; object-position:center center; display:block; transition:transform 0.6s cubic-bezier(0.16,1,0.3,1); background:var(--blush); }
     .photo-item:hover img { transform: scale(1.06); }
     .photo-overlay { position: absolute; inset: 0; background: rgba(44,24,16,0); display: flex; flex-direction: column; align-items: center; justify-content: center; transition: background 0.3s; }
     .photo-item:hover .photo-overlay { background: rgba(44,24,16,0.42); }
@@ -330,7 +330,7 @@
     .lightbox-inner { max-width: 680px; width: 100%; background: var(--cream); position: relative; overflow: hidden; animation: lightboxIn 0.4s cubic-bezier(0.16,1,0.3,1); max-height: 92vh; display: flex; flex-direction: column; }
     @keyframes lightboxIn { from { opacity: 0; transform: scale(0.9) translateY(20px); } to { opacity: 1; transform: none; } }
     .lightbox-ph { width: 100%; height: 340px; background: linear-gradient(135deg, var(--blush), var(--champagne)); display: flex; align-items: center; justify-content: center; font-size: 5rem; flex-shrink: 0; }
-    .lightbox-ph.has-image { height: auto; max-height: 65vh; background: #1a0a04; flex-shrink: 1; overflow: hidden; align-items: flex-start; }
+    .lightbox-ph.has-image { height: auto; background: #1a0a04; flex-shrink: 0; overflow: hidden; align-items: center; justify-content: center; }
     .lightbox-info { padding: 1.5rem 2rem; }
     .lightbox-info h3 { font-family: 'Playfair Display', serif; font-size: 1.3rem; font-weight: 600; color: var(--text-dark); margin-bottom: 0.3rem; }
     .lightbox-info p { font-size: 0.88rem; color: var(--text-light); line-height: 1.7; }
@@ -1471,12 +1471,18 @@
   async function loadDynamicGallery() {
     if (_galleryLoaded) return;
     try {
+      let photos = null;
       const res = await fetch('/api/gallery/list');
-      if (!res.ok) return;
-      const photos = await res.json();
+      if (res.ok) {
+        photos = await res.json();
+      } else {
+        const fb = await fetch('/gallery/gallery.json');
+        if (fb.ok) photos = await fb.json();
+      }
       if (!photos || !photos.length) return;
       _galleryLoaded = true;
       const grid = document.getElementById('photoGrid');
+      grid.innerHTML = '';
       photos.forEach(p => {
         const el = document.createElement('div');
         el.className = 'photo-item' + (p.featured ? ' featured' : '');
@@ -2182,7 +2188,7 @@
       const img = document.createElement('img');
       img.src = imgEl.src;
       img.alt = el.dataset.title || '';
-      img.style.cssText = 'width:100%;height:400px;display:block;object-fit:cover;object-position:center 59%;';
+      img.style.cssText = 'width:100%;height:auto;display:block;object-fit:contain;';
       lbPh.appendChild(img);
     } else {
       lbPh.innerHTML = '';
