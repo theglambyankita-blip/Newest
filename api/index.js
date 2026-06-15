@@ -909,18 +909,28 @@ async function ensureGalleryTable() {
   )`);
 }
 
+let _gallerySynced = false;
 async function getGalleryItems() {
   await ensureGalleryTable();
   const db = getPool();
-  const { rows } = await db.query('SELECT * FROM gallery_images ORDER BY sort_order ASC, uploaded_at DESC');
-  if (rows.length === 0) {
+  if (!_gallerySynced) {
+    _gallerySynced = true;
     for (const item of STATIC_GALLERY_SEED) {
-      await db.query(`INSERT INTO gallery_images (filename,url,title,category,description,object_position,featured,sort_order) VALUES ($1,$2,$3,$4,$5,$6,$7,$8) ON CONFLICT (filename) DO NOTHING`,
-        [item.filename,item.url,item.title,item.category,item.description,item.object_position,item.featured,item.sort_order]);
+      await db.query(
+        `INSERT INTO gallery_images (filename,url,title,category,description,object_position,featured,sort_order)
+         VALUES ($1,$2,$3,$4,$5,$6,$7,$8)
+         ON CONFLICT (filename) DO UPDATE SET
+           url=EXCLUDED.url, title=EXCLUDED.title, category=EXCLUDED.category,
+           description=EXCLUDED.description, object_position=EXCLUDED.object_position,
+           featured=EXCLUDED.featured, sort_order=EXCLUDED.sort_order`,
+        [item.filename,item.url,item.title,item.category,item.description,item.object_position,item.featured,item.sort_order]
+      );
     }
-    const { rows: seeded } = await db.query('SELECT * FROM gallery_images ORDER BY sort_order ASC, uploaded_at DESC');
-    return seeded;
+    const seedFilenames = STATIC_GALLERY_SEED.map(i => i.filename);
+    const placeholders = seedFilenames.map((_,i) => `$${i+1}`).join(',');
+    await db.query(`DELETE FROM gallery_images WHERE filename NOT IN (${placeholders})`, seedFilenames);
   }
+  const { rows } = await db.query('SELECT * FROM gallery_images ORDER BY sort_order ASC, uploaded_at DESC');
   return rows;
 }
 
