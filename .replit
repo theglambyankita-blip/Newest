@@ -50,6 +50,7 @@ externalPort = 3002
 [userenv]
 
 [userenv.shared]
+ADMIN_TOKEN = "c6dcc60c-72bd-4969-b8a8-9fa5098f6bcc"
 
 [nix]
 channel = "stable-25_05"

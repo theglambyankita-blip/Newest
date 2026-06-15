@@ -141,13 +141,21 @@ async function generateNewToken(): Promise<string> {
 
 async function validateToken(token: string): Promise<boolean> {
   if (!token) return false;
-  const now = new Date();
-  const rows = await db
-    .select()
-    .from(adminTokens)
-    .where(eq(adminTokens.token, token))
-    .limit(1);
-  return rows.length > 0 && rows[0].expiresAt > now;
+  // Accept the hardcoded env-var token as a permanent bypass (no DB needed)
+  const envToken = process.env["ADMIN_TOKEN"];
+  if (envToken && token === envToken) return true;
+  // Fall back to DB lookup
+  try {
+    const now = new Date();
+    const rows = await db
+      .select()
+      .from(adminTokens)
+      .where(eq(adminTokens.token, token))
+      .limit(1);
+    return rows.length > 0 && rows[0].expiresAt > now;
+  } catch {
+    return false;
+  }
 }
 
 // ── GET /api/admin-token — returns current valid token for the admin panel redirect ──
