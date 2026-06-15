@@ -1,11 +1,21 @@
 [
   {
+    "filename": "full-glam-city.png",
+    "url": "/full-glam-city.png",
+    "title": "Full Glam",
+    "category": "glam",
+    "desc": "Bold red lip & city sunset vibes",
+    "uploadedAt": "2025-05-01T00:00:00.000Z",
+    "featured": true,
+    "objectPosition": "center 30%"
+  },
+  {
     "filename": "image_1781426299431.jpeg",
     "title": "Editorial Look",
     "category": "editorial",
     "desc": "Bold editorial eye makeup look",
     "uploadedAt": "2025-05-10T00:00:00.000Z",
-    "featured": true,
+    "featured": false,
     "objectPosition": "center top"
   },
   {
@@ -16,16 +26,6 @@
     "uploadedAt": "2025-05-10T00:00:00.000Z",
     "featured": false,
     "objectPosition": "center center"
-  },
-  {
-    "filename": "full-glam-city.png",
-    "url": "/full-glam-city.png",
-    "title": "Full Glam",
-    "category": "glam",
-    "desc": "Bold red lip & city sunset vibes",
-    "uploadedAt": "2025-05-01T00:00:00.000Z",
-    "featured": false,
-    "objectPosition": "center 70%"
   },
   {
     "filename": "soft-glam-1.jpeg",
