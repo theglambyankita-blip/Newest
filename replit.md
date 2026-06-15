@@ -26,3 +26,4 @@ A professional makeup artist website for Ankita, a Melbourne-based MUA. Multi-pa
 - **Preserve credits** — always keep the footer credits intact: `© 2026 The Glam by Ankita · Ankita Awasthi. All rights reserved.` and `Made with ♥ in Melbourne`. Never remove or alter these lines.
 - **Thank you emails** — Ankita sends post-session thank-you emails manually by telling the agent the client's name and email. The agent runs the nodemailer script directly from `artifacts/api-server` using saved Gmail credentials. No public-facing send page (removed for security).
 - **Test emails** — any test emails sent during development should go to nishankn.ankita@gmail.com.
+- **Serverless function limit** — Hobby plan allows max 12 Serverless Functions per deployment. To deploy more, upgrade to a Team (Pro) plan. After any commit, remind the user to push their changes.
