@@ -1503,7 +1503,8 @@
         el.onclick = () => openLightbox(el);
         const imgStyle = p.objectPosition ? 'object-position:' + p.objectPosition + ';' : '';
         const descHtml = p.desc ? '<small>' + p.desc + '</small>' : '';
-        el.innerHTML = '<img src="' + (p.url || '/gallery/' + p.filename) + '" alt="' + (p.title||'') + '" style="' + imgStyle + '">' +
+        const loading = p.featured ? 'eager' : 'lazy';
+        el.innerHTML = '<img src="' + (p.url || '/gallery/' + p.filename) + '" alt="' + (p.title||'') + '" loading="' + loading + '" decoding="async" style="' + imgStyle + '">' +
           '<div class="photo-overlay"><div class="photo-overlay-txt">' + (p.title||'') + descHtml + '</div></div>';
         if (p.featured) {
           grid.insertBefore(el, grid.firstChild);
@@ -2248,7 +2249,7 @@
   }
 
   function openLightbox(el) {
-    _lbItems = Array.from(document.querySelectorAll('#photoGrid .photo-item:not([style*="display: none"]):not([style*="display:none"])'));
+    _lbItems = Array.from(document.querySelectorAll('#photoGrid .photo-item:not([style*="display: none"]):not([style*="display:none"])')).filter(i => i.querySelector('img'));
     _lbIndex = _lbItems.indexOf(el);
     if (_lbIndex === -1) { _lbItems = [el]; _lbIndex = 0; }
     _lbRender(el);

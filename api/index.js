@@ -892,10 +892,10 @@ loadGallery();
 
 // ── Gallery ───────────────────────────────────────────────────────
 const STATIC_GALLERY_SEED = [
-  { filename:'glam-city.png', url:'/gallery/glam-city.png', title:'Full Glam with a Statement Red Lip', category:'glam', description:'Bold red lip, warm neutral eyes & bronzed skin — polished, glamorous, and sophisticated', object_position:'center top', featured:true, sort_order:0 },
+  { filename:'glam-city.png', url:'/gallery/glam-city.png', title:'Full Glam with a Statement Red Lip', category:'glam', description:'Bold red lip, warm neutral eyes & bronzed skin — polished, glamorous, and sophisticated', object_position:'center 30%', featured:true, sort_order:0 },
   { filename:'smokey-salon.jpeg', url:'/gallery/smokey-salon.jpeg', title:'Soft Glam with Smokey Eyes', category:'glam', description:'Rich brown smokey eye, rosy mauve blush, nude pink lips — elegant, refined, and effortlessly glamorous', object_position:'center top', featured:false, sort_order:1 },
   { filename:'soft-smokey.jpeg', url:'/gallery/soft-smokey.jpeg', title:'Soft Smokey Glam', category:'glam', description:'Soft taupe and warm brown tones, diffused smoky corners, rosy nude lips — polished and timeless', object_position:'center top', featured:false, sort_order:2 },
-  { filename:'purple-glam.jpeg', url:'/gallery/purple-glam.jpeg', title:'Soft Glam with a Pop of Blue Liner', category:'glam', description:'Soft pink/mauve shadow & a sharp blue-violet winged liner — clean, feminine, wearable', object_position:'center top', featured:false, sort_order:3 },
+  { filename:'purple-glam.jpeg', url:'/gallery/purple-glam.jpeg', title:'Soft Glam with a Pop of Blue Liner', category:'glam', description:'Soft pink/mauve shadow & a sharp blue-violet winged liner — clean, feminine, wearable', object_position:'center 30%', featured:false, sort_order:3 },
 ];
 
 async function ensureGalleryTable() {
