@@ -1,42 +1,42 @@
 [
   {
-    "filename": "image_1781501304429.jpeg",
-    "url": "/gallery/image_1781501304429.jpeg",
-    "title": "Soft Glam with a Pop of Blue Liner",
+    "filename": "glam-city.png",
+    "url": "/gallery/glam-city.png",
+    "title": "Full Glam — City Sunset",
     "category": "glam",
-    "desc": "Soft pink/mauve eyeshadow with a sharp blue-violet winged liner — clean, feminine, and wearable",
+    "desc": "Bold red lip and smoky eyes against the Melbourne skyline at golden hour",
     "uploadedAt": "2026-06-15T00:00:00.000Z",
     "featured": true,
-    "objectPosition": "center center"
+    "objectPosition": "center top"
   },
   {
-    "filename": "image_1781501478673.jpeg",
-    "url": "/gallery/image_1781501478673.jpeg",
-    "title": "Soft Smokey Glam with Rosy Neutrals",
+    "filename": "smokey-salon.jpeg",
+    "url": "/gallery/smokey-salon.jpeg",
+    "title": "Smokey Eye",
     "category": "glam",
-    "desc": "Soft brown smokey eye with rosy-peach blush and nude pink lips — elegant, polished, and timeless",
+    "desc": "Deep, blended smokey eye with rich browns and defined lashes",
     "uploadedAt": "2026-06-15T00:00:00.000Z",
-    "featured": false,
-    "objectPosition": "center center"
-  },
-  {
-    "filename": "image_1781426299431.jpeg",
-    "url": "/gallery/image_1781426299431.jpeg",
-    "title": "Editorial Look",
-    "category": "editorial",
-    "desc": "Bold editorial eye makeup look",
-    "uploadedAt": "2026-06-14T00:00:00.000Z",
     "featured": false,
     "objectPosition": "center top"
   },
   {
-    "filename": "image_1781426379509.jpeg",
-    "url": "/gallery/image_1781426379509.jpeg",
-    "title": "Soft Glam Blue Wing",
+    "filename": "soft-smokey.jpeg",
+    "url": "/gallery/soft-smokey.jpeg",
+    "title": "Soft Smokey Glam",
     "category": "glam",
-    "desc": "Soft glam with blue wing liner accent",
-    "uploadedAt": "2026-06-14T00:00:00.000Z",
+    "desc": "Soft brown smokey eye with rosy-peach blush and nude pink lips — elegant and timeless",
+    "uploadedAt": "2026-06-15T00:00:00.000Z",
     "featured": false,
-    "objectPosition": "center center"
+    "objectPosition": "center top"
+  },
+  {
+    "filename": "purple-glam.jpeg",
+    "url": "/gallery/purple-glam.jpeg",
+    "title": "Purple & Pink Glam",
+    "category": "glam",
+    "desc": "Vibrant purple and pink eyeshadow with bold liner — playful, feminine, and striking",
+    "uploadedAt": "2026-06-15T00:00:00.000Z",
+    "featured": false,
+    "objectPosition": "center top"
   }
 ]
