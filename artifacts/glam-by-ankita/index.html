@@ -1503,8 +1503,7 @@
         el.onclick = () => openLightbox(el);
         const imgStyle = p.objectPosition ? 'object-position:' + p.objectPosition + ';' : '';
         const descHtml = p.desc ? '<small>' + p.desc + '</small>' : '';
-        const loading = p.featured ? 'eager' : 'lazy';
-        el.innerHTML = '<img src="' + (p.url || '/gallery/' + p.filename) + '" alt="' + (p.title||'') + '" loading="' + loading + '" decoding="async" style="' + imgStyle + '">' +
+        el.innerHTML = '<img src="' + (p.url || '/gallery/' + p.filename) + '" alt="' + (p.title||'') + '" loading="eager" decoding="async" style="' + imgStyle + '">' +
           '<div class="photo-overlay"><div class="photo-overlay-txt">' + (p.title||'') + descHtml + '</div></div>';
         if (p.featured) {
           grid.insertBefore(el, grid.firstChild);
@@ -2227,7 +2226,8 @@
       const img = document.createElement('img');
       img.src = imgEl.src;
       img.alt = el.dataset.title || '';
-      img.style.cssText = 'width:100%;height:auto;display:block;object-fit:contain;';
+      const objPos = imgEl.style.objectPosition || 'center center';
+      img.style.cssText = 'width:100%;height:auto;display:block;object-fit:contain;object-position:' + objPos + ';';
       lbPh.appendChild(img);
     } else {
       lbPh.innerHTML = '';
