@@ -508,11 +508,6 @@
     /* ── GALLERY GLOW ON ACTIVE FILTER ───────────────────────── */
     .gfbtn.active { box-shadow: 0 4px 14px rgba(201,169,110,0.3); }
 
-    /* ── SCROLL-TO-TOP BUTTON ─────────────────────────────────── */
-    #scroll-top-btn { position: fixed; bottom: 2rem; left: 2rem; width: 42px; height: 42px; background: var(--gold); border: none; border-radius: 50%; color: var(--white); font-size: 1.1rem; cursor: pointer; display: flex; align-items: center; justify-content: center; opacity: 0; transform: translateY(12px); transition: opacity 0.3s, transform 0.3s, background 0.2s; z-index: 800; box-shadow: 0 4px 16px rgba(201,169,110,0.35); }
-    #scroll-top-btn.visible { opacity: 1; transform: translateY(0); }
-    #scroll-top-btn:hover { background: var(--gold-dark); }
-
     /* RESPONSIVE */
     @media (max-width: 900px) {
       .sitenav-tabs button { font-size: 0.72rem; padding: 0.6rem 0.3rem; }
@@ -734,6 +729,8 @@
 <div id="root" style="display:none;position:fixed;inset:0;z-index:9000;overflow-y:auto;-webkit-overflow-scrolling:touch;"></div>
 <div id="progress-bar"></div>
 <button id="scroll-top-btn" aria-label="Scroll to top" onclick="window.scrollTo({top:0,behavior:'smooth'})">↑</button>
+<div class="cursor-dot" id="cursorDot"></div>
+<div class="cursor-ring" id="cursorRing"></div>
 
 <!-- TOAST -->
 <div class="toast" id="toast"></div>
@@ -1551,6 +1548,35 @@
         }
       });
       grid.classList.remove('gallery-loading');
+
+      // Staggered entrance animation for each photo item
+      const photoItems = grid.querySelectorAll('.photo-item');
+      photoItems.forEach((item, i) => {
+        item.style.opacity = '0';
+        setTimeout(() => {
+          item.classList.add('photo-enter');
+          item.style.opacity = '';
+          // Clean up class after animation completes
+          setTimeout(() => item.classList.remove('photo-enter'), 700);
+        }, i * 75);
+      });
+
+      // 3-D tilt effect on individual photo items
+      const TILT_STRENGTH = 12;
+      grid.querySelectorAll('.photo-item').forEach(item => {
+        item.addEventListener('mousemove', function(e) {
+          const r = this.getBoundingClientRect();
+          const x = ((e.clientX - r.left) / r.width  - 0.5) * 2;
+          const y = ((e.clientY - r.top)  / r.height - 0.5) * 2;
+          this.style.transform = `perspective(600px) rotateY(${x * TILT_STRENGTH}deg) rotateX(${-y * TILT_STRENGTH}deg) scale(1.03)`;
+          this.style.transition = 'transform 0.08s ease, box-shadow 0.08s ease';
+        });
+        item.addEventListener('mouseleave', function() {
+          this.style.transform = '';
+          this.style.transition = 'transform 0.45s cubic-bezier(0.16,1,0.3,1), box-shadow 0.45s ease';
+        });
+      });
+
       // Category-specific placeholders — hidden in All view, shown only when that category is filtered
       const categoryPlaceholders = [
         { emoji: '👰', label: 'Bridal Glam',    cat: 'bridal' },
@@ -2187,7 +2213,7 @@
     }
   }
 
-  // SCROLL PROGRESS BAR
+  // SCROLL PROGRESS BAR + NAV
   let scrollStopTimer = null;
   window.addEventListener('scroll', () => {
     const nav = document.getElementById('sitenav');
@@ -2198,9 +2224,15 @@
     if (tabs && window.innerWidth > 600) {
       tabs.classList.add('tabs-hidden');
       clearTimeout(scrollStopTimer);
-      scrollStopTimer = setTimeout(() => {
-        tabs.classList.remove('tabs-hidden');
-      }, 400);
+      scrollStopTimer = setTimeout(() => tabs.classList.remove('tabs-hidden'), 400);
+    }
+    // Update progress bar
+    const progressBar = document.getElementById('progress-bar');
+    if (progressBar) {
+      const scrolled = window.scrollY;
+      const total = document.documentElement.scrollHeight - window.innerHeight;
+      const pct = total > 0 ? (scrolled / total) * 100 : 0;
+      progressBar.style.width = pct + '%';
     }
   });
 
@@ -2235,6 +2267,61 @@
       s.async = true;
       document.body.appendChild(s);
     }
+
+    // ── CURSOR SPARKLE ────────────────────────────────────────
+    const cursorDot  = document.getElementById('cursorDot');
+    const cursorRing = document.getElementById('cursorRing');
+    let _ringX = 0, _ringY = 0, _rafRunning = false;
+    function _animRing() {
+      if (!cursorRing) return;
+      const tx = parseFloat(cursorRing.dataset.tx || 0);
+      const ty = parseFloat(cursorRing.dataset.ty || 0);
+      _ringX += (tx - _ringX) * 0.18;
+      _ringY += (ty - _ringY) * 0.18;
+      cursorRing.style.left = _ringX + 'px';
+      cursorRing.style.top  = _ringY + 'px';
+      requestAnimationFrame(_animRing);
+    }
+    if (cursorDot && cursorRing && window.matchMedia('(pointer:fine)').matches) {
+      document.addEventListener('mousemove', (e) => {
+        cursorDot.style.left = e.clientX + 'px';
+        cursorDot.style.top  = e.clientY + 'px';
+        cursorDot.classList.add('visible');
+        cursorRing.classList.add('visible');
+        cursorRing.dataset.tx = e.clientX;
+        cursorRing.dataset.ty = e.clientY;
+        if (!_rafRunning) { _rafRunning = true; _animRing(); }
+      });
+      document.addEventListener('mouseleave', () => {
+        cursorDot.classList.remove('visible');
+        cursorRing.classList.remove('visible');
+      });
+    }
+
+    // ── HERO STAT COUNTER-UP ANIMATION ────────────────────────
+    const statNums = document.querySelectorAll('.hero-stat-num');
+    const statObs = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        if (!entry.isIntersecting) return;
+        const el = entry.target;
+        const raw = el.textContent.trim();
+        const num = parseInt(raw.replace(/\D/g, ''), 10);
+        if (isNaN(num) || raw.length > 5) {
+          el.classList.add('stat-popped'); statObs.unobserve(el); return;
+        }
+        el.classList.add('stat-popped');
+        let start = 0;
+        const dur = 900, step = 16;
+        const inc = () => {
+          start = Math.min(start + Math.ceil(num / (dur / step)), num);
+          el.textContent = start + (raw.replace(String(num), '') || '');
+          if (start < num) setTimeout(inc, step);
+        };
+        setTimeout(inc, 120);
+        statObs.unobserve(el);
+      });
+    }, { threshold: 0.5 });
+    statNums.forEach(el => statObs.observe(el));
   });
 
   // SERVICE TAB FILTER
@@ -2322,7 +2409,13 @@
     const next = _lbIndex + dir;
     if (next < 0 || next >= _lbItems.length) return;
     _lbIndex = next;
+    const lbPh = document.getElementById('lbEmoji');
+    const slideClass = dir > 0 ? 'lb-slide-fwd' : 'lb-slide-back';
+    lbPh.classList.remove('lb-slide-fwd', 'lb-slide-back');
+    void lbPh.offsetWidth;
+    lbPh.classList.add(slideClass);
     _lbRender(_lbItems[_lbIndex]);
+    setTimeout(() => lbPh.classList.remove(slideClass), 320);
   }
   // BTS LIGHTBOX
   const btsImages = [
