@@ -19,7 +19,7 @@ run = "pnpm --filter @workspace/glam-by-ankita run dev"
 
 [services.production]
 build = [ "pnpm", "--filter", "@workspace/glam-by-ankita", "run", "build" ]
-publicDir = "artifacts/glam-by-ankita/dist/public"
+publicDir = "artifacts/glam-by-ankita/dist"
 serve = "static"
 
 [[services.production.rewrites]]
