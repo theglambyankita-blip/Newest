@@ -1,39 +1,41 @@
 [
   {
-    "filename": "full-glam-city.png",
-    "url": "/full-glam-city.png",
-    "title": "Full Glam",
+    "filename": "image_1781501304429.jpeg",
+    "url": "/gallery/image_1781501304429.jpeg",
+    "title": "Soft Glam with a Pop of Blue Liner",
     "category": "glam",
-    "desc": "Bold red lip & city sunset vibes",
-    "uploadedAt": "2025-05-01T00:00:00.000Z",
+    "desc": "Soft pink/mauve eyeshadow with a sharp blue-violet winged liner — clean, feminine, and wearable",
+    "uploadedAt": "2026-06-15T00:00:00.000Z",
     "featured": true,
-    "objectPosition": "center 60%"
+    "objectPosition": "center center"
+  },
+  {
+    "filename": "image_1781501478673.jpeg",
+    "url": "/gallery/image_1781501478673.jpeg",
+    "title": "Soft Smokey Glam with Rosy Neutrals",
+    "category": "glam",
+    "desc": "Soft brown smokey eye with rosy-peach blush and nude pink lips — elegant, polished, and timeless",
+    "uploadedAt": "2026-06-15T00:00:00.000Z",
+    "featured": false,
+    "objectPosition": "center center"
   },
   {
     "filename": "image_1781426299431.jpeg",
+    "url": "/gallery/image_1781426299431.jpeg",
     "title": "Editorial Look",
     "category": "editorial",
     "desc": "Bold editorial eye makeup look",
-    "uploadedAt": "2025-05-10T00:00:00.000Z",
+    "uploadedAt": "2026-06-14T00:00:00.000Z",
     "featured": false,
     "objectPosition": "center top"
   },
   {
     "filename": "image_1781426379509.jpeg",
+    "url": "/gallery/image_1781426379509.jpeg",
     "title": "Soft Glam Blue Wing",
     "category": "glam",
     "desc": "Soft glam with blue wing liner accent",
-    "uploadedAt": "2025-05-10T00:00:00.000Z",
-    "featured": false,
-    "objectPosition": "center center"
-  },
-  {
-    "filename": "soft-glam-1.jpeg",
-    "url": "/soft-glam-1.jpeg",
-    "title": "Soft Glam",
-    "category": "glam",
-    "desc": "Everyday soft glam look",
-    "uploadedAt": "2025-05-01T00:00:00.000Z",
+    "uploadedAt": "2026-06-14T00:00:00.000Z",
     "featured": false,
     "objectPosition": "center center"
   }
