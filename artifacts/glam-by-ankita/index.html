@@ -2209,7 +2209,10 @@
   }
 
   // LIGHTBOX
-  function openLightbox(el) {
+  let _lbItems = [];
+  let _lbIndex = 0;
+
+  function _lbRender(el) {
     const emojis = {'bridal':'👰','glam':'💄','editorial':'🎨','festival':'✨'};
     const lbPh = document.getElementById('lbEmoji');
     const imgEl = el.querySelector('img');
@@ -2230,7 +2233,30 @@
     }
     document.getElementById('lbTitle').textContent = el.dataset.title || '';
     document.getElementById('lbDesc').textContent = el.dataset.desc || '';
+    const counter = document.getElementById('lbCounter');
+    if (_lbItems.length > 1) {
+      counter.textContent = (_lbIndex + 1) + ' / ' + _lbItems.length;
+      counter.style.display = '';
+    } else {
+      counter.style.display = 'none';
+    }
+    document.getElementById('lbPrev').disabled = _lbIndex === 0;
+    document.getElementById('lbNext').disabled = _lbIndex === _lbItems.length - 1;
+  }
+
+  function openLightbox(el) {
+    _lbItems = Array.from(document.querySelectorAll('#photoGrid .photo-item:not([style*="display: none"]):not([style*="display:none"])'));
+    _lbIndex = _lbItems.indexOf(el);
+    if (_lbIndex === -1) { _lbItems = [el]; _lbIndex = 0; }
+    _lbRender(el);
     document.getElementById('lightbox').classList.add('open');
+  }
+
+  function lbNavigate(dir) {
+    const next = _lbIndex + dir;
+    if (next < 0 || next >= _lbItems.length) return;
+    _lbIndex = next;
+    _lbRender(_lbItems[_lbIndex]);
   }
   // BTS LIGHTBOX
   const btsImages = [
@@ -2267,8 +2293,23 @@
     }
   }
   document.addEventListener('keydown', function(e) {
+    const lb = document.getElementById('lightbox');
+    if (!lb.classList.contains('open')) return;
     if (e.key === 'Escape') closeLightbox();
+    if (e.key === 'ArrowLeft') lbNavigate(-1);
+    if (e.key === 'ArrowRight') lbNavigate(1);
   });
+
+  // Touch swipe support for lightbox
+  (function() {
+    let _tx = 0;
+    const lb = document.getElementById('lightbox');
+    lb.addEventListener('touchstart', function(e) { _tx = e.touches[0].clientX; }, {passive: true});
+    lb.addEventListener('touchend', function(e) {
+      const dx = e.changedTouches[0].clientX - _tx;
+      if (Math.abs(dx) > 50) lbNavigate(dx < 0 ? 1 : -1);
+    }, {passive: true});
+  })();
 
   // FORM TABS
   function switchTab(btn, tabId) {
