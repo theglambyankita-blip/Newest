@@ -334,8 +334,14 @@
     .lightbox-info { padding: 1.5rem 2rem; }
     .lightbox-info h3 { font-family: 'Playfair Display', serif; font-size: 1.3rem; font-weight: 600; color: var(--text-dark); margin-bottom: 0.3rem; }
     .lightbox-info p { font-size: 0.88rem; color: var(--text-light); line-height: 1.7; }
-    .lightbox-close { position: absolute; top: 1rem; right: 1rem; background: var(--white); border: none; width: 36px; height: 36px; border-radius: 50%; cursor: pointer; font-size: 1.1rem; display: flex; align-items: center; justify-content: center; transition: background 0.2s, transform 0.2s; }
+    .lightbox-close { position: absolute; top: 1rem; right: 1rem; background: var(--white); border: none; width: 36px; height: 36px; border-radius: 50%; cursor: pointer; font-size: 1.1rem; display: flex; align-items: center; justify-content: center; transition: background 0.2s, transform 0.2s; z-index: 2; }
     .lightbox-close:hover { background: var(--blush); transform: rotate(90deg); }
+    .lightbox-nav { position: absolute; top: 50%; transform: translateY(-50%); background: rgba(255,255,255,0.92); border: none; width: 40px; height: 40px; border-radius: 50%; cursor: pointer; font-size: 1.1rem; display: flex; align-items: center; justify-content: center; transition: background 0.2s, transform 0.15s; z-index: 2; box-shadow: 0 2px 8px rgba(0,0,0,0.18); }
+    .lightbox-nav:hover { background: var(--blush); transform: translateY(-50%) scale(1.08); }
+    .lightbox-nav.prev { left: 0.75rem; }
+    .lightbox-nav.next { right: 0.75rem; }
+    .lightbox-nav:disabled { opacity: 0.25; cursor: default; pointer-events: none; }
+    .lightbox-counter { position: absolute; bottom: 0.7rem; left: 50%; transform: translateX(-50%); font-size: 0.75rem; color: var(--text-light); letter-spacing: 0.06em; background: rgba(255,255,255,0.75); padding: 0.2rem 0.6rem; border-radius: 20px; }
 
     /* IG PANEL */
     .ig-panel { margin-top: 3rem; background: var(--champagne); border: 1.5px dashed var(--gold-light); padding: 2.2rem 2.5rem; border-radius: 6px; }
@@ -722,6 +728,9 @@
       <p id="lbDesc">Description of the look.</p>
     </div>
     <button class="lightbox-close" onclick="closeLightbox()">✕</button>
+    <button class="lightbox-nav prev" id="lbPrev" onclick="lbNavigate(-1)" aria-label="Previous">&#8592;</button>
+    <button class="lightbox-nav next" id="lbNext" onclick="lbNavigate(1)" aria-label="Next">&#8594;</button>
+    <span class="lightbox-counter" id="lbCounter"></span>
   </div>
 </div>
 
