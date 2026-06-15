@@ -1471,14 +1471,10 @@
   async function loadDynamicGallery() {
     if (_galleryLoaded) return;
     try {
+      // Load static gallery.json immediately (fast, no cold start)
       let photos = null;
-      const res = await fetch('/api/gallery/list');
-      if (res.ok) {
-        photos = await res.json();
-      } else {
-        const fb = await fetch('/gallery/gallery.json');
-        if (fb.ok) photos = await fb.json();
-      }
+      const fb = await fetch('/gallery/gallery.json');
+      if (fb.ok) photos = await fb.json();
       if (!photos || !photos.length) return;
       _galleryLoaded = true;
       const grid = document.getElementById('photoGrid');
@@ -1498,6 +1494,15 @@
           grid.insertBefore(el, grid.firstChild);
         } else {
           grid.appendChild(el);
+        }
+      });
+      // Preload all gallery images in parallel so they appear instantly
+      photos.forEach(p => {
+        const url = p.url || '/gallery/' + p.filename;
+        if (!document.querySelector('link[rel="preload"][href="' + url + '"]')) {
+          const lnk = document.createElement('link');
+          lnk.rel = 'preload'; lnk.as = 'image'; lnk.href = url;
+          document.head.appendChild(lnk);
         }
       });
       grid.classList.remove('gallery-loading');
@@ -2168,6 +2173,8 @@
     els.forEach(el => obs.observe(el));
   }
   document.addEventListener('DOMContentLoaded', () => {
+    // Pre-fetch gallery data + preload images in background so Gallery tab is instant
+    setTimeout(loadDynamicGallery, 1500);
     setTimeout(triggerAnims, 100);
     // Set minimum date to today for the booking date picker
     const dateInput = document.getElementById('book-date');
