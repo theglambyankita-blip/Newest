@@ -7,6 +7,13 @@ import { eq, desc } from "drizzle-orm";
 import multer from "multer";
 import path from "path";
 import fs from "fs";
+import { v2 as cloudinary } from "cloudinary";
+
+cloudinary.config({
+  cloud_name: process.env["CLOUDINARY_CLOUD_NAME"],
+  api_key: process.env["CLOUDINARY_API_KEY"],
+  api_secret: process.env["CLOUDINARY_API_SECRET"],
+});
 
 const router = Router();
 
@@ -20,21 +27,27 @@ const _adminDir = path.dirname(fileURLToPath(import.meta.url));
 const GALLERY_DIR = path.join(_adminDir, "../../../artifacts/glam-by-ankita/public/gallery");
 if (!fs.existsSync(GALLERY_DIR)) fs.mkdirSync(GALLERY_DIR, { recursive: true });
 
-const galleryStorage = multer.diskStorage({
-  destination: (_req, _file, cb) => cb(null, GALLERY_DIR),
-  filename: (_req, file, cb) => {
-    const ext = path.extname(file.originalname).toLowerCase() || ".jpg";
-    cb(null, `gallery-${Date.now()}${ext}`);
-  },
-});
 const uploadMiddleware = multer({
-  storage: galleryStorage,
+  storage: multer.memoryStorage(),
   limits: { fileSize: 15 * 1024 * 1024 },
   fileFilter: (_req, file, cb) => {
     if (file.mimetype.startsWith("image/")) cb(null, true);
     else cb(new Error("Only image files are allowed"));
   },
 });
+
+function uploadToCloudinary(buffer: Buffer, folder: string): Promise<{ secure_url: string; public_id: string }> {
+  return new Promise((resolve, reject) => {
+    const stream = cloudinary.uploader.upload_stream(
+      { folder, resource_type: "image" },
+      (err, result) => {
+        if (err || !result) return reject(err || new Error("Upload failed"));
+        resolve({ secure_url: result.secure_url, public_id: result.public_id });
+      }
+    );
+    stream.end(buffer);
+  });
+}
 
 interface GalleryMeta {
   filename: string;
@@ -44,6 +57,8 @@ interface GalleryMeta {
   uploadedAt: string;
   featured?: boolean;
   objectPosition?: string;
+  url?: string;
+  cloudinaryPublicId?: string;
 }
 
 function readGalleryMeta(): GalleryMeta[] {
@@ -633,7 +648,7 @@ function renderGallery() {
       'style="position:relative;border-radius:8px;overflow:hidden;aspect-ratio:3/4;background:#f0ddd6;box-shadow:0 2px 8px rgba(0,0,0,0.08);cursor:grab;transition:outline 0.1s;">' +
       '<div style="position:absolute;top:6px;right:6px;z-index:2;background:rgba(255,255,255,0.75);border-radius:4px;padding:2px 5px;font-size:0.8rem;color:#9e7c4a;cursor:grab;line-height:1;">⠿</div>' +
       (p.featured ? '<div style="position:absolute;top:6px;left:6px;z-index:2;background:rgba(201,169,110,0.95);border-radius:4px;padding:2px 7px;font-size:0.68rem;color:#fff;font-weight:700;line-height:1.4;">⭐ Featured</div>' : '') +
-      '<img src="/gallery/' + p.filename + '" alt="' + p.title + '" style="width:100%;height:100%;object-fit:cover;object-position:' + (p.objectPosition || 'center center') + ';display:block;pointer-events:none;">' +
+      '<img src="' + (p.url || '/gallery/' + p.filename) + '" alt="' + p.title + '" style="width:100%;height:100%;object-fit:cover;object-position:' + (p.objectPosition || 'center center') + ';display:block;pointer-events:none;">' +
       '<div class="gal-overlay" style="position:absolute;inset:0;background:linear-gradient(to top,rgba(0,0,0,0.78) 0%,transparent 50%);opacity:0;transition:opacity 0.2s;display:flex;flex-direction:column;justify-content:flex-end;padding:10px;">' +
         '<div style="font-size:0.73rem;color:#fff;font-weight:700;line-height:1.3;">' + p.title + '</div>' +
         '<div style="font-size:0.68rem;color:rgba(255,255,255,0.8);margin-top:2px;text-transform:capitalize;">' + p.category + '</div>' +
@@ -714,7 +729,8 @@ var _galPosOptions = [
 function initPosGrid(filename, currentPos) {
   _galEditPos = currentPos || 'center center';
   var previewImg = document.getElementById('gal-pos-preview-img');
-  previewImg.src = '/gallery/' + filename;
+  var photo = _galleryPhotos.find(function(p) { return p.filename === filename; });
+  previewImg.src = (photo && photo.url) ? photo.url : '/gallery/' + filename;
   previewImg.style.objectPosition = _galEditPos;
   var grid = document.getElementById('gal-pos-grid');
   grid.innerHTML = '';
@@ -1047,13 +1063,28 @@ router.post(
     next();
   },
   uploadMiddleware.single("photo"),
-  (req, res) => {
+  async (req, res) => {
     if (!req.file) { res.status(400).json({ error: "No file uploaded" }); return; }
     const { title = "Untitled", category = "glam", desc = "" } = req.body as Record<string, string>;
-    const meta = readGalleryMeta();
-    meta.unshift({ filename: req.file.filename, title, category, desc, uploadedAt: new Date().toISOString() });
-    writeGalleryMeta(meta);
-    res.json({ ok: true, filename: req.file.filename });
+    try {
+      const { secure_url, public_id } = await uploadToCloudinary(req.file.buffer, "glam-by-ankita/gallery");
+      const filename = `gallery-${Date.now()}${path.extname(req.file.originalname).toLowerCase() || ".jpg"}`;
+      const meta = readGalleryMeta();
+      meta.unshift({
+        filename,
+        title,
+        category,
+        desc,
+        uploadedAt: new Date().toISOString(),
+        url: secure_url,
+        cloudinaryPublicId: public_id,
+      });
+      writeGalleryMeta(meta);
+      res.json({ ok: true, filename, url: secure_url });
+    } catch (e) {
+      console.error("Cloudinary upload error:", e);
+      res.status(500).json({ error: "Upload to Cloudinary failed." });
+    }
   }
 );
 
@@ -1116,11 +1147,19 @@ router.delete("/admin/gallery/:filename", async (req, res) => {
     res.status(400).json({ error: "Invalid filename" }); return;
   }
 
-  const filepath = path.join(GALLERY_DIR, filename);
-  if (fs.existsSync(filepath)) fs.unlinkSync(filepath);
+  const meta = readGalleryMeta();
+  const item = meta.find((p) => p.filename === filename);
 
-  const meta = readGalleryMeta().filter((p) => p.filename !== filename);
-  writeGalleryMeta(meta);
+  if (item?.cloudinaryPublicId) {
+    await cloudinary.uploader.destroy(item.cloudinaryPublicId).catch((e) =>
+      console.error("Cloudinary delete error:", e)
+    );
+  } else {
+    const filepath = path.join(GALLERY_DIR, filename);
+    if (fs.existsSync(filepath)) fs.unlinkSync(filepath);
+  }
+
+  writeGalleryMeta(meta.filter((p) => p.filename !== filename));
   res.json({ ok: true });
 });
 
