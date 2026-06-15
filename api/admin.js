@@ -1,4 +1,4 @@
-const { getPool } = require('./db');
+const { getPool } = require('./_db');
 const nodemailer = require('nodemailer');
 const { randomUUID } = require('crypto');
 

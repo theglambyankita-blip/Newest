@@ -1,4 +1,19 @@
 module.exports = async function handler(req, res) {
+  // ?json=1 mode: used by frontend to decode booking data without the HTML page
+  if (req.query.json === '1') {
+    res.setHeader('Access-Control-Allow-Origin', '*');
+    res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
+    if (req.method === 'OPTIONS') return res.status(200).end();
+    const { d } = req.query;
+    if (!d) return res.status(400).json({ error: 'Missing booking data' });
+    try {
+      const bookingData = JSON.parse(Buffer.from(d, 'base64url').toString('utf8'));
+      return res.json({ booking_data: bookingData });
+    } catch (err) {
+      return res.status(400).json({ error: 'Invalid booking data' });
+    }
+  }
+
   const { b } = req.query;
 
   if (!b) {

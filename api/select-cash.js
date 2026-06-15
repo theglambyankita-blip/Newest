@@ -1,6 +1,6 @@
 const nodemailer = require('nodemailer');
 const crypto = require('crypto');
-const { getPool } = require('./db');
+const { getPool } = require('./_db');
 
 function generateBookingId() {
   const now = new Date();

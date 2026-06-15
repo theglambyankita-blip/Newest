@@ -1,6 +1,6 @@
 const nodemailer = require('nodemailer');
 const https = require('https');
-const { getPool } = require('./db');
+const { getPool } = require('./_db');
 
 const SITE_URL = 'https://www.theglambyankita.com';
 const OWNER_EMAIL = 'nishankn.ankita@gmail.com';
