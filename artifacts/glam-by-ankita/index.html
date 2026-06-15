@@ -468,6 +468,51 @@
     .toast { position: fixed; bottom: 2rem; right: 2rem; background: var(--text-dark); color: var(--white); padding: 1rem 1.5rem; font-size: 0.85rem; font-weight: 600; border-radius: 6px; transform: translateY(100px); opacity: 0; transition: transform 0.4s cubic-bezier(0.16,1,0.3,1), opacity 0.4s; z-index: 9000; max-width: 300px; }
     .toast.show { transform: translateY(0); opacity: 1; }
 
+    /* ── GALLERY ENTRANCE ANIMATIONS ─────────────────────────── */
+    @keyframes photoEnter {
+      from { opacity: 0; transform: scale(0.88) translateY(24px); }
+      to   { opacity: 1; transform: scale(1) translateY(0); }
+    }
+    .photo-item.photo-enter { animation: photoEnter 0.62s cubic-bezier(0.16,1,0.3,1) both; }
+    /* tilt: override only when JS applies inline transform */
+    .photo-item { will-change: transform; }
+    .photo-item:hover { z-index: 2; box-shadow: 0 24px 64px rgba(201,169,110,0.28); }
+
+    /* shimmer on placeholder tiles */
+    .photo-ph { position: relative; overflow: hidden; }
+    .photo-ph::after { content: ''; position: absolute; inset: 0; background: linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.38) 50%, transparent 100%); background-size: 200% 100%; animation: shimmerPh 1.8s ease-in-out infinite; }
+    @keyframes shimmerPh { 0%,100% { background-position: -200% 0; } 50% { background-position: 200% 0; } }
+
+    /* ── ENHANCED LIGHTBOX ────────────────────────────────────── */
+    .lightbox { background: rgba(10,4,2,0.96); }
+    .lightbox-inner { max-width: 900px; border-radius: 4px; box-shadow: 0 32px 100px rgba(0,0,0,0.6); }
+    .lightbox-ph.has-image { min-height: 480px; max-height: 72vh; display: flex; align-items: center; justify-content: center; overflow: hidden; }
+    .lightbox-ph.has-image img { max-height: 72vh; width: 100%; height: 100%; object-fit: contain; display: block; }
+    @keyframes lbSlide { from { opacity: 0; transform: translateX(40px) scale(0.97); } to { opacity: 1; transform: none; } }
+    @keyframes lbSlideBack { from { opacity: 0; transform: translateX(-40px) scale(0.97); } to { opacity: 1; transform: none; } }
+    .lightbox-ph.lb-slide-fwd { animation: lbSlide 0.28s cubic-bezier(0.16,1,0.3,1); }
+    .lightbox-ph.lb-slide-back { animation: lbSlideBack 0.28s cubic-bezier(0.16,1,0.3,1); }
+    .lightbox-nav { width: 44px; height: 44px; font-size: 1.2rem; }
+
+    /* ── HERO STAT COUNT-UP ───────────────────────────────────── */
+    @keyframes statPop { 0% { transform: scale(0.6); opacity: 0; } 70% { transform: scale(1.08); } 100% { transform: scale(1); opacity: 1; } }
+    .hero-stat-num.stat-popped { animation: statPop 0.55s cubic-bezier(0.16,1,0.3,1) both; }
+
+    /* ── CURSOR SPARKLE ───────────────────────────────────────── */
+    .cursor-dot { position: fixed; pointer-events: none; z-index: 8000; width: 10px; height: 10px; border-radius: 50%; background: var(--gold); mix-blend-mode: multiply; transform: translate(-50%,-50%) scale(0); transition: transform 0.15s ease, opacity 0.2s ease; opacity: 0; }
+    .cursor-dot.visible { transform: translate(-50%,-50%) scale(1); opacity: 0.55; }
+    .cursor-ring { position: fixed; pointer-events: none; z-index: 7999; width: 32px; height: 32px; border-radius: 50%; border: 1.5px solid rgba(201,169,110,0.45); transform: translate(-50%,-50%); transition: transform 0.4s cubic-bezier(0.16,1,0.3,1), opacity 0.3s; opacity: 0; }
+    .cursor-ring.visible { opacity: 1; }
+    @media (max-width: 900px) { .cursor-dot, .cursor-ring { display: none; } }
+
+    /* ── GALLERY GLOW ON ACTIVE FILTER ───────────────────────── */
+    .gfbtn.active { box-shadow: 0 4px 14px rgba(201,169,110,0.3); }
+
+    /* ── SCROLL-TO-TOP BUTTON ─────────────────────────────────── */
+    #scroll-top-btn { position: fixed; bottom: 2rem; left: 2rem; width: 42px; height: 42px; background: var(--gold); border: none; border-radius: 50%; color: var(--white); font-size: 1.1rem; cursor: pointer; display: flex; align-items: center; justify-content: center; opacity: 0; transform: translateY(12px); transition: opacity 0.3s, transform 0.3s, background 0.2s; z-index: 800; box-shadow: 0 4px 16px rgba(201,169,110,0.35); }
+    #scroll-top-btn.visible { opacity: 1; transform: translateY(0); }
+    #scroll-top-btn:hover { background: var(--gold-dark); }
+
     /* RESPONSIVE */
     @media (max-width: 900px) {
       .sitenav-tabs button { font-size: 0.72rem; padding: 0.6rem 0.3rem; }
