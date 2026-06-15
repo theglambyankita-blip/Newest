@@ -3,8 +3,14 @@
   "outputDirectory": "artifacts/glam-by-ankita/dist",
   "installCommand": "pnpm install",
   "framework": null,
+  "functions": {
+    "api/index.js": {
+      "maxDuration": 30
+    }
+  },
   "rewrites": [
     { "source": "/r", "destination": "/api/r" },
+    { "source": "/api/:path*", "destination": "/api/index.js" },
     { "source": "/((?!api/).*)", "destination": "/index.html" }
   ]
 }

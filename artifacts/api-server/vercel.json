@@ -1,0 +1,18 @@
+{
+  "version": 2,
+  "builds": [
+    {
+      "src": "src/serverless.ts",
+      "use": "@vercel/node",
+      "config": {
+        "includeFiles": ["src/**", "../../lib/db/src/**", "../../lib/api-zod/src/**"]
+      }
+    }
+  ],
+  "routes": [
+    {
+      "src": "/(.*)",
+      "dest": "/src/serverless.ts"
+    }
+  ]
+}
