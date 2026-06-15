@@ -893,8 +893,9 @@ loadGallery();
 // ── Gallery ───────────────────────────────────────────────────────
 const STATIC_GALLERY_SEED = [
   { filename:'image_1781501304429.jpeg', url:'/gallery/image_1781501304429.jpeg', title:'Soft Glam with a Pop of Blue Liner', category:'glam', description:'Soft pink/mauve eyeshadow with a sharp blue-violet winged liner — clean, feminine, and wearable', object_position:'center center', featured:true, sort_order:0 },
-  { filename:'image_1781426299431.jpeg', url:'/gallery/image_1781426299431.jpeg', title:'Editorial Look', category:'editorial', description:'Bold editorial eye makeup look', object_position:'center top', featured:false, sort_order:1 },
-  { filename:'image_1781426379509.jpeg', url:'/gallery/image_1781426379509.jpeg', title:'Soft Glam Blue Wing', category:'glam', description:'Soft glam with blue wing liner accent', object_position:'center center', featured:false, sort_order:2 },
+  { filename:'image_1781501478673.jpeg', url:'/gallery/image_1781501478673.jpeg', title:'Soft Smokey Glam with Rosy Neutrals', category:'glam', description:'Soft brown smokey eye with rosy-peach blush and nude pink lips — elegant, polished, and timeless', object_position:'center center', featured:false, sort_order:1 },
+  { filename:'image_1781426299431.jpeg', url:'/gallery/image_1781426299431.jpeg', title:'Editorial Look', category:'editorial', description:'Bold editorial eye makeup look', object_position:'center top', featured:false, sort_order:2 },
+  { filename:'image_1781426379509.jpeg', url:'/gallery/image_1781426379509.jpeg', title:'Soft Glam Blue Wing', category:'glam', description:'Soft glam with blue wing liner accent', object_position:'center center', featured:false, sort_order:3 },
 ];
 
 async function ensureGalleryTable() {
