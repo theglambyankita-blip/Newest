@@ -327,6 +327,7 @@ router.get("/admin", async (req, res) => {
       <a class="tab-btn ${view==='all'?'tab-active':''}" href="${viewUrl('all')}">All (${allBookings.length})</a>
       <a class="tab-btn ${view==='upcoming'?'tab-active':''}" href="${viewUrl('upcoming')}">Upcoming (${upcoming.length})</a>
       <a class="tab-btn ${view==='past'?'tab-active':''}" href="${viewUrl('past')}">Past (${past.length})</a>
+      <a class="tab-btn ${view==='thismonth'?'tab-active':''}" href="${viewUrl('thismonth')}">This Month (${thisMonth.length})</a>
       <button class="tab-btn tab-csv" onclick="exportCSV()">⬇ CSV</button>
     </div>
     <div class="card">
