@@ -300,21 +300,23 @@
     .gallery-view-toggle { display: flex; gap: 0.4rem; }
     .view-btn { background: var(--white); border: 1.5px solid var(--blush-deep); color: var(--text-mid); font-size: 0.82rem; font-weight: 600; padding: 0.45rem 0.8rem; border-radius: 4px; cursor: pointer; }
     .view-btn.active { background: var(--gold-dark); color: var(--white); border-color: var(--gold-dark); }
-    .photo-grid { display: grid; gap: 0; transition: all 0.4s ease; }
+    .photo-grid { display: grid; gap: 4px; transition: all 0.4s ease; }
     .photo-grid.gallery-loading { visibility: hidden; min-height: 420px; }
     .photo-grid.grid-3 { grid-template-columns: repeat(3, 1fr); }
     .photo-grid.grid-2 { grid-template-columns: repeat(2, 1fr); }
-    .photo-item { aspect-ratio: 1; position: relative; overflow: hidden; background: var(--blush); cursor: pointer; }
+    .photo-item { aspect-ratio: 1; position: relative; overflow: hidden; background: var(--blush); cursor: pointer; border-radius: 3px; }
     .photo-item.featured { grid-column: span 2; grid-row: span 2; aspect-ratio: 1; }
-    .photo-ph { width: 100%; height: 100%; min-height: 180px; transition: transform 0.6s cubic-bezier(0.16,1,0.3,1); background: linear-gradient(135deg, var(--blush), var(--champagne)); display: flex; align-items: center; justify-content: center; font-size: 3rem; }
-    .photo-item:hover .photo-ph { transform: scale(1.06); }
-    .photo-item img { width:100%; height:100%; object-fit:cover; object-position:center center; display:block; transition:transform 0.6s cubic-bezier(0.16,1,0.3,1); background:var(--blush); }
-    .photo-item:hover img { transform: scale(1.06); }
-    .photo-overlay { position: absolute; inset: 0; background: rgba(44,24,16,0); display: flex; flex-direction: column; align-items: center; justify-content: center; transition: background 0.3s; }
-    .photo-item:hover .photo-overlay { background: rgba(44,24,16,0.42); }
-    .photo-overlay-txt { opacity: 0; font-family: 'Playfair Display', serif; font-style: italic; font-size: 1rem; color: var(--white); transition: opacity 0.3s, transform 0.3s; transform: translateY(8px); text-align: center; padding: 0.5rem; }
-    .photo-overlay-txt small { display: block; font-family: 'Nunito', sans-serif; font-style: normal; font-size: 0.72rem; letter-spacing: 0.04em; opacity: 0.88; margin-top: 0.25rem; }
-    .photo-item:hover .photo-overlay-txt { opacity: 1; transform: translateY(0); }
+    .photo-ph { width: 100%; height: 100%; min-height: 180px; transition: transform 0.6s cubic-bezier(0.16,1,0.3,1); background: linear-gradient(145deg, #f5ece6 0%, #ede0d4 40%, #e8d5c4 100%); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1rem; }
+    .photo-ph-line { width: 32px; height: 1px; background: var(--gold); }
+    .photo-ph-label { font-family: 'Nunito', sans-serif; font-size: 0.65rem; font-weight: 700; letter-spacing: 0.2em; text-transform: uppercase; color: var(--gold-dark); }
+    .photo-item:hover .photo-ph { transform: scale(1.04); }
+    .photo-item img { width:100%; height:100%; object-fit:cover; object-position:center center; display:block; transition:transform 0.55s cubic-bezier(0.16,1,0.3,1); background:var(--blush); }
+    .photo-item:hover img { transform: scale(1.05); }
+    .photo-overlay { position: absolute; inset: 0; background: linear-gradient(to top, rgba(20,8,4,0.72) 0%, rgba(20,8,4,0.18) 45%, rgba(20,8,4,0) 100%); opacity: 0; display: flex; flex-direction: column; align-items: flex-start; justify-content: flex-end; padding: 1rem 1.1rem; transition: opacity 0.32s; }
+    .photo-item:hover .photo-overlay { opacity: 1; }
+    .photo-overlay-txt { font-family: 'Playfair Display', serif; font-style: italic; font-size: 0.95rem; color: var(--white); text-align: left; transform: translateY(6px); transition: transform 0.32s; line-height: 1.3; }
+    .photo-overlay-txt small { display: block; font-family: 'Nunito', sans-serif; font-style: normal; font-size: 0.68rem; letter-spacing: 0.06em; opacity: 0.82; margin-top: 0.2rem; text-transform: uppercase; }
+    .photo-item:hover .photo-overlay-txt { transform: translateY(0); }
 
     /* BTS GRID */
     .bts-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 0.8rem; }
@@ -962,25 +964,11 @@
     </div>
 
     <div class="photo-grid grid-3 gallery-loading" id="photoGrid" data-stagger>
-      <div class="photo-item featured" data-cat="bridal" data-title="Bridal Glam" data-desc="Soft, long-wear bridal look" onclick="openLightbox(this)">
-        <div class="photo-ph">👰<div style="font-size:0.7rem;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;color:var(--text-light);margin-top:0.5rem;">Coming Soon</div></div>
+      <div class="photo-item featured" data-cat="fill" data-fill="true" onclick="openLightbox(this)">
+        <div class="photo-ph"><div class="photo-ph-line"></div><div class="photo-ph-label">Coming Soon</div><div class="photo-ph-line"></div></div>
       </div>
-      <div class="photo-item" data-cat="glam" data-title="Full Glam" data-desc="Bold red lip & city sunset vibes" onclick="openLightbox(this)">
-        <img src="/full-glam-city.png" alt="Full Glam — Melbourne city sunset" style="object-position: center 70%;">
-        <div class="photo-overlay"><div class="photo-overlay-txt">Full Glam<br><small>City Sunset ✦</small></div></div>
-      </div>
-      <div class="photo-item" data-cat="festival" data-title="Festival Vibes" data-desc="Festival glitter and glow" onclick="openLightbox(this)">
-        <div class="photo-ph">✨<div style="font-size:0.7rem;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;color:var(--text-light);margin-top:0.5rem;">Coming Soon</div></div>
-      </div>
-      <div class="photo-item" data-cat="glam" data-title="Soft Glam" data-desc="Everyday soft glam look" onclick="openLightbox(this)">
-        <img src="/soft-glam-1.jpeg" alt="Soft Glam">
-        <div class="photo-overlay"><div class="photo-overlay-txt">Soft Glam</div></div>
-      </div>
-      <div class="photo-item" data-cat="bridal" data-title="Bridal Party" data-desc="Coordinated bridal party looks" onclick="openLightbox(this)">
-        <div class="photo-ph">💐<div style="font-size:0.7rem;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;color:var(--text-light);margin-top:0.5rem;">Coming Soon</div></div>
-      </div>
-      <div class="photo-item" data-cat="editorial" data-title="Bold Editorial" data-desc="Avant-garde creative look" onclick="openLightbox(this)">
-        <div class="photo-ph">🎭<div style="font-size:0.7rem;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;color:var(--text-light);margin-top:0.5rem;">Coming Soon</div></div>
+      <div class="photo-item" data-cat="fill" data-fill="true" onclick="openLightbox(this)">
+        <div class="photo-ph"><div class="photo-ph-line"></div><div class="photo-ph-label">Coming Soon</div><div class="photo-ph-line"></div></div>
       </div>
     </div>
 
@@ -1532,9 +1520,21 @@
         el.dataset.desc = '';
         el.dataset.placeholder = 'true';
         el.style.display = 'none';
-        el.innerHTML = '<div class="photo-ph">' + ph.emoji + '<div style="font-size:0.7rem;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;color:var(--text-light);margin-top:0.5rem;">Coming Soon</div></div>';
+        el.innerHTML = '<div class="photo-ph"><div class="photo-ph-line"></div><div class="photo-ph-label">Coming Soon</div><div class="photo-ph-line"></div></div>';
         grid.appendChild(el);
       });
+
+      // Fill 2 empty grid slots in All view (3-col grid: 1 featured 2×2 + 3 real = 2 gaps)
+      const nonFeaturedReal = photos.filter(p => !p.featured).length;
+      const needed = Math.max(0, 5 - nonFeaturedReal);
+      for (let i = 0; i < needed; i++) {
+        const el = document.createElement('div');
+        el.className = 'photo-item';
+        el.dataset.cat = 'fill';
+        el.dataset.fill = 'true';
+        el.innerHTML = '<div class="photo-ph"><div class="photo-ph-line"></div><div class="photo-ph-label">Coming Soon</div><div class="photo-ph-line"></div></div>';
+        grid.appendChild(el);
+      }
     } catch(e) {}
   }
 
@@ -2198,10 +2198,14 @@
     document.querySelectorAll('.gfbtn').forEach(b => b.classList.remove('active'));
     btn.classList.add('active');
     document.querySelectorAll('.photo-item').forEach(item => {
-      const isPlaceholder = item.dataset.placeholder === 'true';
+      const isCatPlaceholder = item.dataset.placeholder === 'true';
+      const isFill = item.dataset.fill === 'true';
       if (cat === 'all') {
-        item.style.display = isPlaceholder ? 'none' : '';
+        // All: show real photos + fill slots; hide category placeholders
+        item.style.display = isCatPlaceholder ? 'none' : '';
       } else {
+        // Category: show matching real photos + matching category placeholders; hide fills
+        if (isFill) { item.style.display = 'none'; return; }
         item.style.display = (item.dataset.cat === cat) ? '' : 'none';
       }
     });
