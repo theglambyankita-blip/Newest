@@ -150,6 +150,16 @@ async function validateToken(token: string): Promise<boolean> {
   return rows.length > 0 && rows[0].expiresAt > now;
 }
 
+// ── GET /api/admin-token — returns current valid token for the admin panel redirect ──
+router.get("/admin-token", async (req, res) => {
+  try {
+    const token = await getOrCreateToken();
+    res.json({ token });
+  } catch (e) {
+    res.status(500).json({ error: "Could not retrieve admin token." });
+  }
+});
+
 // ── GET /api/admin — admin dashboard ────────────────────────────
 router.get("/admin", async (req, res) => {
   const token = req.query.token as string;
