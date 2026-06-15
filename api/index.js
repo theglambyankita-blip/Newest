@@ -606,6 +606,76 @@ app.get('/admin', async (req, res) => {
 
   const baseUrl = `/api/admin?token=${encodeURIComponent(token)}`;
   const tabBtn = (v,label) => `<a href="${baseUrl}${v==='all'?'':('&view='+v)}" style="padding:7px 14px;border:1.5px solid ${view===v?'transparent':'#e0c8c0'};border-radius:6px;font-size:0.85rem;font-weight:600;color:${view===v?'#fff':'#6b3d2e'};background:${view===v?'linear-gradient(135deg,#c9a96e,#9e7c4a)':'#fff'};text-decoration:none;display:inline-block;">${label}</a>`;
+  const cloudName = process.env.CLOUDINARY_CLOUD_NAME || '';
+  const uploadPreset = process.env.CLOUDINARY_UPLOAD_PRESET || '';
+  const posPresets = ['top left','top center','top right','center left','center center','center right','bottom left','bottom center','bottom right'];
+  const posIcons = ['↖','↑','↗','←','·','→','↙','↓','↘'];
+  const posBtns = (fnName) => posPresets.map((p,i)=>`<button onclick="${fnName}('${p}')" style="padding:5px 2px;font-size:0.75rem;border:1px solid #e0c8c0;border-radius:4px;background:#fff;color:#6b3d2e;cursor:pointer;font-family:inherit;">${posIcons[i]}</button>`).join('');
+  const gallerySectionHtml = `<div class="section"><div class="section-title">🖼️ Gallery Photos</div>
+  <div class="card" style="padding:20px 24px;margin-bottom:16px;">
+    <h3 style="font-size:0.93rem;color:#2c1810;margin:0 0 14px;padding-bottom:8px;border-bottom:1px solid #f0ddd8;">Upload New Photo</h3>
+    ${!cloudName?`<div style="background:#fff8e6;border:1px solid #f0c060;border-radius:6px;padding:12px 16px;margin-bottom:14px;font-size:0.83rem;color:#7a5a00;">⚠️ <strong>Cloudinary not configured.</strong> Add <code>CLOUDINARY_CLOUD_NAME</code> and <code>CLOUDINARY_UPLOAD_PRESET</code> to your environment variables to enable uploads. <a href="https://cloudinary.com/users/register/free" target="_blank" style="color:#c9a96e;text-decoration:underline;">Create free account →</a></div>`:''}
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;">
+      <div>
+        <div class="field"><label>Photo</label><input type="file" id="gal-file" accept="image/*" onchange="galPreviewFile(event)" style="padding:8px;"></div>
+        <div id="gal-preview-wrap" style="display:none;margin-bottom:10px;">
+          <div style="font-size:0.72rem;font-weight:700;color:#6b3d2e;text-transform:uppercase;letter-spacing:0.06em;margin-bottom:5px;">Click image to set focus point</div>
+          <div id="gal-preview-box" style="position:relative;width:100%;aspect-ratio:4/3;overflow:hidden;border-radius:6px;cursor:crosshair;border:1.5px solid #e8c4bc;background:#f5e8e0;" onclick="galSetPos(event,this,'gal-preview-img','gal-focus-dot','gal-pos-val',true)">
+            <img id="gal-preview-img" style="width:100%;height:100%;object-fit:cover;object-position:center center;pointer-events:none;" alt="Preview">
+            <div id="gal-focus-dot" style="position:absolute;width:14px;height:14px;background:rgba(201,169,110,0.9);border:2.5px solid #fff;border-radius:50%;transform:translate(-50%,-50%);left:50%;top:50%;pointer-events:none;box-shadow:0 0 0 3px rgba(0,0,0,0.2);transition:left 0.15s,top 0.15s;"></div>
+          </div>
+          <div id="gal-pos-val" style="font-size:0.76rem;color:#9e7c4a;margin-top:5px;text-align:center;">Focus: center center</div>
+          <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:3px;margin-top:6px;">${posBtns('galApplyUploadPos')}</div>
+        </div>
+        <div class="field"><label>Title</label><input type="text" id="gal-title" placeholder="e.g. Bridal Glam"></div>
+      </div>
+      <div>
+        <div class="field"><label>Category</label><select id="gal-category" style="width:100%;padding:10px 13px;border:1.5px solid #e0c8c0;border-radius:6px;font-size:0.92rem;color:#2c1810;background:#fff;font-family:inherit;"><option value="glam">Glam</option><option value="bridal">Bridal</option><option value="editorial">Editorial</option><option value="festival">Festival</option><option value="creative">Creative</option><option value="collab">Collab</option></select></div>
+        <div class="field"><label>Description</label><textarea id="gal-desc" rows="3" placeholder="Short description…" style="min-height:75px;"></textarea></div>
+        <button class="btn" id="gal-upload-btn" onclick="galUpload()" ${!cloudName?'disabled':''}>Upload Photo ✦</button>
+        <div id="gal-upload-status" style="margin-top:10px;font-size:0.84rem;"></div>
+      </div>
+    </div>
+  </div>
+  <div class="card" style="padding:20px 24px;">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;padding-bottom:8px;border-bottom:1px solid #f0ddd8;">
+      <h3 style="font-size:0.93rem;color:#2c1810;margin:0;">All Photos</h3>
+      <span style="font-size:0.76rem;color:#9a7060;">Click a photo to edit · drag to reorder</span>
+    </div>
+    <div id="gal-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:10px;"></div>
+    <div id="gal-empty" style="color:#9e7c4a;font-size:0.85rem;padding:20px 0;display:none;">No photos yet. Upload your first photo above!</div>
+  </div>
+</div>
+<div id="gal-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.55);z-index:9999;align-items:center;justify-content:center;padding:16px;">
+  <div style="background:#fff;border-radius:12px;max-width:640px;width:100%;max-height:92vh;overflow-y:auto;box-shadow:0 20px 60px rgba(0,0,0,0.22);">
+    <div style="background:linear-gradient(135deg,#c9a96e,#9e7c4a);padding:18px 24px;border-radius:12px 12px 0 0;"><h3 style="color:#fff;margin:0;font-size:1.05rem;">✏️ Edit Photo</h3></div>
+    <div style="padding:20px 24px;">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:18px;margin-bottom:16px;">
+        <div>
+          <div style="font-size:0.72rem;font-weight:700;color:#6b3d2e;text-transform:uppercase;letter-spacing:0.06em;margin-bottom:5px;">Click to recenter image</div>
+          <div id="gal-edit-pbox" style="position:relative;width:100%;aspect-ratio:4/3;overflow:hidden;border-radius:6px;cursor:crosshair;border:1.5px solid #e8c4bc;background:#f5e8e0;" onclick="galSetPos(event,this,'gal-edit-img','gal-edit-dot','gal-edit-pos-val',false)">
+            <img id="gal-edit-img" style="width:100%;height:100%;object-fit:cover;object-position:center center;pointer-events:none;" alt="">
+            <div id="gal-edit-dot" style="position:absolute;width:14px;height:14px;background:rgba(201,169,110,0.9);border:2.5px solid #fff;border-radius:50%;transform:translate(-50%,-50%);left:50%;top:50%;pointer-events:none;box-shadow:0 0 0 3px rgba(0,0,0,0.2);transition:left 0.15s,top 0.15s;"></div>
+          </div>
+          <div id="gal-edit-pos-val" style="font-size:0.76rem;color:#9e7c4a;margin-top:5px;text-align:center;">Focus: center center</div>
+          <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:3px;margin-top:6px;">${posBtns('galEditApplyPos')}</div>
+        </div>
+        <div>
+          <div class="field"><label>Title</label><input type="text" id="gal-edit-title"></div>
+          <div class="field"><label>Category</label><select id="gal-edit-cat" style="width:100%;padding:10px 13px;border:1.5px solid #e0c8c0;border-radius:6px;font-size:0.92rem;color:#2c1810;background:#fff;font-family:inherit;"><option value="glam">Glam</option><option value="bridal">Bridal</option><option value="editorial">Editorial</option><option value="festival">Festival</option><option value="creative">Creative</option><option value="collab">Collab</option></select></div>
+          <div class="field"><label>Description</label><textarea id="gal-edit-desc" rows="3" style="min-height:70px;"></textarea></div>
+        </div>
+      </div>
+      <div id="gal-edit-err" style="background:#fff0f0;border:1px solid #f5c0c0;color:#c62828;padding:10px 14px;border-radius:4px;font-size:0.85rem;margin-bottom:12px;display:none;"></div>
+      <div style="display:flex;gap:10px;flex-wrap:wrap;">
+        <button class="btn" style="flex:1;min-width:110px;" id="gal-save-btn" onclick="galEditSave()">Save ✦</button>
+        <button id="gal-feat-btn" onclick="galToggleFeatured()" style="flex:1;min-width:110px;padding:13px 16px;border:1.5px solid #c9a96e;border-radius:8px;background:#fff;color:#9e7c4a;font-weight:700;font-size:0.88rem;cursor:pointer;font-family:inherit;">⭐ Feature</button>
+        <button onclick="galDelete()" style="padding:13px 16px;border:1.5px solid #f5c0c0;border-radius:8px;background:#fff;color:#c0392b;font-weight:700;font-size:0.88rem;cursor:pointer;font-family:inherit;">🗑️ Delete</button>
+        <button onclick="galCloseModal()" style="padding:13px 16px;border:1.5px solid #e0c8c0;border-radius:8px;background:#fff;color:#6b3d2e;font-weight:700;font-size:0.88rem;cursor:pointer;font-family:inherit;">Cancel</button>
+      </div>
+    </div>
+  </div>
+</div>`;
 
   res.setHeader('Content-Type','text/html; charset=utf-8');
   res.send(`<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Admin Dashboard · The Glam by Ankita</title><style>*{box-sizing:border-box;margin:0;padding:0}body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#fdf8f4;color:#2c1810;min-height:100vh;}.topbar{display:flex;align-items:center;justify-content:space-between;padding:16px 28px;background:#fff;border-bottom:1px solid #e8c4bc;}.logo-text{font-size:1rem;color:#6b3d2e;font-style:italic;}.header{background:linear-gradient(135deg,#c9a96e,#9e7c4a);padding:28px 32px;color:#fff;}.header h1{font-size:1.5rem;margin-bottom:4px;}.stats{display:flex;gap:16px;flex-wrap:wrap;margin-top:20px;}.stat{background:rgba(255,255,255,0.18);border-radius:8px;padding:12px 20px;text-align:center;min-width:100px;border:2px solid transparent;text-decoration:none;color:inherit;display:block;}.stat-val{font-size:1.6rem;font-weight:700;}.stat-lbl{font-size:0.75rem;opacity:0.88;margin-top:2px;}.content{max-width:1100px;margin:0 auto;padding:28px 20px 60px;}.section{margin-bottom:32px;}.section-title{font-size:1rem;color:#6b3d2e;margin-bottom:14px;padding-bottom:8px;border-bottom:2px solid #e8c4bc;}.toolbar{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px;align-items:center;}.card{background:#fff;border:1px solid #e8c4bc;border-radius:10px;overflow:hidden;}.table-wrap{overflow-x:auto;}table{width:100%;border-collapse:collapse;font-size:0.88rem;}th{padding:10px 12px;text-align:left;font-size:0.75rem;font-weight:700;color:#6b3d2e;text-transform:uppercase;letter-spacing:0.05em;background:#fdf5f0;border-bottom:1px solid #e8c4bc;white-space:nowrap;}tr:hover td{background:#fdf5f0;}.email-form{padding:24px;}.field{margin-bottom:16px;}label{display:block;font-size:0.75rem;font-weight:700;color:#6b3d2e;text-transform:uppercase;letter-spacing:0.06em;margin-bottom:6px;}input,textarea{width:100%;padding:10px 13px;border:1.5px solid #e0c8c0;border-radius:6px;font-size:0.92rem;color:#2c1810;background:#fff;font-family:inherit;outline:none;transition:border-color .2s;}input:focus,textarea:focus{border-color:#c9a96e;}textarea{resize:vertical;min-height:140px;}.btn{display:inline-block;padding:13px 28px;background:linear-gradient(135deg,#c9a96e,#9e7c4a);color:#fff;border:none;border-radius:8px;font-size:0.95rem;font-weight:700;cursor:pointer;}.btn:disabled{opacity:0.5;cursor:not-allowed;}.alert{padding:12px 16px;border-radius:6px;font-size:0.88rem;margin-bottom:16px;display:none;}.alert-success{background:#f0fff4;border:1px solid #a8e6b8;color:#2c6e3f;}.alert-error{background:#fff0f0;border:1px solid #f5c0c0;color:#c0392b;}</style></head><body>
@@ -632,6 +702,7 @@ app.get('/admin', async (req, res) => {
       <button class="btn" onclick="sendEmail()">Send Email ✦</button>
     </div></div>
   </div>
+  ${gallerySectionHtml}
   <div class="section"><div class="section-title">🔗 Admin Link</div>
     <div class="card" style="padding:20px 24px;">
       <p style="font-size:0.88rem;color:#4a2e22;margin-bottom:14px;">Regenerate your admin link (a new one will be emailed to you and this page will no longer work).</p>
@@ -642,9 +713,288 @@ app.get('/admin', async (req, res) => {
 </div>
 <script>
 const TOKEN='${esc(token)}';
+const CLOUD_NAME='${cloudName}';
+const UPLOAD_PRESET='${uploadPreset}';
+var _galPhotos=[];
+var _galEditFilename='';
+var _galEditPos='center center';
+var _galUploadPos='center center';
+
+// ── Shared position tool ──────────────────────────────────────────
+function galSetPos(e,box,imgId,dotId,valId,isUpload){
+  var rect=box.getBoundingClientRect();
+  var x=Math.round(((e.clientX-rect.left)/rect.width)*100);
+  var y=Math.round(((e.clientY-rect.top)/rect.height)*100);
+  var pos=x+'% '+y+'%';
+  document.getElementById(imgId).style.objectPosition=pos;
+  document.getElementById(dotId).style.left=x+'%';
+  document.getElementById(dotId).style.top=y+'%';
+  document.getElementById(valId).textContent='Focus: '+pos;
+  if(isUpload){_galUploadPos=pos;}else{_galEditPos=pos;}
+}
+function galApplyPreset(pos,imgId,dotId,valId,isUpload){
+  document.getElementById(imgId).style.objectPosition=pos;
+  var xMap={'left':'0%','center':'50%','right':'100%'};
+  var yMap={'top':'0%','center':'50%','bottom':'100%'};
+  var parts=pos.split(' ');
+  document.getElementById(dotId).style.left=xMap[parts[1]||'center']||'50%';
+  document.getElementById(dotId).style.top=yMap[parts[0]||'center']||'50%';
+  document.getElementById(valId).textContent='Focus: '+pos;
+  if(isUpload){_galUploadPos=pos;}else{_galEditPos=pos;}
+}
+function galApplyUploadPos(pos){galApplyPreset(pos,'gal-preview-img','gal-focus-dot','gal-pos-val',true);}
+function galEditApplyPos(pos){galApplyPreset(pos,'gal-edit-img','gal-edit-dot','gal-edit-pos-val',false);}
+
+// ── Load & render gallery ─────────────────────────────────────────
+async function loadGallery(){
+  try{
+    var r=await fetch('/api/gallery/list');
+    _galPhotos=await r.json();
+    renderGallery();
+  }catch(e){console.error('Gallery load error',e);}
+}
+function renderGallery(){
+  var grid=document.getElementById('gal-grid');
+  var empty=document.getElementById('gal-empty');
+  if(!_galPhotos.length){grid.innerHTML='';empty.style.display='block';return;}
+  empty.style.display='none';
+  grid.innerHTML=_galPhotos.map(function(p){
+    var imgUrl=p.url||('/gallery/'+p.filename);
+    var pos=p.objectPosition||'center center';
+    return '<div draggable="true" ondragstart="galDragStart(event,\''+p.filename+'\')" ondragover="galDragOver(event)" ondrop="galDrop(event,\''+p.filename+'\')" data-fn="'+p.filename+'" style="position:relative;aspect-ratio:1;overflow:hidden;border-radius:8px;border:1.5px solid #e8c4bc;cursor:pointer;background:#f5e8e0;transition:box-shadow 0.2s;" onclick="galOpenEdit(\''+p.filename+'\')">'+
+      (p.featured?'<div style="position:absolute;top:5px;left:5px;z-index:2;background:rgba(201,169,110,0.95);border-radius:4px;padding:2px 7px;font-size:0.66rem;color:#fff;font-weight:700;pointer-events:none;">⭐</div>':'')+
+      '<img src="'+imgUrl+'" style="width:100%;height:100%;object-fit:cover;object-position:'+pos+';display:block;pointer-events:none;" alt="'+p.title+'">'+
+      '<div style="position:absolute;inset:0;background:rgba(44,24,16,0);transition:background 0.2s;pointer-events:none;" class="gal-hover-ov"></div>'+
+      '<div style="position:absolute;bottom:0;left:0;right:0;padding:7px 8px;color:#fff;font-size:0.7rem;font-weight:600;text-shadow:0 1px 3px rgba(0,0,0,0.7);pointer-events:none;background:linear-gradient(transparent,rgba(0,0,0,0.55));">'+p.title+'</div>'+
+      '</div>';
+  }).join('');
+}
+
+// ── Drag to reorder ───────────────────────────────────────────────
+var _galDragSrc='';
+function galDragStart(e,fn){_galDragSrc=fn;e.dataTransfer.effectAllowed='move';}
+function galDragOver(e){e.preventDefault();e.dataTransfer.dropEffect='move';}
+async function galDrop(e,targetFn){
+  e.preventDefault();
+  if(_galDragSrc===targetFn)return;
+  var si=_galPhotos.findIndex(function(p){return p.filename===_galDragSrc;});
+  var ti=_galPhotos.findIndex(function(p){return p.filename===targetFn;});
+  var moved=_galPhotos.splice(si,1)[0];
+  _galPhotos.splice(ti,0,moved);
+  renderGallery();
+  await fetch('/api/admin/gallery/reorder?token='+encodeURIComponent(TOKEN),{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify({order:_galPhotos.map(function(p){return p.filename;})})});
+}
+
+// ── Upload ────────────────────────────────────────────────────────
+function galPreviewFile(e){
+  var file=e.target.files[0];if(!file)return;
+  var img=document.getElementById('gal-preview-img');
+  img.src=URL.createObjectURL(file);
+  img.style.objectPosition='center center';
+  _galUploadPos='center center';
+  document.getElementById('gal-pos-val').textContent='Focus: center center';
+  document.getElementById('gal-focus-dot').style.left='50%';
+  document.getElementById('gal-focus-dot').style.top='50%';
+  document.getElementById('gal-preview-wrap').style.display='block';
+}
+async function galUpload(){
+  if(!CLOUD_NAME||!UPLOAD_PRESET){alert('Cloudinary not configured. Set CLOUDINARY_CLOUD_NAME and CLOUDINARY_UPLOAD_PRESET env vars.');return;}
+  var fileInput=document.getElementById('gal-file');
+  var file=fileInput.files[0];if(!file){alert('Please select a photo first.');return;}
+  var title=document.getElementById('gal-title').value.trim();
+  var category=document.getElementById('gal-category').value;
+  var desc=document.getElementById('gal-desc').value.trim();
+  var btn=document.getElementById('gal-upload-btn');
+  var status=document.getElementById('gal-upload-status');
+  btn.disabled=true;btn.textContent='Uploading…';status.textContent='';
+  try{
+    var fd=new FormData();
+    fd.append('file',file);
+    fd.append('upload_preset',UPLOAD_PRESET);
+    fd.append('folder','glam-by-ankita');
+    status.textContent='Uploading to cloud…';
+    var cr=await fetch('https://api.cloudinary.com/v1_1/'+CLOUD_NAME+'/image/upload',{method:'POST',body:fd});
+    if(!cr.ok){var ce=await cr.json().catch(()=>({}));throw new Error(ce.error?.message||'Cloudinary upload failed');}
+    var cd=await cr.json();
+    status.textContent='Saving…';
+    var sr=await fetch('/api/admin/gallery?token='+encodeURIComponent(TOKEN),{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({url:cd.secure_url,public_id:cd.public_id,title:title,category:category,description:desc,object_position:_galUploadPos})});
+    if(!sr.ok)throw new Error('Failed to save metadata');
+    status.innerHTML='<span style="color:#2e7d32;">✅ Photo uploaded successfully!</span>';
+    fileInput.value='';
+    document.getElementById('gal-preview-wrap').style.display='none';
+    document.getElementById('gal-title').value='';
+    document.getElementById('gal-desc').value='';
+    _galUploadPos='center center';
+    await loadGallery();
+  }catch(e){status.innerHTML='<span style="color:#c0392b;">❌ '+e.message+'</span>';}
+  btn.disabled=false;btn.textContent='Upload Photo ✦';
+}
+
+// ── Edit modal ────────────────────────────────────────────────────
+function galOpenEdit(filename){
+  var p=_galPhotos.find(function(x){return x.filename===filename;});if(!p)return;
+  _galEditFilename=filename;
+  _galEditPos=p.objectPosition||'center center';
+  var img=document.getElementById('gal-edit-img');
+  img.src=p.url||('/gallery/'+p.filename);
+  img.style.objectPosition=_galEditPos;
+  var parts=_galEditPos.replace(/%/g,'').trim().split(/\s+/);
+  var xp=parseFloat(parts[0]),yp=parseFloat(parts[1]);
+  if(!isNaN(xp)&&!isNaN(yp)){
+    document.getElementById('gal-edit-dot').style.left=xp+'%';
+    document.getElementById('gal-edit-dot').style.top=yp+'%';
+  }else{
+    var xMap={left:'0%',center:'50%',right:'100%'};
+    var yMap={top:'0%',center:'50%',bottom:'100%'};
+    document.getElementById('gal-edit-dot').style.left=xMap[parts[1]||'center']||'50%';
+    document.getElementById('gal-edit-dot').style.top=yMap[parts[0]||'center']||'50%';
+  }
+  document.getElementById('gal-edit-pos-val').textContent='Focus: '+_galEditPos;
+  document.getElementById('gal-edit-title').value=p.title||'';
+  document.getElementById('gal-edit-cat').value=p.category||'glam';
+  document.getElementById('gal-edit-desc').value=p.desc||'';
+  document.getElementById('gal-edit-err').style.display='none';
+  document.getElementById('gal-feat-btn').textContent=p.featured?'☆ Unfeature':'⭐ Feature';
+  document.getElementById('gal-modal').style.display='flex';
+}
+function galCloseModal(){document.getElementById('gal-modal').style.display='none';}
+document.getElementById('gal-modal').addEventListener('click',function(e){if(e.target===this)galCloseModal();});
+
+async function galEditSave(){
+  var btn=document.getElementById('gal-save-btn');
+  var err=document.getElementById('gal-edit-err');
+  btn.disabled=true;btn.textContent='Saving…';err.style.display='none';
+  try{
+    var r=await fetch('/api/admin/gallery/'+encodeURIComponent(_galEditFilename)+'/meta?token='+encodeURIComponent(TOKEN),{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify({title:document.getElementById('gal-edit-title').value,category:document.getElementById('gal-edit-cat').value,description:document.getElementById('gal-edit-desc').value,object_position:_galEditPos})});
+    if(!r.ok)throw new Error('Save failed');
+    galCloseModal();await loadGallery();
+  }catch(e){err.textContent='Failed to save. Please try again.';err.style.display='block';}
+  btn.disabled=false;btn.textContent='Save ✦';
+}
+async function galToggleFeatured(){
+  var r=await fetch('/api/admin/gallery/'+encodeURIComponent(_galEditFilename)+'/featured?token='+encodeURIComponent(TOKEN),{method:'PUT'});
+  if(r.ok){galCloseModal();await loadGallery();}
+  else alert('Failed to update featured status.');
+}
+async function galDelete(){
+  if(!confirm('Delete this photo permanently?'))return;
+  var r=await fetch('/api/admin/gallery/'+encodeURIComponent(_galEditFilename)+'?token='+encodeURIComponent(TOKEN),{method:'DELETE'});
+  if(r.ok){galCloseModal();await loadGallery();}
+  else alert('Delete failed. Please try again.');
+}
+
+// ── Email & admin ─────────────────────────────────────────────────
 async function sendEmail(){var btn=event.target,success=document.getElementById('email-success'),error=document.getElementById('email-error');success.style.display='none';error.style.display='none';var to=document.getElementById('e-to').value.trim(),subject=document.getElementById('e-subject').value.trim(),body=document.getElementById('e-body').value.trim();if(!to||!subject||!body){error.textContent='Please fill in all fields.';error.style.display='block';return;}btn.disabled=true;btn.textContent='Sending…';try{var res=await fetch('/api/admin-send-email?token='+encodeURIComponent(TOKEN),{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({to,subject,body})});var json=await res.json();if(!res.ok)throw new Error(json.error||'Failed');success.textContent='Email sent to '+to+'!';success.style.display='block';document.getElementById('e-to').value='';document.getElementById('e-subject').value='';document.getElementById('e-body').value='';}catch(e){error.textContent='Could not send email. Please try again.';error.style.display='block';}finally{btn.disabled=false;btn.textContent='Send Email ✦';}}
 async function regenToken(){var btn=document.getElementById('regen-btn'),status=document.getElementById('regen-status');btn.disabled=true;status.textContent='Regenerating…';try{var res=await fetch('/api/admin?token='+encodeURIComponent(TOKEN),{method:'POST'});var json=await res.json();if(!res.ok)throw new Error(json.error||'Failed');status.textContent='✅ New link sent to your email!';btn.style.display='none';}catch(e){status.textContent='❌ Failed. Try again.';btn.disabled=false;}}
+loadGallery();
 </script></body></html>`);
+});
+
+// ── Gallery ───────────────────────────────────────────────────────
+const STATIC_GALLERY_SEED = [
+  { filename:'image_1781426299431.jpeg', url:'/gallery/image_1781426299431.jpeg', title:'Editorial Look', category:'editorial', description:'Bold editorial eye makeup look', object_position:'center top', featured:false, sort_order:1 },
+  { filename:'image_1781426379509.jpeg', url:'/gallery/image_1781426379509.jpeg', title:'Soft Glam Blue Wing', category:'glam', description:'Soft glam with blue wing liner accent', object_position:'center center', featured:false, sort_order:2 },
+];
+
+async function ensureGalleryTable() {
+  const db = getPool();
+  await db.query(`CREATE TABLE IF NOT EXISTS gallery_images (
+    id SERIAL PRIMARY KEY, filename TEXT NOT NULL UNIQUE, url TEXT NOT NULL,
+    public_id TEXT, title TEXT DEFAULT '', category TEXT DEFAULT 'glam',
+    description TEXT DEFAULT '', object_position TEXT DEFAULT 'center center',
+    featured BOOLEAN DEFAULT false, sort_order INTEGER DEFAULT 0,
+    uploaded_at TIMESTAMPTZ DEFAULT NOW()
+  )`);
+}
+
+async function getGalleryItems() {
+  await ensureGalleryTable();
+  const db = getPool();
+  const { rows } = await db.query('SELECT * FROM gallery_images ORDER BY sort_order ASC, uploaded_at DESC');
+  if (rows.length === 0) {
+    for (const item of STATIC_GALLERY_SEED) {
+      await db.query(`INSERT INTO gallery_images (filename,url,title,category,description,object_position,featured,sort_order) VALUES ($1,$2,$3,$4,$5,$6,$7,$8) ON CONFLICT (filename) DO NOTHING`,
+        [item.filename,item.url,item.title,item.category,item.description,item.object_position,item.featured,item.sort_order]);
+    }
+    const { rows: seeded } = await db.query('SELECT * FROM gallery_images ORDER BY sort_order ASC, uploaded_at DESC');
+    return seeded;
+  }
+  return rows;
+}
+
+app.get('/gallery/list', async (req, res) => {
+  try {
+    const rows = await getGalleryItems();
+    const items = rows.map(r => ({ filename:r.filename, url:r.url, title:r.title||'', category:r.category||'glam', desc:r.description||'', objectPosition:r.object_position||'center center', featured:r.featured||false }));
+    items.sort((a,b) => (b.featured?1:0)-(a.featured?1:0));
+    res.json(items);
+  } catch(e) { console.error('gallery/list error:',e); res.json([]); }
+});
+
+app.post('/admin/gallery', async (req, res) => {
+  const valid = await validateAdminToken(req.query.token);
+  if (!valid) return res.status(403).json({ error:'Unauthorized' });
+  const { url, public_id, title, category, description, object_position } = req.body;
+  if (!url) return res.status(400).json({ error:'URL required' });
+  const filename = public_id ? public_id.replace(/\//g,'-') : `gal-${Date.now()}`;
+  try {
+    await ensureGalleryTable();
+    const db = getPool();
+    const { rows:mx } = await db.query('SELECT MAX(sort_order) as m FROM gallery_images');
+    const sortOrder = (Number(mx[0]?.m)||0)+1;
+    await db.query(`INSERT INTO gallery_images (filename,url,public_id,title,category,description,object_position,sort_order) VALUES ($1,$2,$3,$4,$5,$6,$7,$8) ON CONFLICT (filename) DO UPDATE SET url=$2,title=$4,category=$5,description=$6,object_position=$7`,
+      [filename,url,public_id||null,title||'',category||'glam',description||'',object_position||'center center',sortOrder]);
+    res.json({ ok:true, filename });
+  } catch(e) { console.error('gallery save error:',e); res.status(500).json({ error:'Failed to save' }); }
+});
+
+app.put('/admin/gallery/reorder', async (req, res) => {
+  const valid = await validateAdminToken(req.query.token);
+  if (!valid) return res.status(403).json({ error:'Unauthorized' });
+  const { order } = req.body;
+  if (!Array.isArray(order)) return res.status(400).json({ error:'order array required' });
+  try {
+    await ensureGalleryTable();
+    const db = getPool();
+    for (let i=0; i<order.length; i++) await db.query('UPDATE gallery_images SET sort_order=$1 WHERE filename=$2',[i,order[i]]);
+    res.json({ ok:true });
+  } catch(e) { res.status(500).json({ error:'Failed to reorder' }); }
+});
+
+app.put('/admin/gallery/:filename/meta', async (req, res) => {
+  const valid = await validateAdminToken(req.query.token);
+  if (!valid) return res.status(403).json({ error:'Unauthorized' });
+  const { title, category, description, object_position } = req.body;
+  try {
+    await ensureGalleryTable();
+    await getPool().query('UPDATE gallery_images SET title=$1,category=$2,description=$3,object_position=$4 WHERE filename=$5',
+      [title||'',category||'glam',description||'',object_position||'center center',req.params.filename]);
+    res.json({ ok:true });
+  } catch(e) { res.status(500).json({ error:'Failed to update' }); }
+});
+
+app.put('/admin/gallery/:filename/featured', async (req, res) => {
+  const valid = await validateAdminToken(req.query.token);
+  if (!valid) return res.status(403).json({ error:'Unauthorized' });
+  try {
+    await ensureGalleryTable();
+    const db = getPool();
+    const { rows } = await db.query('SELECT featured FROM gallery_images WHERE filename=$1',[req.params.filename]);
+    if (!rows.length) return res.status(404).json({ error:'Not found' });
+    const newFeatured = !rows[0].featured;
+    await db.query('UPDATE gallery_images SET featured=$1 WHERE filename=$2',[newFeatured,req.params.filename]);
+    res.json({ ok:true, featured:newFeatured });
+  } catch(e) { res.status(500).json({ error:'Failed to update' }); }
+});
+
+app.delete('/admin/gallery/:filename', async (req, res) => {
+  const valid = await validateAdminToken(req.query.token);
+  if (!valid) return res.status(403).json({ error:'Unauthorized' });
+  try {
+    await ensureGalleryTable();
+    await getPool().query('DELETE FROM gallery_images WHERE filename=$1',[req.params.filename]);
+    res.json({ ok:true });
+  } catch(e) { res.status(500).json({ error:'Failed to delete' }); }
 });
 
 // ── Export for Vercel serverless ──────────────────────────────────

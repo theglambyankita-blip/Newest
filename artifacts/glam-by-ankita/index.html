@@ -1486,7 +1486,7 @@
         el.onclick = () => openLightbox(el);
         const overlayTxt = p.featured ? (p.title + '<br><small>⭐ Featured</small>') : p.title;
         const imgStyle = p.objectPosition ? 'object-position:' + p.objectPosition + ';' : '';
-        el.innerHTML = '<img src="/gallery/' + p.filename + '" alt="' + (p.title||'') + '" style="' + imgStyle + '">' +
+        el.innerHTML = '<img src="' + (p.url || '/gallery/' + p.filename) + '" alt="' + (p.title||'') + '" style="' + imgStyle + '">' +
           '<div class="photo-overlay"><div class="photo-overlay-txt">' + overlayTxt + '</div></div>';
         if (p.featured) {
           grid.insertBefore(el, grid.firstChild);
