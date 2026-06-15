@@ -121,7 +121,7 @@
     body { font-family: 'Nunito', sans-serif; background: var(--cream); color: var(--text-dark); overflow-x: hidden; }
 
     /* SCROLL PROGRESS */
-    #progress-bar { display: none; }
+    #progress-bar { display: block; position: fixed; top: 0; left: 0; height: 3px; width: 0%; background: linear-gradient(90deg, var(--gold-dark), var(--gold), var(--gold-light), var(--gold)); z-index: 9999; border-radius: 0 3px 3px 0; transition: width 0.08s linear; pointer-events: none; }
 
     /* NAV */
     .sitenav { position: fixed; top: 0; left: 0; right: 0; z-index: 500; transition: background 0.4s, backdrop-filter 0.4s, box-shadow 0.4s; }
