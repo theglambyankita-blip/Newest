@@ -1756,6 +1756,7 @@
         calcEl.innerHTML = 'Original: A$' + amt.toFixed(2) + ' → Discount: −A$' + disc.toFixed(2) + ' → <strong>Client pays: A$' + final.toFixed(2) + '</strong>';
       }
       totalInput.addEventListener('input', updateDiscountCalc);
+      updateDiscountCalc();
     }
     document.getElementById('review-loading').style.display = 'none';
     document.getElementById('review-content').style.display = 'block';
@@ -2548,9 +2549,11 @@
       postcode:         document.getElementById('book-postcode').value.trim(),
       referral:         document.getElementById('book-referral').value,
       vision:           document.getElementById('book-vision').value.trim(),
-      coupon_code:      (_appliedCoupon && _appliedCoupon.code) ? _appliedCoupon.code : undefined,
-      discount_type:    (_appliedCoupon && _appliedCoupon.code) ? _appliedCoupon.discountType : undefined,
-      discount_value:   (_appliedCoupon && _appliedCoupon.code) ? _appliedCoupon.discountValue : undefined,
+      ...(_appliedCoupon && _appliedCoupon.code ? {
+        coupon_code:    _appliedCoupon.code,
+        discount_type:  _appliedCoupon.discountType,
+        discount_value: String(_appliedCoupon.discountValue),
+      } : {}),
       owner_email:      'nishankn.ankita@gmail.com',
       from_email:       'theglambyankita@gmail.com'
     };
@@ -2676,7 +2679,7 @@
     try {
       const fd = new FormData();
       fd.append('type', type);
-      Object.entries(data).forEach(([k, v]) => fd.append(k, v));
+      Object.entries(data).forEach(([k, v]) => { if (v !== undefined && v !== null) fd.append(k, String(v)); });
       const fileInput = document.getElementById(isBooking ? 'book-files' : 'collab-files');
       if (fileInput && fileInput.files) {
         [...fileInput.files].slice(0, 5).forEach(f => fd.append('files', f));

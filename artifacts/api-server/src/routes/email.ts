@@ -420,10 +420,11 @@ router.post("/send-email", upload.array("files", 5), async (req, res) => {
     postcode:       "Postcode",
     referral:       "How They Found You",
     vision:         "Look / Vision",
-    coupon_code:    "Promo Code",
-    discount_type:  "Discount Type",
-    discount_value: "Discount Value",
-    name:           "Name",
+    coupon_code:       "Promo Code",
+    discount_type:     "Discount Type",
+    discount_value:    "Discount Value",
+    appt_location:     "Appointment Location",
+    name:              "Name",
     brand:          "Brand / Company",
     collab_email:   "Email",
     instagram:      "Instagram Handle",
@@ -435,7 +436,7 @@ router.post("/send-email", upload.array("files", 5), async (req, res) => {
     k.split("_").map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(" ");
 
   const rows = Object.entries(fields)
-    .filter(([k, v]) => !skipEmailFields.has(k) && v !== undefined && v !== "")
+    .filter(([k, v]) => !skipEmailFields.has(k) && v !== undefined && v !== "" && v !== "undefined")
     .map(([k, v]) => `<tr>
       <td style="padding:8px 14px;font-weight:700;color:#6b3d2e;white-space:nowrap;background:#fdf0ee;border-bottom:1px solid #f0ddd6;">${emailLabelMap[k] || toTitleCase(k)}</td>
       <td style="padding:8px 14px;color:#2c1810;border-bottom:1px solid #f0ddd6;">${v || "—"}</td>
@@ -538,23 +539,36 @@ router.post("/send-confirmation", async (req, res) => {
   let discountAmount = 0;
   let discountLabel = "";
 
-  if (coupon_code && discount_value && origAmount > 0) {
-    if (discount_type === "fixed") {
-      discountAmount = Math.min(Number(discount_value), origAmount);
-    } else {
-      discountAmount = Math.round((origAmount * Number(discount_value) / 100) * 100) / 100;
-    }
-    finalAmount = Math.max(0, origAmount - discountAmount);
-    discountLabel = discount_type === "fixed"
-      ? `${coupon_code} (A$${Number(discount_value).toFixed(2)} off)`
-      : `${coupon_code} (${discount_value}% off)`;
+  if (coupon_code && coupon_code !== "undefined" && origAmount > 0) {
     try {
       const { pool: dbPool } = await import("@workspace/db");
-      await dbPool.query(
-        `UPDATE coupons SET uses_count = uses_count + 1 WHERE code = $1`,
-        [coupon_code]
+      const result = await dbPool.query(
+        `SELECT * FROM coupons WHERE code = $1 AND active = 'true'`,
+        [coupon_code.trim().toUpperCase()]
       );
-    } catch { /* non-fatal */ }
+      const dbCoupon = result.rows[0];
+      if (
+        dbCoupon &&
+        (!dbCoupon.expires_at || new Date() <= new Date(dbCoupon.expires_at)) &&
+        (!dbCoupon.max_uses || Number(dbCoupon.uses_count) < Number(dbCoupon.max_uses))
+      ) {
+        const dbType = dbCoupon.discount_type as string;
+        const dbValue = Number(dbCoupon.discount_value);
+        if (dbType === "fixed") {
+          discountAmount = Math.min(dbValue, origAmount);
+        } else {
+          discountAmount = Math.round((origAmount * dbValue / 100) * 100) / 100;
+        }
+        finalAmount = Math.max(0, origAmount - discountAmount);
+        discountLabel = dbType === "fixed"
+          ? `${coupon_code} (A$${dbValue.toFixed(2)} off)`
+          : `${coupon_code} (${dbValue}% off)`;
+        await dbPool.query(
+          `UPDATE coupons SET uses_count = uses_count + 1 WHERE code = $1`,
+          [dbCoupon.code]
+        );
+      }
+    } catch { /* non-fatal — proceed without discount if DB unavailable */ }
   }
 
   const paymentToken = toUrlSafeBase64({
