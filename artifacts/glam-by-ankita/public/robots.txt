@@ -4,4 +4,12 @@ Disallow: /sign-in
 Disallow: /sign-up
 Disallow: /account
 Disallow: /api/
+Disallow: /p
+Disallow: /review
+Disallow: /admin
+
+# Allow Google Image Bot
+User-agent: Googlebot-Image
+Allow: /
+
 Sitemap: https://www.theglambyankita.com/sitemap.xml
