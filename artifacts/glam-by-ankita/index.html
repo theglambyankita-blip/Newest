@@ -292,6 +292,7 @@
     .svc-name { font-family: 'Playfair Display', serif; font-size: 1.2rem; font-weight: 600; color: var(--text-dark); margin-bottom: 0.5rem; }
     .svc-desc { font-size: 0.85rem; line-height: 1.8; color: var(--text-light); }
     .svc-tag { display: inline-block; margin-top: 0.8rem; font-size: 0.7rem; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; color: var(--gold); }
+    .svc-price { font-family: 'Playfair Display', serif; font-size: 1.1rem; font-weight: 700; color: var(--text-dark); margin-top: 0.9rem; margin-bottom: 0; }
 
 
     /* GALLERY */
@@ -1037,16 +1038,29 @@
       <button class="stab" onclick="showServiceTab('glam',this)">Glam</button>
       <button class="stab" onclick="showServiceTab('bridal',this)">Bridal</button>
       <button class="stab" onclick="showServiceTab('creative',this)">Creative</button>
-      <button class="stab" onclick="showServiceTab('collab',this)">Collabs</button>
     </div>
     <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(270px,1fr));gap:2px;background:var(--blush-deep);" data-stagger id="servicesGrid">
-      <div class="svc-card hover-lift" data-cat="glam"><div class="svc-num">01</div><div class="svc-emoji">💄</div><h3 class="svc-name">Soft & Everyday Glam</h3><p class="svc-desc">Natural, glowing looks perfect for daily wear, work, or casual events. Clean skin, defined features.</p><span class="svc-tag">Glam</span></div>
-      <div class="svc-card hover-lift" data-cat="glam"><div class="svc-num">02</div><div class="svc-emoji">🎉</div><h3 class="svc-name">Party Makeup</h3><p class="svc-desc">Full glam for celebrations, nights out, or any occasion where you want to shine.</p><span class="svc-tag">Glam</span></div>
-      <div class="svc-card hover-lift" data-cat="bridal"><div class="svc-num">03</div><div class="svc-emoji">👰</div><h3 class="svc-name">Bridal Makeup</h3><p class="svc-desc">Long-wear, flawless bridal looks designed to last all day and photograph beautifully. Trial included.</p><span class="svc-tag">Bridal</span></div>
-      <div class="svc-card hover-lift" data-cat="bridal"><div class="svc-num">04</div><div class="svc-emoji">🌸</div><h3 class="svc-name">Bridal Party</h3><p class="svc-desc">Coordinated looks for the entire bridal party — bridesmaids, mother of the bride, and more.</p><span class="svc-tag">Bridal</span></div>
-      <div class="svc-card hover-lift" data-cat="creative"><div class="svc-num">05</div><div class="svc-emoji">🎨</div><h3 class="svc-name">Editorial & Creative</h3><p class="svc-desc">Avant-garde and artistic makeup for shoots, fashion, and creative projects.</p><span class="svc-tag">Creative</span></div>
-      <div class="svc-card hover-lift" data-cat="collab"><div class="svc-num">06</div><div class="svc-emoji">💛</div><h3 class="svc-name">Brand Collabs</h3><p class="svc-desc">UGC, PR gifting, and brand collaboration content creation. Let's create together.</p><span class="svc-tag">Collab</span></div>
-      <div class="svc-card hover-lift" data-cat="collab"><div class="svc-num">07</div><div class="svc-emoji">📸</div><h3 class="svc-name">TFP / Portfolio</h3><p class="svc-desc">Trade-for-print collaborations with photographers and models for portfolio building.</p><span class="svc-tag">Collab</span></div>
+      <div class="svc-card hover-lift" data-cat="glam"><div class="svc-num">01</div><div class="svc-emoji">💄</div><h3 class="svc-name">Soft Glam</h3><p class="svc-desc">Your skin, elevated. A luminous, polished finish that enhances your natural beauty — think dewy, radiant, and effortlessly put-together.</p><p class="svc-price">$100</p><span class="svc-tag">Glam</span></div>
+      <div class="svc-card hover-lift" data-cat="glam"><div class="svc-num">02</div><div class="svc-emoji">✨</div><h3 class="svc-name">Full Glam</h3><p class="svc-desc">Turn heads and own the room. Sultry eyes, a flawless base, and lash-forward drama — made for moments that deserve to be remembered.</p><p class="svc-price">$120</p><span class="svc-tag">Glam</span></div>
+      <div class="svc-card hover-lift" data-cat="glam"><div class="svc-num">03</div><div class="svc-emoji">🎉</div><h3 class="svc-name">Party Glam</h3><p class="svc-desc">Wear the night. Bold, fun, and celebration-ready — whether it's a birthday bash, dinner date, or a night you'll want to remember forever.</p><p class="svc-price">$120</p><span class="svc-tag">Glam</span></div>
+      <div class="svc-card hover-lift" data-cat="glam"><div class="svc-num">04</div><div class="svc-emoji">🎓</div><h3 class="svc-name">Formal Makeup</h3><p class="svc-desc">Sophisticated and enduring. Polished long-wear makeup that keeps you camera-ready from the ceremony through to the very last moment.</p><p class="svc-price">$120</p><span class="svc-tag">Glam</span></div>
+      <div class="svc-card hover-lift" data-cat="bridal"><div class="svc-num">05</div><div class="svc-emoji">👰</div><h3 class="svc-name">Bridal Makeup</h3><p class="svc-desc">Your most iconic look. Meticulously crafted bridal artistry designed to carry you through every moment of your day — and photograph beautifully doing it.</p><p class="svc-price">$180</p><span class="svc-tag">Bridal</span></div>
+      <div class="svc-card hover-lift" data-cat="bridal"><div class="svc-num">06</div><div class="svc-emoji">🌸</div><h3 class="svc-name">Bridal Party Makeup</h3><p class="svc-desc">A harmonious, beautiful wedding party. Individually tailored looks for your bridesmaids and loved ones — all in seamless sync with your bridal vision.</p><p class="svc-price">$120 <span style="font-size:0.75rem;font-weight:500;color:var(--text-light);">per person</span></p><span class="svc-tag">Bridal</span></div>
+      <div class="svc-card hover-lift" data-cat="creative"><div class="svc-num">07</div><div class="svc-emoji">🎨</div><h3 class="svc-name">Editorial Makeup</h3><p class="svc-desc">Where artistry meets intention. Striking makeup crafted for the lens — fashion campaigns, magazine spreads, and creative direction that demands attention.</p><p class="svc-price">From $140</p><span class="svc-tag">Creative</span></div>
+      <div class="svc-card hover-lift" data-cat="creative"><div class="svc-num">08</div><div class="svc-emoji">🎭</div><h3 class="svc-name">Festival &amp; Cultural Makeup</h3><p class="svc-desc">Vivid, expressive, and deeply personal. From cultural ceremonies to festival moments — makeup that honours your story and makes every look unforgettable.</p><p class="svc-price">From $120</p><span class="svc-tag">Creative</span></div>
+    </div>
+
+    <!-- PRICING NOTES -->
+    <div data-anim="up" style="margin-top:3rem;background:var(--champagne);border-left:3px solid var(--gold);padding:1.8rem 2rem;border-radius:2px;">
+      <p class="eyebrow" style="margin-bottom:0.8rem;">Good to Know</p>
+      <ul style="list-style:none;padding:0;margin:0;display:grid;gap:0.55rem;">
+        <li style="font-size:0.88rem;color:var(--text-mid);line-height:1.7;">✦ &nbsp;Premium false lashes included where required</li>
+        <li style="font-size:0.88rem;color:var(--text-mid);line-height:1.7;">✦ &nbsp;Luxury skin preparation included with every service</li>
+        <li style="font-size:0.88rem;color:var(--text-mid);line-height:1.7;">✦ &nbsp;All appointments are conducted from my Melbourne studio</li>
+        <li style="font-size:0.88rem;color:var(--text-mid);line-height:1.7;">✦ &nbsp;Group bookings available upon request</li>
+        <li style="font-size:0.88rem;color:var(--text-mid);line-height:1.7;">✦ &nbsp;All prices are in AUD</li>
+        <li style="font-size:0.88rem;color:var(--text-mid);line-height:1.7;">✦ &nbsp;Please enquire for customised quotes</li>
+      </ul>
     </div>
 
   </div>
