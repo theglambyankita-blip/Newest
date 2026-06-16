@@ -106,10 +106,10 @@
       --blush-deep: #e8c4bc;
       --blush-light: #fdf0ee;
       --champagne: #f7e9d0;
-      --gold: #d4af37;
-      --gold-light: #f3e5ab;
-      --gold-dark: #aa8627;
-      --cream: #fdf6ec;
+      --gold: #c9a96e;
+      --gold-light: #e8d5a3;
+      --gold-dark: #9e7c4a;
+      --cream: #fdf8f4;
       --text-dark: #2c1810;
       --text-mid: #6b3d2e;
       --text-light: #9a7060;
@@ -196,9 +196,15 @@
     /* Floating orbs */
     @keyframes float1 { 0%,100% { transform: translate(0,0) scale(1); } 33% { transform: translate(15px,-20px) scale(1.05); } 66% { transform: translate(-10px,10px) scale(0.98); } }
     @keyframes float2 { 0%,100% { transform: translate(0,0); } 50% { transform: translate(-20px,-15px) scale(1.08); } }
-    .orb { display: none; }
-    .orb-gold { background: radial-gradient(circle, var(--gold-light), var(--gold)); }
-    .orb-blush { background: radial-gradient(circle, var(--blush), var(--blush-deep)); }
+    .orb { position: absolute; border-radius: 50%; filter: blur(52px); pointer-events: none; z-index: 0; }
+    .orb-gold { background: radial-gradient(circle, rgba(232,213,163,0.6), rgba(201,169,110,0.15)); }
+    .orb-blush { background: radial-gradient(circle, rgba(232,196,188,0.55), rgba(245,221,216,0.18)); }
+
+    @keyframes glamParticleFloat {
+      0%   { transform: translateY(0) translateX(0) rotate(0deg); }
+      50%  { transform: translateY(-45vh) translateX(var(--p-drift)) rotate(180deg); opacity: 0.4; }
+      100% { transform: translateY(-100vh) translateX(calc(var(--p-drift) * 0.4)) rotate(360deg); opacity: 0; }
+    }
 
     /* Pulsing dot */
     @keyframes pulse-dot { 0%,100% { transform: scale(1); opacity: 1; } 50% { transform: scale(1.6); opacity: 0.4; } }
@@ -285,11 +291,13 @@
     .service-tabs { display: flex; gap: 0.5rem; flex-wrap: wrap; margin-bottom: 2.5rem; }
     .stab { background: var(--white); border: 1.5px solid var(--blush-deep); color: var(--text-mid); font-family: 'Nunito', sans-serif; font-size: 0.82rem; font-weight: 600; padding: 0.5rem 1.2rem; border-radius: 100px; cursor: pointer; transition: background 0.2s, color 0.2s, border-color 0.2s; }
     .stab:hover, .stab.active { background: var(--gold); color: var(--white); border-color: var(--gold); }
-    .services-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(270px, 1fr)); gap: 2px; background: var(--blush-deep); }
-    .svc-card { background: var(--cream); padding: 2.2rem 2rem; position: relative; overflow: hidden; cursor: default; transition: background 0.3s; }
-    .svc-card::after { content: ''; position: absolute; bottom: 0; left: 0; width: 0; height: 3px; background: linear-gradient(90deg, var(--gold), var(--gold-light)); transition: width 0.3s; }
-    .svc-card:hover { background: var(--champagne); }
-    .svc-card:hover::after { width: 100%; }
+    .services-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(270px, 1fr)); gap: 1.25rem; background: transparent; }
+    .svc-card { background: rgba(255,255,255,0.68); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px); padding: 2.2rem 2rem; border-radius: 16px; border: 1px solid rgba(201,169,110,0.15); position: relative; overflow: hidden; cursor: default; transition: background 0.4s cubic-bezier(0.34,1.56,0.64,1), transform 0.4s cubic-bezier(0.34,1.56,0.64,1), box-shadow 0.4s, border-color 0.3s; }
+    .svc-card::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px; background: linear-gradient(90deg, transparent, var(--gold), transparent); opacity: 0; transition: opacity 0.3s; }
+    .svc-card::after { content: ''; position: absolute; top: -50%; left: -80%; width: 60%; height: 200%; background: linear-gradient(90deg, transparent, rgba(255,255,255,0.55), rgba(201,169,110,0.12), transparent); transform: skewX(-12deg); transition: left 0.8s cubic-bezier(0.4,0,0.2,1); pointer-events: none; }
+    .svc-card:hover { background: rgba(255,255,255,0.9); transform: translateY(-10px) scale(1.015); box-shadow: 0 24px 64px rgba(201,169,110,0.22), 0 0 0 1px rgba(201,169,110,0.18); border-color: rgba(201,169,110,0.32); }
+    .svc-card:hover::before { opacity: 1; }
+    .svc-card:hover::after { left: 130%; }
     .svc-num { position: absolute; top: 1.4rem; right: 1.6rem; font-family: 'Playfair Display', serif; font-size: 1.2rem; color: var(--blush-deep); }
     .svc-emoji { font-size: 1.8rem; margin-bottom: 0.8rem; }
     .svc-name { font-family: 'Playfair Display', serif; font-size: 1.2rem; font-weight: 600; color: var(--text-dark); margin-bottom: 0.5rem; }
@@ -876,10 +884,22 @@
 </div>
 
 <!-- HOME PAGE -->
-<div class="page active" id="page-home">
-  <section style="padding:0;" class="hero">
+<div class="page active" id="page-home" style="position:relative;">
+
+  <!-- Ambient background orbs — Petal Luxe + Silk & Gold -->
+  <div style="position:absolute;inset:0;overflow:hidden;pointer-events:none;z-index:0;">
+    <div class="orb orb-blush" style="width:540px;height:540px;top:-140px;right:-100px;animation:float1 16s ease-in-out infinite;opacity:0.52;"></div>
+    <div class="orb orb-gold"  style="width:420px;height:420px;bottom:60px;left:-100px;animation:float2 22s ease-in-out infinite reverse;opacity:0.42;"></div>
+    <div class="orb orb-blush" style="width:300px;height:300px;top:42%;left:42%;animation:float1 19s 5s ease-in-out infinite;opacity:0.28;"></div>
+  </div>
+
+  <!-- Floating particles container -->
+  <div id="glam-particles" style="position:absolute;inset:0;overflow:hidden;pointer-events:none;z-index:1;"></div>
+
+  <section style="padding:0;position:relative;z-index:2;" class="hero">
     <div class="hero-left">
-      <div class="hero-pill" data-anim="up" style="margin-top:1.5rem;"><span class="dot"></span> Melbourne Makeup Artist</div>
+      <img src="/logo-original.png" alt="The Glam by Ankita" data-anim="scale" style="width:68px;height:68px;border-radius:50%;border:2px solid rgba(201,169,110,0.38);object-fit:cover;box-shadow:0 4px 20px rgba(201,169,110,0.22);margin-bottom:1.1rem;">
+      <div class="hero-pill" data-anim="up" style="margin-top:0;"><span class="dot"></span> Melbourne Makeup Artist</div>
       <h1 class="hero-h1" data-anim="up" data-delay="100">Beauty That<br><em>Tells Your</em><br>Story</h1>
       <p class="hero-p" data-anim="up" data-delay="300">Professional makeup artistry tailored to you — from soft everyday glam to full bridal transformations.</p>
       <div class="hero-btns" data-anim="up" data-delay="400">
@@ -897,9 +917,9 @@
         </div>
       </div>
     </div>
-    <div class="hero-right" id="heroRight" style="background:var(--blush-light);display:flex;align-items:center;justify-content:center;">
+    <div class="hero-right" id="heroRight" style="background:linear-gradient(135deg,#fdf0ee 0%,#f5ddd8 55%,#f7e9d0 100%);display:flex;align-items:center;justify-content:center;">
       <div class="hero-photo-wrap" data-anim="scale">
-        <img src="/logo-original.png" alt="The Glam by Ankita" style="width:100%;display:block;border-radius:50%;">
+        <img src="/logo-original.png" alt="The Glam by Ankita" style="width:100%;display:block;">
       </div>
       <div class="hero-gold-bar"></div>
     </div>
@@ -3029,6 +3049,38 @@
       ].filter(Boolean).join(';');
       heroLeft.insertBefore(orb, heroLeft.firstChild);
     });
+  })();
+
+  // D: FLOATING PARTICLES — Petal Luxe inspired ✦ ✧ ❀ ✿
+  (function() {
+    const container = document.getElementById('glam-particles');
+    if (!container) return;
+    const SYMBOLS = ['✦', '✧', '❀', '✿', '◈', '⬥'];
+    const COLORS  = ['#c9a96e', '#e8c4bc', '#e8d5a3', '#9e7c4a'];
+    for (let i = 0; i < 22; i++) {
+      const sym   = SYMBOLS[Math.floor(Math.random() * SYMBOLS.length)];
+      const color = COLORS[Math.floor(Math.random() * COLORS.length)];
+      const size  = (0.62 + Math.random() * 0.72).toFixed(2);
+      const left  = (Math.random() * 100).toFixed(1);
+      const dur   = (13 + Math.random() * 18).toFixed(1);
+      const delay = (Math.random() * -22).toFixed(1);
+      const opacity = (0.16 + Math.random() * 0.3).toFixed(2);
+      const drift = Math.round((Math.random() - 0.5) * 70);
+      const span  = document.createElement('span');
+      span.textContent = sym;
+      span.style.cssText = [
+        'position:absolute',
+        'left:' + left + '%',
+        'bottom:0',
+        'font-size:' + size + 'rem',
+        'color:' + color,
+        'opacity:' + opacity,
+        '--p-drift:' + drift + 'px',
+        'animation:glamParticleFloat ' + dur + 's ' + delay + 's linear infinite',
+        'will-change:transform'
+      ].join(';');
+      container.appendChild(span);
+    }
   })();
 </script>
 <script type="module" src="/src/main.tsx"></script>
