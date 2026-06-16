@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>The Glam By Ankita</title>
   <meta name="description" content="Professional makeup artistry for bridal, glam & occasions. Professional makeup artistry tailored to you. Bridal, soft glam & occasions. Book online.">
-  <meta name="keywords" content="The Glam by Ankita, Melbourne makeup artist, bridal makeup Melbourne, soft glam Melbourne, Ankita Awasthi, wedding makeup Melbourne, makeup artist near me, mobile makeup artist Melbourne, South Yarra makeup artist, Richmond makeup artist, St Kilda makeup artist, Toorak makeup artist, bridal makeup artist Melbourne, glam makeup Melbourne, party makeup Melbourne, editorial makeup Melbourne, Indian bridal makeup Melbourne, cultural makeup Melbourne, makeup artist for hire Melbourne">
+  <meta name="keywords" content="The Glam by Ankita, Melbourne makeup artist, bridal makeup Melbourne, soft glam Melbourne, Ankita Awasthi, wedding makeup Melbourne, makeup artist near me, South Yarra makeup artist, Richmond makeup artist, St Kilda makeup artist, Toorak makeup artist, bridal makeup artist Melbourne, glam makeup Melbourne, party makeup Melbourne, editorial makeup Melbourne, Indian bridal makeup Melbourne, cultural makeup Melbourne, makeup artist for hire Melbourne">
   <!-- Open Graph -->
   <meta property="og:title" content="The Glam By Ankita">
   <meta property="og:description" content="Professional makeup artistry for bridal, glam & occasions. Professional makeup artistry tailored to you. Bridal, soft glam & occasions. Book online.">
@@ -117,6 +117,7 @@
       --obsidian: #0d0a07;
       --espresso: #1a0f08;
       --cream-warm: #fdf6ec;
+      --burgundy: #8b2a3a;
     }
 
     * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -191,6 +192,7 @@
 
     /* Shimmer text */
     @keyframes shimmer { 0% { background-position: -200% center; } 100% { background-position: 200% center; } }
+    @keyframes goldShimmerText { 0% { background-position: 0% center; } 100% { background-position: 200% center; } }
     .shimmer-text { background: linear-gradient(90deg, var(--gold-dark) 0%, var(--gold) 30%, var(--gold-light) 50%, var(--gold) 70%, var(--gold-dark) 100%); background-size: 200%; -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; animation: shimmer 4s linear infinite; }
 
     /* Floating orbs */
@@ -292,10 +294,8 @@
     .stab:hover, .stab.active { background: var(--gold); color: var(--white); border-color: var(--gold); }
     .services-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(270px, 1fr)); gap: 1.25rem; background: transparent; }
     .svc-card { background: rgba(255,255,255,0.68); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px); padding: 2.2rem 2rem; border-radius: 16px; border: 1px solid rgba(201,169,110,0.15); position: relative; overflow: hidden; cursor: default; transition: background 0.4s cubic-bezier(0.34,1.56,0.64,1), transform 0.4s cubic-bezier(0.34,1.56,0.64,1), box-shadow 0.4s, border-color 0.3s; }
-    .svc-card::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px; background: linear-gradient(90deg, transparent, var(--gold), transparent); opacity: 0; transition: opacity 0.3s; }
     .svc-card::after { content: ''; position: absolute; top: -50%; left: -80%; width: 60%; height: 200%; background: linear-gradient(90deg, transparent, rgba(255,255,255,0.55), rgba(201,169,110,0.12), transparent); transform: skewX(-12deg); transition: left 0.8s cubic-bezier(0.4,0,0.2,1); pointer-events: none; }
     .svc-card:hover { background: rgba(255,255,255,0.9); transform: translateY(-10px) scale(1.015); box-shadow: 0 24px 64px rgba(201,169,110,0.22), 0 0 0 1px rgba(201,169,110,0.18); border-color: rgba(201,169,110,0.32); }
-    .svc-card:hover::before { opacity: 1; }
     .svc-card:hover::after { left: 130%; }
     .svc-num { position: absolute; top: 1.4rem; right: 1.6rem; font-family: 'Playfair Display', serif; font-size: 1.2rem; color: var(--blush-deep); }
     .svc-emoji { font-size: 1.8rem; margin-bottom: 0.8rem; }
@@ -2003,9 +2003,9 @@
   }
   function clearSavedDetails() {
     localStorage.removeItem('glamSavedDetails');
-    document.getElementById('sp-fast-banner').style.display = 'none';
-    document.getElementById('sp-save-section').style.display = 'block';
-    document.getElementById('sp-saved-confirm').style.display = 'none';
+    const fb = document.getElementById('sp-fast-banner'); if (fb) fb.style.display = 'none';
+    const ss = document.getElementById('sp-save-section'); if (ss) ss.style.display = 'block';
+    const sc = document.getElementById('sp-saved-confirm'); if (sc) sc.style.display = 'none';
     _pinClose();
   }
   function toggleSaveForm() {
@@ -2159,9 +2159,8 @@
     // Pre-fill save form with saved details if available
     const saved = _loadSavedDetails();
     if (saved) {
-      document.getElementById('sp-save-section').style.display = 'none';
-      const c = document.getElementById('sp-saved-confirm');
-      c.style.display = 'flex';
+      const ss = document.getElementById('sp-save-section'); if (ss) ss.style.display = 'none';
+      const sc = document.getElementById('sp-saved-confirm'); if (sc) sc.style.display = 'flex';
     }
     // Init Stripe if not done yet
     if (!_stripeInitStarted && _bookingToken) {
@@ -2657,7 +2656,6 @@
       }
       return label;
     }).join(', ');
-    const apptLocationEl = document.querySelector('input[name="appt-location"]:checked');
     return {
       first_name:       document.getElementById('book-first').value.trim(),
       last_name:        document.getElementById('book-last').value.trim(),
@@ -2667,7 +2665,7 @@
       preferred_date:   document.getElementById('book-date').value,
       num_people:       document.getElementById('book-people').value,
       services:         services || 'Not specified',
-      appt_location:    apptLocationEl ? apptLocationEl.value : 'Not specified',
+      appt_location:    'At Ankita\'s studio',
       location:         document.getElementById('book-location').value.trim(),
       postcode:         document.getElementById('book-postcode').value.trim(),
       referral:         document.getElementById('book-referral').value,
@@ -2827,7 +2825,7 @@
     const successId = isBooking ? 'success-book' : 'success-collab';
     const data      = isBooking ? getBookingData() : getCollabData();
     const required  = isBooking
-      ? ['first_name', 'client_email', 'phone', 'preferred_date']
+      ? ['first_name', 'last_name', 'client_email', 'phone', 'preferred_date']
       : ['name', 'client_email', 'collab_type'];
 
     const emailErrorId = isBooking ? 'book-email-error' : 'collab-email-error';
