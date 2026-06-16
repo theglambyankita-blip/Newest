@@ -1232,7 +1232,7 @@
               <input id="book-date" type="date">
             </div>
             <div class="fgroup"><label>Number of People</label>
-              <select id="book-people">
+              <select id="book-people" onchange="updatePriceSummary()">
                 <option>Just me</option>
                 <option>2 people</option>
                 <option>3 people</option>
@@ -1241,12 +1241,16 @@
               </select>
             </div>
             <div class="fgroup"><label>Services Required *</label>
-              <div class="check-grid">
-                <label class="check-item"><input type="checkbox"><span>Soft &amp; Full Glam</span></label>
-                <label class="check-item"><input type="checkbox"><span>Party &amp; Occasion</span></label>
-                <label class="check-item"><input type="checkbox"><span>Bridal &amp; Guest</span></label>
-                <label class="check-item"><input type="checkbox"><span>Festival &amp; Cultural</span></label>
-                <label class="check-item" id="svc-other-label"><input type="checkbox" id="svc-other-check" onchange="toggleOtherService(this)"><span>Other</span></label>
+              <div class="check-grid" id="svc-checkboxes">
+                <label class="check-item"><input type="checkbox" class="svc-cb" data-price="100" onchange="updatePriceSummary()"><span>💄 Soft Glam <small style="display:block;font-size:0.75rem;color:var(--text-light);">$100</small></span></label>
+                <label class="check-item"><input type="checkbox" class="svc-cb" data-price="120" onchange="updatePriceSummary()"><span>✨ Full Glam <small style="display:block;font-size:0.75rem;color:var(--text-light);">$120</small></span></label>
+                <label class="check-item"><input type="checkbox" class="svc-cb" data-price="120" onchange="updatePriceSummary()"><span>🎉 Party Glam <small style="display:block;font-size:0.75rem;color:var(--text-light);">$120</small></span></label>
+                <label class="check-item"><input type="checkbox" class="svc-cb" data-price="120" onchange="updatePriceSummary()"><span>🎓 Formal Makeup <small style="display:block;font-size:0.75rem;color:var(--text-light);">$120</small></span></label>
+                <label class="check-item"><input type="checkbox" class="svc-cb" data-price="180" onchange="updatePriceSummary()"><span>👰 Bridal Makeup <small style="display:block;font-size:0.75rem;color:var(--text-light);">$180</small></span></label>
+                <label class="check-item"><input type="checkbox" class="svc-cb" data-price="120" data-per-person="true" onchange="updatePriceSummary()"><span>🌸 Bridal Party <small style="display:block;font-size:0.75rem;color:var(--text-light);">$120 per person</small></span></label>
+                <label class="check-item"><input type="checkbox" class="svc-cb" data-price="140" data-from="true" onchange="updatePriceSummary()"><span>🎨 Editorial <small style="display:block;font-size:0.75rem;color:var(--text-light);">From $140</small></span></label>
+                <label class="check-item"><input type="checkbox" class="svc-cb" data-price="120" data-from="true" onchange="updatePriceSummary()"><span>🎭 Festival &amp; Cultural <small style="display:block;font-size:0.75rem;color:var(--text-light);">From $120</small></span></label>
+                <label class="check-item" id="svc-other-label"><input type="checkbox" id="svc-other-check" onchange="toggleOtherService(this);updatePriceSummary()"><span>Other</span></label>
               </div>
               <input type="text" id="svc-other-text" placeholder="Please specify your service..." style="display:none;margin-top:0.6rem;width:100%;padding:0.7rem 1rem;border:1.5px solid var(--blush-deep);border-radius:6px;font-size:0.95rem;font-family:inherit;">
             </div>
@@ -1297,6 +1301,14 @@
               </div>
               <div id="coupon-result" style="margin-top:6px;font-size:0.85rem;"></div>
             </div>
+
+            <!-- PRICE SUMMARY -->
+            <div id="booking-price-summary" style="display:none;margin-bottom:1.2rem;background:var(--champagne);border:1.5px solid var(--gold);border-radius:10px;padding:1.2rem 1.4rem;">
+              <p style="font-family:'Playfair Display',serif;font-weight:700;font-size:0.95rem;color:var(--text-dark);margin:0 0 0.7rem;">Estimated Price</p>
+              <div id="bps-rows" style="display:flex;flex-direction:column;gap:0.35rem;font-size:0.88rem;color:var(--text-mid);"></div>
+              <p style="margin:0.8rem 0 0;font-size:0.75rem;color:var(--text-light);line-height:1.6;">* Estimate based on selected services. Final pricing confirmed on booking.</p>
+            </div>
+
             <div class="form-submit-row">
               <button id="btn-book" onclick="submitForm('booking')">Send Booking Request</button>
               <p class="form-note">Response within 24–48 hrs 🌸</p>
@@ -2683,6 +2695,48 @@
     };
   }
 
+  function updatePriceSummary() {
+    const summary = document.getElementById('booking-price-summary');
+    const rows = document.getElementById('bps-rows');
+    if (!summary || !rows) return;
+
+    const peopleVal = (document.getElementById('book-people') || {}).value || 'Just me';
+    const peopleMap = { 'Just me': 1, '2 people': 2, '3 people': 3, '4 people': 4, '5+ people': 5 };
+    const numPeople = peopleMap[peopleVal] || 1;
+
+    const cbs = document.querySelectorAll('.svc-cb:checked');
+    if (!cbs.length) { summary.style.display = 'none'; return; }
+
+    let total = 0;
+    let hasFrom = false;
+    cbs.forEach(cb => {
+      const price = Number(cb.dataset.price || 0);
+      const perPerson = cb.dataset.perPerson === 'true';
+      const from = cb.dataset.from === 'true';
+      if (from) hasFrom = true;
+      total += perPerson ? price * numPeople : price;
+    });
+
+    const prefix = hasFrom ? 'From ' : '';
+    rows.innerHTML = '';
+
+    if (_appliedCoupon && _appliedCoupon.code) {
+      const disc = _appliedCoupon.discountType === 'fixed'
+        ? Math.min(Number(_appliedCoupon.discountValue), total)
+        : Math.round(total * Number(_appliedCoupon.discountValue) / 100 * 100) / 100;
+      const final = Math.max(0, total - disc);
+      rows.innerHTML =
+        '<div style="display:flex;justify-content:space-between;"><span>Subtotal</span><span>A$' + total.toFixed(2) + '</span></div>' +
+        '<div style="display:flex;justify-content:space-between;color:#2c6e3f;font-weight:700;"><span>🏷️ ' + _appliedCoupon.code + ' discount</span><span>−A$' + disc.toFixed(2) + '</span></div>' +
+        '<div style="display:flex;justify-content:space-between;border-top:1px solid var(--gold);margin-top:6px;padding-top:6px;font-weight:700;color:var(--text-dark);font-size:0.95rem;"><span>' + prefix + 'Total</span><span>A$' + final.toFixed(2) + '</span></div>';
+    } else {
+      rows.innerHTML =
+        '<div style="display:flex;justify-content:space-between;font-weight:700;color:var(--text-dark);font-size:0.95rem;"><span>' + prefix + 'Estimated Total</span><span>A$' + total.toFixed(2) + '</span></div>';
+    }
+
+    summary.style.display = 'block';
+  }
+
   async function applyCoupon() {
     const codeEl = document.getElementById('book-coupon');
     const resultEl = document.getElementById('coupon-result');
@@ -2705,12 +2759,14 @@
       _appliedCoupon = null;
       resultEl.innerHTML = '<span style="color:#c0392b;">Could not validate code. Please try again.</span>';
     }
+    updatePriceSummary();
   }
 
   function clearCouponResult() {
     _appliedCoupon = null;
     const resultEl = document.getElementById('coupon-result');
     if (resultEl) resultEl.innerHTML = '';
+    updatePriceSummary();
   }
 
   function toggleTravelNote() {
