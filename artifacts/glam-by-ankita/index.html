@@ -2655,7 +2655,7 @@
     try {
       const res = await fetch('/api/validate-coupon?code=' + encodeURIComponent(code));
       const data = await res.json();
-      if (data.valid) {
+      if (res.ok && data.code) {
         _appliedCoupon = data;
         const label = data.discountType === 'fixed' ? 'A$' + Number(data.discountValue).toFixed(2) + ' off' : data.discountValue + '% off';
         resultEl.innerHTML = '<span style="color:#2c6e3f;font-weight:700;">✅ ' + data.code + ' applied — ' + label + '!</span>'
