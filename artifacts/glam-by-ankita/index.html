@@ -218,7 +218,7 @@
 
     /* HERO */
     #page-home .hero { min-height: 100vh; display: grid; grid-template-columns: 1fr 1fr; position: relative; overflow: hidden; gap: 0; background: var(--blush-light); }
-    .hero-left { background: transparent; display: flex; flex-direction: column; justify-content: center; padding: 5rem 3rem 4rem 4rem; position: relative; overflow: hidden; }
+    .hero-left { background: transparent; display: flex; flex-direction: column; justify-content: center; padding: 5rem 3rem 4rem 4rem; position: relative; overflow: hidden; z-index: 1; }
     .hero-pill { display: inline-flex; align-items: center; gap: 0.5rem; background: var(--champagne); color: var(--gold-dark); border: 1px solid var(--gold-light); border-radius: 100px; padding: 0.4rem 1rem; font-size: 0.78rem; font-weight: 600; margin-bottom: 1.5rem; width: fit-content; }
     .hero-pill .dot { width: 8px; height: 8px; background: var(--gold); border-radius: 50%; display: inline-block; animation: pulse-dot 2s ease-in-out infinite; }
     .hero-h1 { font-family: 'Playfair Display', serif; font-size: clamp(3.5rem, 6.5vw, 7.5rem); font-weight: 700; line-height: 1.05; color: var(--text-dark); margin-bottom: 0.3rem; }
@@ -237,7 +237,7 @@
     .hero-stat-num { font-family: 'Playfair Display', serif; font-size: 3.2rem; font-weight: 700; color: var(--gold-dark); line-height: 1; }
     .hero-stat-lbl { font-size: 0.82rem; font-weight: 600; color: var(--text-light); text-transform: uppercase; letter-spacing: 0.12em; margin-top: 0.3rem; }
     .hero-stat-div { width: 1px; background: var(--blush-deep); align-self: stretch; margin: 0.2rem 0; }
-    .hero-right { background: transparent; position: relative; overflow: hidden; display: flex !important; align-items: center; justify-content: center; min-height: 100vh; }
+    .hero-right { background: transparent; position: relative; overflow: hidden; display: flex !important; align-items: center; justify-content: center; min-height: 100vh; z-index: 1; }
     .hero-photo-wrap { width: 72%; max-width: 420px; position: relative; z-index: 2; border-radius: 50%; overflow: hidden; box-shadow: 0 24px 72px rgba(201,169,110,0.3), 0 0 0 3px rgba(201,169,110,0.22); transition: box-shadow 0.3s; }
     .hero-photo-wrap img { width: 100%; display: block; border-radius: 0 !important; }
     .hero-ring { display: none; }
@@ -892,10 +892,8 @@
     <div class="orb orb-blush" style="width:300px;height:300px;top:42%;left:42%;animation:float1 19s 5s ease-in-out infinite;opacity:0.28;"></div>
   </div>
 
-  <!-- Floating particles container -->
-  <div id="glam-particles" style="position:absolute;inset:0;overflow:hidden;pointer-events:none;z-index:1;"></div>
-
   <section style="padding:0;position:relative;z-index:2;" class="hero">
+    <div id="glam-particles" style="position:absolute;inset:0;overflow:hidden;pointer-events:none;z-index:0;"></div>
     <div class="hero-left">
       <div class="hero-pill" data-anim="up" style="margin-top:0;"><span class="dot"></span> Melbourne Makeup Artist</div>
       <h1 class="hero-h1" data-anim="up" data-delay="100">Beauty That<br><em>Tells Your</em><br>Story</h1>
@@ -988,7 +986,7 @@
   </div>
 
   <div class="cta-band" data-anim="up">
-    <p style="font-size:1rem;color:rgba(255,255,255,0.85);margin-bottom:1.5rem;font-weight:400;" data-anim="up">Ready to look and feel your absolute best?</p>
+    <p style="font-family:'Playfair Display',serif;font-size:1.25rem;font-style:italic;color:rgba(255,255,255,0.9);margin-bottom:1.5rem;font-weight:400;letter-spacing:0.02em;" data-anim="up">Ready to look and feel your absolute best?</p>
     <button class="mag-btn" style="background:var(--white);color:var(--gold-dark);border:none;font-family:'Nunito',sans-serif;font-weight:700;font-size:1rem;padding:0.9rem 2.5rem;border-radius:4px;cursor:pointer;transition:transform 0.2s,box-shadow 0.2s;" onclick="showPage('contact',null)" data-anim="up" data-delay="100" onmouseover="this.style.transform='translateY(-2px)';this.style.boxShadow='0 8px 24px rgba(0,0,0,0.15)'" onmouseout="this.style.transform='';this.style.boxShadow=''">Book your session ✦</button>
   </div>
 </div>
@@ -1274,21 +1272,6 @@
                 <label class="check-item" id="svc-other-label"><input type="checkbox" id="svc-other-check" onchange="toggleOtherService(this);updatePriceSummary()"><span>Other</span></label>
               </div>
               <input type="text" id="svc-other-text" placeholder="Please specify your service..." style="display:none;margin-top:0.6rem;width:100%;padding:0.7rem 1rem;border:1.5px solid var(--blush-deep);border-radius:6px;font-size:0.95rem;font-family:inherit;">
-            </div>
-            <div class="fgroup"><label>Appointment Location *</label>
-              <div class="check-grid" style="grid-template-columns: 1fr 1fr;">
-                <label class="check-item" style="border-radius:8px;">
-                  <input type="radio" name="appt-location" id="appt-mobile" value="At my location (mobile service — Ankita travels to me)" onchange="toggleTravelNote()">
-                  <span>📍 At my location <small style="display:block;font-size:0.75rem;color:var(--text-light);margin-top:2px;">Ankita comes to you</small></span>
-                </label>
-                <label class="check-item" style="border-radius:8px;">
-                  <input type="radio" name="appt-location" id="appt-studio" value="I am willing to travel to Ankita" onchange="toggleTravelNote()">
-                  <span>🚗 I'm happy to travel <small style="display:block;font-size:0.75rem;color:var(--text-light);margin-top:2px;">You come to Ankita</small></span>
-                </label>
-              </div>
-              <div id="travel-fee-note" style="display:none;margin-top:0.75rem;padding:0.75rem 1rem;background:#fff8f0;border:1.5px solid var(--gold);border-radius:8px;font-size:0.88rem;color:var(--text-dark);line-height:1.6;">
-                🚗 <strong>Travel fee applies</strong> — A travel fee will be discussed and confirmed with you based on your location before your booking is finalised.
-              </div>
             </div>
             <div class="frow">
               <div class="fgroup"><label>Suburb / Location</label><input id="book-location" type="text" placeholder="e.g. Southbank, CBD..."></div>
@@ -2788,11 +2771,6 @@
     const resultEl = document.getElementById('coupon-result');
     if (resultEl) resultEl.innerHTML = '';
     updatePriceSummary();
-  }
-
-  function toggleTravelNote() {
-    const isMobile = document.getElementById('appt-mobile').checked;
-    document.getElementById('travel-fee-note').style.display = isMobile ? 'block' : 'none';
   }
 
   function toggleOtherService(cb) {
