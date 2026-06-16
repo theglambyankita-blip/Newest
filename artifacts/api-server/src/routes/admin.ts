@@ -384,7 +384,7 @@ router.get("/admin", async (req, res) => {
         <div class="alert alert-error" id="email-error">Could not send email. Please try again.</div>
         <div class="field">
           <label>Client Email Address</label>
-          <input type="email" id="e-to" placeholder="client@example.com">
+          <input type="email" id="e-to" placeholder="client@example.com" value="nishankn.ankita@gmail.com">
         </div>
         <div class="field">
           <label>Subject</label>
