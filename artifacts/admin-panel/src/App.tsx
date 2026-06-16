@@ -1,21 +1,40 @@
-import { useEffect } from "react";
-
-const ADMIN_URL = "/api/admin?token=c6dcc60c-72bd-4969-b8a8-9fa5098f6bcc";
+import { useEffect, useState } from "react";
 
 export default function App() {
+  const [status, setStatus] = useState<"loading" | "error">("loading");
+
   useEffect(() => {
-    window.location.replace(ADMIN_URL);
+    fetch("/api/admin-token")
+      .then((r) => r.json())
+      .then((data) => {
+        if (data.token) {
+          window.location.replace(`/api/admin?token=${encodeURIComponent(data.token)}`);
+        } else {
+          setStatus("error");
+        }
+      })
+      .catch(() => setStatus("error"));
   }, []);
 
   return (
     <div style={styles.wrap}>
       <div style={styles.card}>
         <div style={styles.logo}>✦ Glam by Ankita</div>
-        <div style={styles.spinner} />
-        <p style={styles.label}>Opening Admin Dashboard…</p>
-        <a href={ADMIN_URL} style={styles.link}>
-          Click here if not redirected →
-        </a>
+        {status === "loading" ? (
+          <>
+            <div style={styles.spinner} />
+            <p style={styles.label}>Opening Admin Dashboard…</p>
+          </>
+        ) : (
+          <>
+            <p style={{ ...styles.label, color: "#c0392b" }}>
+              Could not load the admin dashboard. Please check that the API server is running.
+            </p>
+            <button style={styles.retryBtn} onClick={() => { setStatus("loading"); window.location.reload(); }}>
+              Retry
+            </button>
+          </>
+        )}
       </div>
       <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
     </div>
@@ -64,10 +83,15 @@ const styles: Record<string, React.CSSProperties> = {
     fontSize: "0.9rem",
     margin: 0,
   },
-  link: {
-    color: "#c9a96e",
-    fontSize: "0.82rem",
-    textDecoration: "none",
-    fontWeight: 600,
+  retryBtn: {
+    background: "linear-gradient(135deg, #c9a96e, #9e7c4a)",
+    color: "#fff",
+    border: "none",
+    borderRadius: "8px",
+    padding: "10px 24px",
+    fontSize: "0.9rem",
+    fontWeight: 700,
+    cursor: "pointer",
+    fontFamily: "inherit",
   },
 };

@@ -18,10 +18,12 @@ export function buildIcs(opts: {
 
   if (opts.time) {
     const [h, m] = opts.time.split(":").map(Number);
-    const endH = h + duration;
-    const pad = (n: number) => String(n).padStart(2, "0");
+    const pad = (n: number) => String(Math.floor(n)).padStart(2, "0");
+    const totalEndMins = h * 60 + m + Math.round(duration * 60);
+    const endH = Math.floor(totalEndMins / 60) % 24;
+    const endM = totalEndMins % 60;
     dtstart = `DTSTART;TZID=Australia/Melbourne:${d}T${pad(h)}${pad(m)}00`;
-    dtend   = `DTEND;TZID=Australia/Melbourne:${d}T${pad(endH)}${pad(m)}00`;
+    dtend   = `DTEND;TZID=Australia/Melbourne:${d}T${pad(endH)}${pad(endM)}00`;
   } else {
     const next = new Date(opts.date + "T00:00:00");
     next.setDate(next.getDate() + 1);

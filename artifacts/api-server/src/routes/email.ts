@@ -568,7 +568,11 @@ router.post("/send-confirmation", async (req, res) => {
           [dbCoupon.code]
         );
       }
-    } catch { /* non-fatal — proceed without discount if DB unavailable */ }
+    } catch (couponErr) {
+      console.error("Coupon DB lookup failed — aborting confirmation to avoid overcharging client:", couponErr);
+      res.status(503).json({ error: "Could not validate promo code (database unavailable). Please try again in a moment." });
+      return;
+    }
   }
 
   const paymentToken = toUrlSafeBase64({
