@@ -272,6 +272,18 @@ router.get("/admin", async (req, res) => {
     .filter((b) => b.totalAud)
     .reduce((sum, b) => sum + Number(b.totalAud || 0), 0);
 
+  const cloudName = process.env["CLOUDINARY_CLOUD_NAME"] || "";
+
+  const posArrows: Record<string, string> = {
+    'top left':'↖','top center':'↑','top right':'↗',
+    'center left':'←','center center':'·','center right':'→',
+    'bottom left':'↙','bottom center':'↓','bottom right':'↘'
+  };
+  const posBtnsUpload = ['top left','top center','top right','center left','center center','center right','bottom left','bottom center','bottom right']
+    .map(p => `<button onclick="galApplyUploadPos('${p}')" style="padding:5px 2px;font-size:0.75rem;border:1px solid #e0c8c0;border-radius:4px;background:#fff;color:#6b3d2e;cursor:pointer;font-family:inherit;">${posArrows[p]}</button>`).join('');
+  const posBtnsEdit = ['top left','top center','top right','center left','center center','center right','bottom left','bottom center','bottom right']
+    .map(p => `<button onclick="galEditApplyPos('${p}')" style="padding:5px 2px;font-size:0.75rem;border:1px solid #e0c8c0;border-radius:4px;background:#fff;color:#6b3d2e;cursor:pointer;font-family:inherit;">${posArrows[p]}</button>`).join('');
+
   const html = `<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -279,886 +291,530 @@ router.get("/admin", async (req, res) => {
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Admin Dashboard · The Glam by Ankita</title>
 <style>
-  *{box-sizing:border-box;margin:0;padding:0}
-  body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#fdf8f4;color:#2c1810;min-height:100vh;}
-  .topbar{display:flex;align-items:center;justify-content:space-between;padding:16px 28px;background:#fff;border-bottom:1px solid #e8c4bc;}
-  .logo{display:flex;align-items:center;gap:10px;}
-  .logo-text{font-family:Georgia,serif;font-size:1rem;color:#6b3d2e;font-style:italic;}
-  .badge{background:#fdf0ee;color:#6b3d2e;font-size:0.75rem;font-weight:700;padding:4px 10px;border-radius:20px;border:1px solid #e8c4bc;}
-  .header{background:linear-gradient(135deg,#c9a96e,#9e7c4a);padding:28px 32px;color:#fff;}
-  .header h1{font-family:Georgia,serif;font-size:1.5rem;margin-bottom:4px;}
-  .header p{font-size:0.85rem;opacity:0.88;}
-  .stats{display:flex;gap:16px;flex-wrap:wrap;margin-top:20px;}
-  .stat{background:rgba(255,255,255,0.18);border-radius:8px;padding:12px 20px;text-align:center;min-width:100px;cursor:pointer;transition:background .2s,transform .15s;border:2px solid transparent;user-select:none;text-decoration:none;color:inherit;display:block;}
-  .stat:hover{background:rgba(255,255,255,0.28);transform:translateY(-1px);}
-  .stat.active{background:rgba(255,255,255,0.35);border-color:rgba(255,255,255,0.55);}
-  .stat-val{font-family:Georgia,serif;font-size:1.6rem;font-weight:700;}
-  .stat-lbl{font-size:0.75rem;opacity:0.88;margin-top:2px;}
-  .content{max-width:1100px;margin:0 auto;padding:28px 20px 60px;}
-  .section{margin-bottom:32px;}
-  .section-title{font-family:Georgia,serif;font-size:1rem;color:#6b3d2e;margin-bottom:14px;padding-bottom:8px;border-bottom:2px solid #e8c4bc;display:flex;align-items:center;gap:8px;}
-  .toolbar{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px;align-items:center;}
-  .search-input{padding:8px 13px;border:1.5px solid #e0c8c0;border-radius:6px;font-size:0.88rem;color:#2c1810;background:#fff;outline:none;transition:border-color .2s;flex:1;min-width:200px;}
-  .search-input:focus{border-color:#c9a96e;}
-  select.filter-sel{padding:8px 12px;border:1.5px solid #e0c8c0;border-radius:6px;font-size:0.88rem;color:#2c1810;background:#fff;outline:none;cursor:pointer;}
-  .tab-btn{padding:7px 14px;border:1.5px solid #e0c8c0;border-radius:6px;font-size:0.85rem;font-weight:600;color:#6b3d2e;background:#fff;cursor:pointer;transition:all .18s;font-family:inherit;white-space:nowrap;text-decoration:none;display:inline-block;}
-  .tab-btn:hover{border-color:#c9a96e;background:#fdf5f0;}
-  .tab-btn.tab-active{background:linear-gradient(135deg,#c9a96e,#9e7c4a);color:#fff;border-color:transparent;}
-  .tab-btn.tab-csv{border-color:#c9a96e;color:#9e7c4a;}
-  .tab-btn.tab-csv:hover{background:#c9a96e;color:#fff;}
-  .card{background:#fff;border:1px solid #e8c4bc;border-radius:10px;overflow:hidden;}
-  .table-wrap{overflow-x:auto;}
-  table{width:100%;border-collapse:collapse;font-size:0.88rem;}
-  th{padding:10px 12px;text-align:left;font-size:0.75rem;font-weight:700;color:#6b3d2e;text-transform:uppercase;letter-spacing:0.05em;background:#fdf5f0;border-bottom:1px solid #e8c4bc;white-space:nowrap;}
-  .brow:hover{background:#fdf5f0;}
-  .email-form{padding:24px;}
-  .field{margin-bottom:16px;}
-  label{display:block;font-size:0.75rem;font-weight:700;color:#6b3d2e;text-transform:uppercase;letter-spacing:0.06em;margin-bottom:6px;}
-  input,textarea{width:100%;padding:10px 13px;border:1.5px solid #e0c8c0;border-radius:6px;font-size:0.92rem;color:#2c1810;background:#fff;font-family:inherit;outline:none;transition:border-color .2s;}
-  input:focus,textarea:focus{border-color:#c9a96e;}
-  textarea{resize:vertical;min-height:140px;}
-  .btn{display:inline-block;padding:13px 28px;background:linear-gradient(135deg,#c9a96e,#9e7c4a);color:#fff;border:none;border-radius:8px;font-size:0.95rem;font-weight:700;font-family:Georgia,serif;cursor:pointer;letter-spacing:0.03em;transition:opacity .2s;}
-  .btn:hover{opacity:0.88;}
-  .btn:disabled{opacity:0.5;cursor:not-allowed;}
-  .btn-outline{background:none;border:1.5px solid #c9a96e;color:#9e7c4a;padding:8px 18px;border-radius:6px;font-size:0.85rem;font-weight:600;cursor:pointer;transition:all .2s;font-family:inherit;white-space:nowrap;}
-  .btn-outline:hover{background:#fdf0ee;}
-  .btn-sm{padding:7px 16px;font-size:0.82rem;}
-  .alert{padding:12px 16px;border-radius:6px;font-size:0.88rem;margin-bottom:16px;display:none;}
-  .alert-success{background:#f0fff4;border:1px solid #a8e6b8;color:#2c6e3f;}
-  .alert-error{background:#fff0f0;border:1px solid #f5c0c0;color:#c0392b;}
-  .regen-section{display:flex;align-items:center;gap:12px;flex-wrap:wrap;}
-  .regen-note{font-size:0.8rem;color:#9e7c4a;}
-  #no-results{display:none;padding:18px;color:#aaa;text-align:center;font-size:0.9rem;}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#fdf8f4;color:#2c1810;min-height:100vh;}
+.topbar{display:flex;align-items:center;justify-content:space-between;padding:16px 28px;background:#fff;border-bottom:1px solid #e8c4bc;}
+.logo-text{font-size:1rem;color:#6b3d2e;font-style:italic;}
+.header{background:linear-gradient(135deg,#c9a96e,#9e7c4a);padding:28px 32px;color:#fff;}
+.header h1{font-size:1.5rem;margin-bottom:4px;}
+.stats{display:flex;gap:16px;flex-wrap:wrap;margin-top:20px;}
+.stat{background:rgba(255,255,255,0.18);border-radius:8px;padding:12px 20px;text-align:center;min-width:100px;border:2px solid transparent;text-decoration:none;color:inherit;display:block;}
+.stat.active{background:rgba(255,255,255,0.35);border-color:rgba(255,255,255,0.55);}
+.stat-val{font-size:1.6rem;font-weight:700;}
+.stat-lbl{font-size:0.75rem;opacity:0.88;margin-top:2px;}
+.content{max-width:1100px;margin:0 auto;padding:28px 20px 60px;}
+.section{margin-bottom:32px;}
+.section-title{font-size:1rem;color:#6b3d2e;margin-bottom:14px;padding-bottom:8px;border-bottom:2px solid #e8c4bc;}
+.toolbar{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px;align-items:center;}
+.tab-btn{padding:7px 14px;border:1.5px solid #e0c8c0;border-radius:6px;font-size:0.85rem;font-weight:600;color:#6b3d2e;background:#fff;cursor:pointer;text-decoration:none;display:inline-block;font-family:inherit;}
+.tab-btn.tab-active{background:linear-gradient(135deg,#c9a96e,#9e7c4a);color:#fff;border-color:transparent;}
+.search-input{padding:8px 13px;border:1.5px solid #e0c8c0;border-radius:6px;font-size:0.88rem;color:#2c1810;background:#fff;outline:none;flex:1;min-width:200px;font-family:inherit;}
+.search-input:focus{border-color:#c9a96e;}
+.card{background:#fff;border:1px solid #e8c4bc;border-radius:10px;overflow:hidden;}
+.table-wrap{overflow-x:auto;}
+table{width:100%;border-collapse:collapse;font-size:0.88rem;}
+th{padding:10px 12px;text-align:left;font-size:0.75rem;font-weight:700;color:#6b3d2e;text-transform:uppercase;letter-spacing:0.05em;background:#fdf5f0;border-bottom:1px solid #e8c4bc;white-space:nowrap;}
+.brow:hover td{background:#fdf5f0;}
+.brow{cursor:pointer;}
+.email-form{padding:24px;}
+.field{margin-bottom:16px;}
+label{display:block;font-size:0.75rem;font-weight:700;color:#6b3d2e;text-transform:uppercase;letter-spacing:0.06em;margin-bottom:6px;}
+input[type=text],input[type=email],input[type=number],input[type=file],textarea,select{width:100%;padding:10px 13px;border:1.5px solid #e0c8c0;border-radius:6px;font-size:0.92rem;color:#2c1810;background:#fff;font-family:inherit;outline:none;transition:border-color .2s;}
+input:focus,textarea:focus,select:focus{border-color:#c9a96e;}
+textarea{resize:vertical;min-height:140px;}
+.btn{display:inline-block;padding:13px 28px;background:linear-gradient(135deg,#c9a96e,#9e7c4a);color:#fff;border:none;border-radius:8px;font-size:0.95rem;font-weight:700;cursor:pointer;font-family:inherit;}
+.btn:disabled{opacity:0.5;cursor:not-allowed;}
+#no-results{display:none;padding:18px;color:#aaa;text-align:center;font-size:0.9rem;}
 </style>
 </head>
 <body>
 <div class="topbar">
-  <div class="logo">
-    <img src="${SITE_URL}/logo-original.png" width="32" height="32" style="border-radius:50%;object-fit:cover;" alt="">
-    <span class="logo-text">The Glam by Ankita</span>
-  </div>
-  <span class="badge">Admin Dashboard</span>
+  <span class="logo-text">The Glam by Ankita</span>
+  <span style="background:#fdf0ee;color:#6b3d2e;font-size:0.75rem;font-weight:700;padding:4px 10px;border-radius:20px;border:1px solid #e8c4bc;">Admin Dashboard</span>
 </div>
-
 <div class="header">
-  <h1>✦ Admin Dashboard</h1>
-  <p>View and manage all bookings, send emails to clients.</p>
+  <h1>&#10022; Admin Dashboard</h1>
+  <p>Manage bookings, gallery and promo codes.</p>
   <div class="stats">
     <a class="stat ${view==='all'?'active':''}" href="${viewUrl('all')}"><div class="stat-val">${allBookings.length}</div><div class="stat-lbl">Total Bookings</div></a>
     <a class="stat ${view==='upcoming'?'active':''}" href="${viewUrl('upcoming')}"><div class="stat-val">${upcoming.length}</div><div class="stat-lbl">Upcoming</div></a>
     <a class="stat ${view==='card'?'active':''}" href="${viewUrl('card')}"><div class="stat-val">A$${totalRevenue.toFixed(2)}</div><div class="stat-lbl">Total Revenue</div></a>
-    <a class="stat ${view==='thismonth'?'active':''}" href="${viewUrl('thismonth')}"><div class="stat-val">A$${thisMonthRevenue.toFixed(2)}</div><div class="stat-lbl">This Month</div></a>
+    <a class="stat"><div class="stat-val">A$${thisMonthRevenue.toFixed(2)}</div><div class="stat-lbl">This Month</div></a>
   </div>
 </div>
-
 <div class="content">
-
   <div class="section">
-    <div class="section-title">📋 ${viewLabels[view] || "All Bookings"} <span style="font-size:0.8rem;font-weight:400;color:#9e7c4a;font-family:'Nunito',sans-serif;">(${displayedBookings.length})</span></div>
+    <div class="section-title">ð ${viewLabels[view] || 'All Bookings'} (${displayedBookings.length})</div>
     <div class="toolbar">
-      <input class="search-input" id="search-input" type="text" placeholder="🔍 Search name, email, service or booking ID…" oninput="filterTable()">
+      <input class="search-input" id="search-input" type="text" placeholder="Search name, email, service..." oninput="filterTable()">
       <a class="tab-btn ${view==='all'?'tab-active':''}" href="${viewUrl('all')}">All (${allBookings.length})</a>
       <a class="tab-btn ${view==='upcoming'?'tab-active':''}" href="${viewUrl('upcoming')}">Upcoming (${upcoming.length})</a>
       <a class="tab-btn ${view==='past'?'tab-active':''}" href="${viewUrl('past')}">Past (${past.length})</a>
-      <a class="tab-btn ${view==='thismonth'?'tab-active':''}" href="${viewUrl('thismonth')}">This Month (${thisMonth.length})</a>
-      <button class="tab-btn tab-csv" onclick="exportCSV()">⬇ CSV</button>
+      <a class="tab-btn ${view==='card'?'tab-active':''}" href="${viewUrl('card')}">Card payments</a>
+      <button class="tab-btn" style="border-color:#c9a96e;color:#9e7c4a;" onclick="exportCSV()">CSV</button>
     </div>
     <div class="card">
       <div class="table-wrap">
         <table id="bookings-table">
-          <thead><tr>
-            <th>Client</th><th>Email</th><th>Service</th><th>Date & Time</th><th>Amount</th><th>Payment</th><th>Reminder Msg</th>
-          </tr></thead>
+          <thead><tr><th>Client</th><th>Email</th><th>Service</th><th>Date &amp; Time</th><th>Amount</th><th>Payment</th></tr></thead>
           <tbody id="bookings-tbody">${allBookingRows}</tbody>
         </table>
         <div id="no-results">No bookings match your search.</div>
       </div>
     </div>
   </div>
-
   <div class="section">
-    <div class="section-title">✉️ Send Email to Client</div>
-    <div class="card">
-      <div class="email-form">
-        <div class="alert alert-success" id="email-success">Email sent successfully!</div>
-        <div class="alert alert-error" id="email-error">Could not send email. Please try again.</div>
-        <div class="field">
-          <label>Client Email Address</label>
-          <input type="email" id="e-to" placeholder="client@example.com" value="nishankn.ankita@gmail.com">
+    <div class="section-title">&#9993; Send Email to Client</div>
+    <div class="card"><div class="email-form">
+      <div id="email-success" style="display:none;background:#f0fff4;border:1px solid #a8e6b8;color:#2c6e3f;padding:12px 16px;border-radius:6px;margin-bottom:16px;font-size:0.88rem;"></div>
+      <div id="email-error" style="display:none;background:#fff0f0;border:1px solid #f5c0c0;color:#c0392b;padding:12px 16px;border-radius:6px;margin-bottom:16px;font-size:0.88rem;"></div>
+      <div class="field"><label>Client Email</label><input type="email" id="e-to" placeholder="client@example.com"></div>
+      <div class="field"><label>Subject</label><input type="text" id="e-subject" placeholder="e.g. Your upcoming appointment"></div>
+      <div class="field"><label>Message</label><textarea id="e-body" placeholder="Hi [Name],&#10;&#10;Write your message here..."></textarea></div>
+      <button class="btn" onclick="sendEmail()">Send Email &#10022;</button>
+    </div></div>
+  </div>
+  <div class="section">
+    <div class="section-title">&#128444; Gallery Photos</div>
+    <div class="card" style="padding:20px 24px;margin-bottom:16px;">
+      <h3 style="font-size:0.93rem;color:#2c1810;margin:0 0 14px;padding-bottom:8px;border-bottom:1px solid #f0ddd8;">Upload New Photo</h3>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;">
+        <div>
+          <div class="field"><label>Photo</label><input type="file" id="gal-file" accept="image/*" onchange="galPreviewFile(event)" style="padding:8px;"></div>
+          <div id="gal-preview-wrap" style="display:none;margin-bottom:10px;">
+            <div style="font-size:0.72rem;font-weight:700;color:#6b3d2e;text-transform:uppercase;letter-spacing:0.06em;margin-bottom:5px;">Click image to set focus point</div>
+            <div id="gal-preview-box" style="position:relative;width:100%;aspect-ratio:4/3;overflow:hidden;border-radius:6px;cursor:crosshair;border:1.5px solid #e8c4bc;background:#f5e8e0;" onclick="galSetPos(event,this,'gal-preview-img','gal-focus-dot','gal-pos-val',true)">
+              <img id="gal-preview-img" style="width:100%;height:100%;object-fit:cover;object-position:center center;pointer-events:none;" alt="Preview">
+              <div id="gal-focus-dot" style="position:absolute;width:14px;height:14px;background:rgba(201,169,110,0.9);border:2.5px solid #fff;border-radius:50%;transform:translate(-50%,-50%);left:50%;top:50%;pointer-events:none;box-shadow:0 0 0 3px rgba(0,0,0,0.2);"></div>
+            </div>
+            <div id="gal-pos-val" style="font-size:0.76rem;color:#9e7c4a;margin-top:5px;text-align:center;">Focus: center center</div>
+            <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:3px;margin-top:6px;">${posBtnsUpload}</div>
+          </div>
+          <div class="field"><label>Title</label><input type="text" id="gal-title" placeholder="e.g. Bridal Glam"></div>
         </div>
-        <div class="field">
-          <label>Subject</label>
-          <input type="text" id="e-subject" placeholder="e.g. Your upcoming appointment — The Glam by Ankita">
+        <div>
+          <div class="field"><label>Category</label><select id="gal-category" style="width:100%;padding:10px 13px;border:1.5px solid #e0c8c0;border-radius:6px;font-size:0.92rem;color:#2c1810;background:#fff;font-family:inherit;"><option value="glam">Glam</option><option value="bridal">Bridal</option><option value="editorial">Editorial</option><option value="festival">Festival</option><option value="creative">Creative</option><option value="collab">Collab</option></select></div>
+          <div class="field"><label>Description</label><textarea id="gal-desc" rows="3" placeholder="Short description..." style="min-height:75px;"></textarea></div>
+          <button class="btn" id="gal-upload-btn" onclick="galUpload()">Upload Photo &#10022;</button>
+          <div id="gal-upload-status" style="margin-top:10px;font-size:0.84rem;"></div>
         </div>
-        <div class="field">
-          <label>Message</label>
-          <textarea id="e-body" placeholder="Hi [Name],&#10;&#10;Write your message here…"></textarea>
-        </div>
-        <button class="btn" id="send-email-btn" onclick="sendEmail()">Send Email ✦</button>
       </div>
     </div>
-  </div>
-
-  <div class="section">
-    <div class="section-title">🖼️ Gallery Manager</div>
     <div class="card" style="padding:20px 24px;">
-      <div style="margin-bottom:24px;padding-bottom:20px;border-bottom:1px solid #f0ddd6;">
-        <h3 style="font-size:0.95rem;color:#6b3d2e;margin:0 0 14px;font-family:Georgia,serif;">Upload New Photo</h3>
-        <div style="display:grid;gap:10px;">
-          <div style="display:flex;gap:10px;flex-wrap:wrap;">
-            <div class="field" style="margin:0;flex:1;min-width:180px;">
-              <label style="font-size:0.8rem;">Photo Title</label>
-              <input type="text" id="gal-title" placeholder="e.g. Soft Glam with Blue Liner">
-            </div>
-            <div class="field" style="margin:0;">
-              <label style="font-size:0.8rem;">Category</label>
-              <select id="gal-cat" class="filter-sel">
-                <option value="glam">Glam</option>
-                <option value="bridal">Bridal</option>
-                <option value="editorial">Editorial</option>
-                <option value="festival">Festival</option>
-              </select>
-            </div>
-          </div>
-          <div class="field" style="margin:0;">
-            <label style="font-size:0.8rem;">Description (optional)</label>
-            <input type="text" id="gal-desc" placeholder="Brief description of the look">
-          </div>
-          <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;">
-            <input type="file" id="gal-file" accept="image/*" style="font-size:0.85rem;color:#4a2e22;">
-            <button class="btn" id="gal-upload-btn" onclick="uploadGalleryPhoto()">Upload Photo ✦</button>
-            <span id="gal-upload-status" style="font-size:0.83rem;"></span>
-          </div>
-        </div>
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;padding-bottom:8px;border-bottom:1px solid #f0ddd8;">
+        <h3 style="font-size:0.93rem;color:#2c1810;margin:0;">All Photos</h3>
+        <span style="font-size:0.76rem;color:#9a7060;">Click a photo to edit</span>
       </div>
-      <h3 style="font-size:0.95rem;color:#6b3d2e;margin:0 0 14px;font-family:Georgia,serif;">Uploaded Photos <span style="font-size:0.8rem;font-weight:400;color:#9e7c4a;font-family:'Nunito',sans-serif;">— drag to reorder, hover to edit or delete</span></h3>
-      <div id="gal-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:12px;">
-        <div style="color:#9e7c4a;font-size:0.85rem;padding:20px 0;">Loading…</div>
-      </div>
+      <div id="gal-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:10px;"></div>
+      <div id="gal-empty" style="color:#9e7c4a;font-size:0.85rem;padding:20px 0;display:none;">No photos yet. Upload your first photo above!</div>
     </div>
   </div>
-
-  <!-- GALLERY EDIT MODAL -->
-  <div id="gal-edit-overlay" style="display:none;position:fixed;inset:0;background:rgba(44,24,16,0.55);z-index:999;align-items:center;justify-content:center;padding:20px;">
-    <div style="background:#fff;border-radius:10px;padding:28px 28px 22px;max-width:400px;width:100%;box-shadow:0 8px 40px rgba(0,0,0,0.22);position:relative;">
-      <button onclick="closeGalEditModal()" style="position:absolute;top:14px;right:16px;background:none;border:none;font-size:1.3rem;color:#9e7c4a;cursor:pointer;line-height:1;">✕</button>
-      <h3 style="font-family:Georgia,serif;color:#6b3d2e;margin:0 0 18px;font-size:1.05rem;">✏️ Edit Photo Details</h3>
-      <div class="field"><label>Title</label><input type="text" id="gal-edit-title" placeholder="e.g. Soft Glam"></div>
-      <div class="field"><label>Category</label>
-        <select id="gal-edit-cat" class="filter-sel" style="width:100%;">
-          <option value="glam">Glam</option>
-          <option value="bridal">Bridal</option>
-          <option value="editorial">Editorial</option>
-          <option value="festival">Festival</option>
-        </select>
-      </div>
-      <div class="field"><label>Description (optional)</label><input type="text" id="gal-edit-desc" placeholder="Brief description of the look"></div>
-      <div class="field" style="margin-top:14px;">
-        <label style="display:block;margin-bottom:7px;">Focus Point <span style="font-weight:400;color:#9e7c4a;font-size:0.78rem;">(click dot to recentre)</span></label>
-        <div style="display:flex;gap:12px;align-items:center;">
-          <div id="gal-pos-grid" style="display:grid;grid-template-columns:repeat(3,30px);gap:5px;flex-shrink:0;"></div>
-          <div style="flex:1;height:90px;border-radius:6px;overflow:hidden;background:#f0ddd6;border:1px solid #e8c4bc;position:relative;">
-            <img id="gal-pos-preview-img" src="" alt="" style="width:100%;height:100%;object-fit:cover;display:block;transition:object-position 0.25s;">
+  <div id="gal-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.55);z-index:9999;align-items:center;justify-content:center;padding:16px;">
+    <div style="background:#fff;border-radius:12px;max-width:640px;width:100%;max-height:92vh;overflow-y:auto;box-shadow:0 20px 60px rgba(0,0,0,0.22);">
+      <div style="background:linear-gradient(135deg,#c9a96e,#9e7c4a);padding:18px 24px;border-radius:12px 12px 0 0;"><h3 style="color:#fff;margin:0;font-size:1.05rem;">&#9999; Edit Photo</h3></div>
+      <div style="padding:20px 24px;">
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:18px;margin-bottom:16px;">
+          <div>
+            <div style="font-size:0.72rem;font-weight:700;color:#6b3d2e;text-transform:uppercase;letter-spacing:0.06em;margin-bottom:5px;">Click to recenter image</div>
+            <div id="gal-edit-pbox" style="position:relative;width:100%;aspect-ratio:4/3;overflow:hidden;border-radius:6px;cursor:crosshair;border:1.5px solid #e8c4bc;background:#f5e8e0;" onclick="galSetPos(event,this,'gal-edit-img','gal-edit-dot','gal-edit-pos-val',false)">
+              <img id="gal-edit-img" style="width:100%;height:100%;object-fit:cover;object-position:center center;pointer-events:none;" alt="">
+              <div id="gal-edit-dot" style="position:absolute;width:14px;height:14px;background:rgba(201,169,110,0.9);border:2.5px solid #fff;border-radius:50%;transform:translate(-50%,-50%);left:50%;top:50%;pointer-events:none;box-shadow:0 0 0 3px rgba(0,0,0,0.2);"></div>
+            </div>
+            <div id="gal-edit-pos-val" style="font-size:0.76rem;color:#9e7c4a;margin-top:5px;text-align:center;">Focus: center center</div>
+            <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:3px;margin-top:6px;">${posBtnsEdit}</div>
+          </div>
+          <div>
+            <div class="field"><label>Title</label><input type="text" id="gal-edit-title"></div>
+            <div class="field"><label>Category</label><select id="gal-edit-cat" style="width:100%;padding:10px 13px;border:1.5px solid #e0c8c0;border-radius:6px;font-size:0.92rem;color:#2c1810;background:#fff;font-family:inherit;"><option value="glam">Glam</option><option value="bridal">Bridal</option><option value="editorial">Editorial</option><option value="festival">Festival</option><option value="creative">Creative</option><option value="collab">Collab</option></select></div>
+            <div class="field"><label>Description</label><textarea id="gal-edit-desc" rows="3" style="min-height:70px;"></textarea></div>
           </div>
         </div>
-        <p style="font-size:0.72rem;color:#9e7c4a;margin:5px 0 0;">Adjust which part of the photo is visible in the card</p>
-      </div>
-      <div style="display:flex;gap:10px;margin-top:18px;align-items:center;flex-wrap:wrap;">
-        <button class="btn" onclick="saveGalEdit()">Save Changes ✦</button>
-        <button class="btn-outline" onclick="closeGalEditModal()">Cancel</button>
-        <span id="gal-edit-status" style="font-size:0.83rem;"></span>
-      </div>
-    </div>
-  </div>
-
-  <div class="section">
-    <div class="section-title">🏷️ Promo Code Manager</div>
-    <div class="card" style="padding:20px 24px;">
-      <div style="margin-bottom:24px;padding-bottom:20px;border-bottom:1px solid #f0ddd6;">
-        <h3 style="font-size:0.95rem;color:#6b3d2e;margin:0 0 14px;font-family:Georgia,serif;">Create New Promo Code</h3>
-        <div style="display:grid;gap:10px;">
-          <div style="display:flex;gap:10px;flex-wrap:wrap;">
-            <div class="field" style="margin:0;flex:1;min-width:140px;">
-              <label style="font-size:0.8rem;">Code</label>
-              <input type="text" id="cp-code" placeholder="e.g. SUMMER20" style="text-transform:uppercase;">
-            </div>
-            <div class="field" style="margin:0;min-width:110px;">
-              <label style="font-size:0.8rem;">Type</label>
-              <select id="cp-type" class="filter-sel">
-                <option value="percent">% Off</option>
-                <option value="fixed">Fixed ($)</option>
-              </select>
-            </div>
-            <div class="field" style="margin:0;min-width:90px;">
-              <label style="font-size:0.8rem;">Value</label>
-              <input type="number" id="cp-value" min="1" step="0.01" placeholder="30">
-            </div>
-          </div>
-          <div style="display:flex;gap:10px;flex-wrap:wrap;">
-            <div class="field" style="margin:0;flex:1;min-width:160px;">
-              <label style="font-size:0.8rem;">Description (optional)</label>
-              <input type="text" id="cp-desc" placeholder="e.g. Friends &amp; family discount">
-            </div>
-            <div class="field" style="margin:0;min-width:130px;">
-              <label style="font-size:0.8rem;">Expiry Date (optional)</label>
-              <input type="date" id="cp-expiry">
-            </div>
-            <div class="field" style="margin:0;min-width:90px;">
-              <label style="font-size:0.8rem;">Max Uses (optional)</label>
-              <input type="number" id="cp-max-uses" min="1" placeholder="Unlimited">
-            </div>
-          </div>
-          <div style="display:flex;gap:10px;align-items:center;">
-            <button class="btn" id="cp-create-btn" onclick="createCoupon()">Create Code ✦</button>
-            <span id="cp-create-status" style="font-size:0.83rem;"></span>
-          </div>
-        </div>
-      </div>
-      <h3 style="font-size:0.95rem;color:#6b3d2e;margin:0 0 14px;font-family:Georgia,serif;">All Promo Codes</h3>
-      <div id="cp-list" style="display:flex;flex-direction:column;gap:10px;">
-        <div style="color:#9e7c4a;font-size:0.85rem;padding:10px 0;">Loading…</div>
-      </div>
-    </div>
-  </div>
-
-  <!-- COUPON EDIT MODAL -->
-  <div id="cp-edit-overlay" style="display:none;position:fixed;inset:0;background:rgba(44,24,16,0.55);z-index:999;align-items:center;justify-content:center;padding:20px;">
-    <div style="background:#fff;border-radius:10px;padding:28px 28px 22px;max-width:460px;width:100%;box-shadow:0 8px 40px rgba(0,0,0,0.22);position:relative;">
-      <button onclick="closeCpEditModal()" style="position:absolute;top:14px;right:16px;background:none;border:none;font-size:1.3rem;color:#9e7c4a;cursor:pointer;line-height:1;">✕</button>
-      <h3 style="font-family:Georgia,serif;color:#6b3d2e;margin:0 0 18px;font-size:1.05rem;">✏️ Edit Promo Code</h3>
-      <input type="hidden" id="cp-edit-id">
-      <div style="display:grid;gap:10px;">
+        <div id="gal-edit-err" style="background:#fff0f0;border:1px solid #f5c0c0;color:#c62828;padding:10px 14px;border-radius:4px;font-size:0.85rem;margin-bottom:12px;display:none;"></div>
         <div style="display:flex;gap:10px;flex-wrap:wrap;">
-          <div class="field" style="margin:0;flex:1;min-width:140px;">
-            <label style="font-size:0.8rem;">Code</label>
-            <input type="text" id="cp-edit-code" style="text-transform:uppercase;font-weight:700;">
-          </div>
-          <div class="field" style="margin:0;min-width:110px;">
-            <label style="font-size:0.8rem;">Type</label>
-            <select id="cp-edit-type" class="filter-sel">
-              <option value="percent">% Off</option>
-              <option value="fixed">Fixed ($)</option>
-            </select>
-          </div>
-          <div class="field" style="margin:0;min-width:90px;">
-            <label style="font-size:0.8rem;">Value</label>
-            <input type="number" id="cp-edit-value" min="1" step="0.01">
-          </div>
-        </div>
-        <div style="display:flex;gap:10px;flex-wrap:wrap;">
-          <div class="field" style="margin:0;flex:1;min-width:160px;">
-            <label style="font-size:0.8rem;">Description (optional)</label>
-            <input type="text" id="cp-edit-desc" placeholder="e.g. Friends &amp; family discount">
-          </div>
-          <div class="field" style="margin:0;min-width:130px;">
-            <label style="font-size:0.8rem;">Expiry Date (optional)</label>
-            <input type="date" id="cp-edit-expiry">
-          </div>
-          <div class="field" style="margin:0;min-width:90px;">
-            <label style="font-size:0.8rem;">Max Uses (optional)</label>
-            <input type="number" id="cp-edit-max-uses" min="1" placeholder="Unlimited">
-          </div>
-        </div>
-        <div style="display:flex;gap:10px;align-items:center;margin-top:6px;">
-          <button class="btn" id="cp-edit-save-btn" onclick="saveCouponEdit()">Save Changes ✦</button>
-          <button class="btn-outline" onclick="closeCpEditModal()">Cancel</button>
-          <span id="cp-edit-status" style="font-size:0.83rem;"></span>
+          <button class="btn" style="flex:1;min-width:110px;" id="gal-save-btn" onclick="galEditSave()">Save &#10022;</button>
+          <button id="gal-feat-btn" onclick="galToggleFeatured()" style="flex:1;min-width:110px;padding:13px 16px;border:1.5px solid #c9a96e;border-radius:8px;background:#fff;color:#9e7c4a;font-weight:700;font-size:0.88rem;cursor:pointer;font-family:inherit;">&#11088; Feature</button>
+          <button onclick="galDelete()" style="padding:13px 16px;border:1.5px solid #f5c0c0;border-radius:8px;background:#fff;color:#c0392b;font-weight:700;font-size:0.88rem;cursor:pointer;font-family:inherit;">&#128465; Delete</button>
+          <button onclick="galCloseModal()" style="padding:13px 16px;border:1.5px solid #e0c8c0;border-radius:8px;background:#fff;color:#6b3d2e;font-weight:700;font-size:0.88rem;cursor:pointer;font-family:inherit;">Cancel</button>
         </div>
       </div>
     </div>
   </div>
-
   <div class="section">
-    <div class="section-title">🔑 Admin Access Link</div>
+    <div class="section-title">&#127991; Promo Codes</div>
+    <div class="card" style="padding:20px 24px;margin-bottom:16px;">
+      <h3 style="font-size:0.93rem;color:#2c1810;margin:0 0 14px;padding-bottom:8px;border-bottom:1px solid #f0ddd8;">Add New Promo Code</h3>
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:12px;align-items:end;flex-wrap:wrap;">
+        <div class="field" style="margin:0;"><label>Code</label><input type="text" id="cp-code" placeholder="e.g. SAVE20" style="text-transform:uppercase;"></div>
+        <div class="field" style="margin:0;"><label>Type</label><select id="cp-type" style="width:100%;padding:10px 13px;border:1.5px solid #e0c8c0;border-radius:6px;font-size:0.92rem;color:#2c1810;background:#fff;font-family:inherit;"><option value="percent">Percent (%)</option><option value="fixed">Fixed (A$)</option></select></div>
+        <div class="field" style="margin:0;"><label>Value</label><input type="number" id="cp-value" placeholder="e.g. 20" min="0" step="0.01"></div>
+        <div class="field" style="margin:0;"><label>Description</label><input type="text" id="cp-desc" placeholder="e.g. 20% off for crew"></div>
+      </div>
+      <div style="margin-top:12px;display:flex;align-items:center;gap:12px;">
+        <button class="btn" onclick="cpAdd()" id="cp-add-btn" style="padding:10px 22px;font-size:0.88rem;">Add Code &#10022;</button>
+        <span id="cp-add-status" style="font-size:0.83rem;"></span>
+      </div>
+    </div>
     <div class="card" style="padding:20px 24px;">
-      <p style="font-size:0.9rem;color:#4a2e22;margin-bottom:16px;">Regenerate your admin link. The new link will be emailed to you, and this one will stop working immediately.</p>
-      <div class="regen-section">
-        <button class="btn-outline" id="regen-btn" onclick="regenToken()">Regenerate Link</button>
-        <span class="regen-note" id="regen-status"></span>
+      <h3 style="font-size:0.93rem;color:#2c1810;margin:0 0 14px;padding-bottom:8px;border-bottom:1px solid #f0ddd8;">All Promo Codes</h3>
+      <div id="cp-list"><p style="color:#9e7c4a;font-size:0.85rem;">Loading...</p></div>
+    </div>
+  </div>
+  <div id="cp-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:9999;align-items:center;justify-content:center;padding:16px;">
+    <div style="background:#fff;border-radius:12px;max-width:480px;width:100%;box-shadow:0 20px 60px rgba(0,0,0,0.2);">
+      <div style="background:linear-gradient(135deg,#c9a96e,#9e7c4a);padding:18px 24px;border-radius:12px 12px 0 0;"><h3 style="color:#fff;margin:0;font-size:1.05rem;">&#9999; Edit Promo Code</h3></div>
+      <div style="padding:20px 24px;">
+        <input type="hidden" id="cp-edit-id">
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px;">
+          <div class="field" style="margin:0;"><label>Code</label><input type="text" id="cp-edit-code" style="text-transform:uppercase;"></div>
+          <div class="field" style="margin:0;"><label>Type</label><select id="cp-edit-type" style="width:100%;padding:10px 13px;border:1.5px solid #e0c8c0;border-radius:6px;font-size:0.92rem;color:#2c1810;background:#fff;font-family:inherit;"><option value="percent">Percent (%)</option><option value="fixed">Fixed (A$)</option></select></div>
+          <div class="field" style="margin:0;"><label>Value</label><input type="number" id="cp-edit-value" min="0" step="0.01"></div>
+          <div class="field" style="margin:0;"><label>Description</label><input type="text" id="cp-edit-desc"></div>
+        </div>
+        <div style="margin-bottom:14px;display:flex;align-items:center;gap:8px;"><input type="checkbox" id="cp-edit-valid" style="width:auto;"><label style="text-transform:none;font-size:0.9rem;letter-spacing:0;" for="cp-edit-valid">Active (can be used)</label></div>
+        <div id="cp-edit-err" style="background:#fff0f0;border:1px solid #f5c0c0;color:#c62828;padding:10px 14px;border-radius:4px;font-size:0.85rem;margin-bottom:12px;display:none;"></div>
+        <div style="display:flex;gap:10px;flex-wrap:wrap;">
+          <button class="btn" style="flex:1;" onclick="cpEditSave()">Save &#10022;</button>
+          <button onclick="cpEditDelete()" style="padding:13px 16px;border:1.5px solid #f5c0c0;border-radius:8px;background:#fff;color:#c0392b;font-weight:700;font-size:0.88rem;cursor:pointer;font-family:inherit;">&#128465; Delete</button>
+          <button onclick="cpCloseModal()" style="padding:13px 16px;border:1.5px solid #e0c8c0;border-radius:8px;background:#fff;color:#6b3d2e;font-weight:700;font-size:0.88rem;cursor:pointer;font-family:inherit;">Cancel</button>
+        </div>
       </div>
     </div>
   </div>
-
+  <div class="section">
+    <div class="section-title">&#128279; Admin Link</div>
+    <div class="card" style="padding:20px 24px;">
+      <p style="font-size:0.88rem;color:#4a2e22;margin-bottom:14px;">Regenerate your admin link (a new one will be emailed to you and this link will stop working).</p>
+      <button class="btn" style="padding:9px 20px;font-size:0.85rem;" id="regen-btn" onclick="regenToken()">Regenerate Admin Link</button>
+      <span id="regen-status" style="margin-left:12px;font-size:0.83rem;color:#9e7c4a;"></span>
+    </div>
+  </div>
 </div>
-
-<script>
-const TOKEN = ${JSON.stringify(token)};
-const API = '/api';
-const TODAY = new Date().toISOString().split('T')[0];
-
-const ALL_BOOKINGS = ${JSON.stringify(allBookings.map(b => ({
-  id: b.id,
-  clientName: b.clientName || "",
-  clientEmail: b.clientEmail || "",
-  service: b.service || "",
-  bookingDate: b.bookingDate || "",
-  bookingTime: b.bookingTime || "",
-  location: b.location || "",
-  numPeople: b.numPeople || "",
-  totalAud: b.totalAud ? Number(b.totalAud).toFixed(2) : "",
-  paymentMethod: b.paymentMethod || "",
-  status: b.status || "confirmed",
-  stripePaymentIntentId: b.stripePaymentIntentId || "",
-  sendReminder: b.sendReminder || "false",
-  reminderSent: b.reminderSent || "false",
-  clientMessage: b.clientMessage || "",
-  createdAt: b.createdAt ? new Date(b.createdAt).toLocaleDateString("en-AU") : "",
-}))
-)};
-
-let _modalBookingId = null;
-let _modalIdx = null;
-
-function openMessageModal(bookingId, idx, event) {
-  event.stopPropagation();
-  _modalBookingId = bookingId;
-  _modalIdx = idx;
-  const b = ALL_BOOKINGS.find(x => x.id === bookingId);
-  document.getElementById('modal-textarea').value = b ? b.clientMessage : '';
-  document.getElementById('modal-client-name').textContent = b ? b.clientName : '';
-  document.getElementById('modal-save-status').textContent = '';
-  document.getElementById('msg-modal-overlay').style.display = 'flex';
-  document.getElementById('modal-textarea').focus();
-}
-
-function closeMessageModal() {
-  document.getElementById('msg-modal-overlay').style.display = 'none';
-  _modalBookingId = null;
-  _modalIdx = null;
-}
-
-async function saveClientMessage() {
-  const msg = document.getElementById('modal-textarea').value.trim();
-  const statusEl = document.getElementById('modal-save-status');
-  const saveBtn = document.getElementById('modal-save-btn');
-  saveBtn.disabled = true;
-  saveBtn.textContent = 'Saving…';
-  statusEl.textContent = '';
-  try {
-    const res = await fetch(API + '/admin/save-client-message?token=' + encodeURIComponent(TOKEN), {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ bookingId: _modalBookingId, message: msg }),
-    });
-    if (!res.ok) throw new Error('Failed');
-    const b = ALL_BOOKINGS.find(x => x.id === _modalBookingId);
-    if (b) b.clientMessage = msg;
-    const preview = document.getElementById('msg-preview-' + _modalIdx);
-    if (preview) {
-      preview.textContent = msg;
-      preview.style.display = msg ? '' : 'none';
-    }
-    statusEl.style.color = '#2c6e3f';
-    statusEl.textContent = '✅ Saved!';
-    setTimeout(closeMessageModal, 800);
-  } catch(e) {
-    statusEl.style.color = '#c0392b';
-    statusEl.textContent = '❌ Could not save. Try again.';
-  } finally {
-    saveBtn.disabled = false;
-    saveBtn.textContent = 'Save Message';
-  }
-}
-
-function toggleDetails(idx) {
-  const row = document.getElementById('detail-' + idx);
-  if (row) row.style.display = row.style.display === 'none' ? '' : 'none';
-}
-
-function filterTable() {
-  const q = document.getElementById('search-input').value.toLowerCase();
-  const rows = document.querySelectorAll('.brow');
-  const details = document.querySelectorAll('.brow-detail');
-  let visible = 0;
-  rows.forEach((row, i) => {
-    const b = ALL_BOOKINGS[i];
-    if (!b) return;
-    const show = !q || [b.clientName, b.clientEmail, b.service, b.location, String(b.id||'')].join(' ').toLowerCase().includes(q);
-    row.style.display = show ? '' : 'none';
-    if (details[i]) details[i].style.display = 'none';
-    if (show) visible++;
-  });
-  document.getElementById('no-results').style.display = visible === 0 ? 'block' : 'none';
-}
-
-function exportCSV() {
-  const q = document.getElementById('search-input').value.toLowerCase();
-  const filtered = ALL_BOOKINGS.filter(b =>
-    !q || [b.clientName, b.clientEmail, b.service, b.location, String(b.id||'')].join(' ').toLowerCase().includes(q)
-  );
-  const headers = ['Name','Email','Service','Date','Time','Location','People','Amount (AUD)','Payment','Status','Booked On'];
-  const rows = filtered.map(b => [
-    b.clientName, b.clientEmail, b.service, b.bookingDate, b.bookingTime,
-    b.location, b.numPeople, b.totalAud, b.paymentMethod, b.status, b.createdAt
-  ].map(v => '"' + String(v || '').replace(/"/g, '""') + '"').join(','));
-  const csv = [headers.join(','), ...rows].join('\\n');
-  const blob = new Blob([csv], { type: 'text/csv' });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url;
-  a.download = 'glam-bookings-' + new Date().toISOString().split('T')[0] + '.csv';
-  a.click();
-  URL.revokeObjectURL(url);
-}
-
-function prefillEmail(email) {
-  document.getElementById('e-to').value = email;
-  document.getElementById('e-subject').focus();
-  document.getElementById('e-subject').scrollIntoView({ behavior: 'smooth', block: 'center' });
-}
-
-async function sendEmail() {
-  const btn = document.getElementById('send-email-btn');
-  const success = document.getElementById('email-success');
-  const error = document.getElementById('email-error');
-  success.style.display = 'none';
-  error.style.display = 'none';
-
-  const to = document.getElementById('e-to').value.trim();
-  const subject = document.getElementById('e-subject').value.trim();
-  const body = document.getElementById('e-body').value.trim();
-
-  if (!to || !subject || !body) {
-    error.textContent = 'Please fill in all fields.';
-    error.style.display = 'block';
-    return;
-  }
-
-  btn.disabled = true;
-  btn.textContent = 'Sending…';
-
-  try {
-    const res = await fetch(API + '/admin/send-client-email?token=' + encodeURIComponent(TOKEN), {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ to, subject, body }),
-    });
-    const json = await res.json();
-    if (!res.ok) throw new Error(json.error || 'Failed');
-    success.textContent = 'Email sent to ' + to + '!';
-    success.style.display = 'block';
-    document.getElementById('e-to').value = '';
-    document.getElementById('e-subject').value = '';
-    document.getElementById('e-body').value = '';
-  } catch(e) {
-    error.textContent = 'Could not send email. Please try again.';
-    error.style.display = 'block';
-  } finally {
-    btn.disabled = false;
-    btn.textContent = 'Send Email ✦';
-  }
-}
-
-var _galleryPhotos = [];
-var _dragSrcIdx = null;
-
-function renderGallery() {
-  var grid = document.getElementById('gal-grid');
-  if (!_galleryPhotos.length) {
-    grid.innerHTML = '<div style="color:#9e7c4a;font-size:0.85rem;padding:20px 0;">No photos uploaded yet. Use the form above to add your first photo.</div>';
-    return;
-  }
-  grid.innerHTML = _galleryPhotos.map(function(p, i) {
-    return '<div class="gal-card" draggable="true" data-idx="' + i + '" data-filename="' + p.filename + '" ' +
-      'style="position:relative;border-radius:8px;overflow:hidden;aspect-ratio:3/4;background:#f0ddd6;box-shadow:0 2px 8px rgba(0,0,0,0.08);cursor:grab;transition:outline 0.1s;">' +
-      '<div style="position:absolute;top:6px;right:6px;z-index:2;background:rgba(255,255,255,0.75);border-radius:4px;padding:2px 5px;font-size:0.8rem;color:#9e7c4a;cursor:grab;line-height:1;">⠿</div>' +
-      (p.featured ? '<div style="position:absolute;top:6px;left:6px;z-index:2;background:rgba(201,169,110,0.95);border-radius:4px;padding:2px 7px;font-size:0.68rem;color:#fff;font-weight:700;line-height:1.4;">⭐ Featured</div>' : '') +
-      '<img src="' + (p.url || '/gallery/' + p.filename) + '" alt="' + p.title + '" style="width:100%;height:100%;object-fit:cover;object-position:' + (p.objectPosition || 'center center') + ';display:block;pointer-events:none;">' +
-      '<div class="gal-overlay" style="position:absolute;inset:0;background:linear-gradient(to top,rgba(0,0,0,0.78) 0%,transparent 50%);opacity:0;transition:opacity 0.2s;display:flex;flex-direction:column;justify-content:flex-end;padding:10px;">' +
-        '<div style="font-size:0.73rem;color:#fff;font-weight:700;line-height:1.3;">' + p.title + '</div>' +
-        '<div style="font-size:0.68rem;color:rgba(255,255,255,0.8);margin-top:2px;text-transform:capitalize;">' + p.category + '</div>' +
-        '<div style="display:flex;gap:5px;margin-top:7px;flex-wrap:wrap;">' +
-          '<button onclick="toggleFeatured(\'' + p.filename + '\',' + i + ',event)" style="background:' + (p.featured ? 'rgba(201,169,110,0.95)' : 'rgba(80,60,40,0.7)') + ';color:#fff;border:none;padding:4px 9px;border-radius:4px;font-size:0.7rem;cursor:pointer;font-family:inherit;">' + (p.featured ? '⭐ Unfeature' : '☆ Feature') + '</button>' +
-          '<button onclick="openGalEditModal(\'' + p.filename + '\',' + i + ',event)" style="background:rgba(60,100,160,0.85);color:#fff;border:none;padding:4px 9px;border-radius:4px;font-size:0.7rem;cursor:pointer;font-family:inherit;">✏️</button>' +
-          '<button onclick="deleteGalleryPhoto(\'' + p.filename + '\')" style="background:rgba(200,50,50,0.9);color:#fff;border:none;padding:4px 9px;border-radius:4px;font-size:0.7rem;cursor:pointer;font-family:inherit;">🗑</button>' +
-        '</div>' +
-      '</div>' +
-    '</div>';
-  }).join('');
-
-  grid.querySelectorAll('.gal-card').forEach(function(card) {
-    card.addEventListener('dragstart', function(e) {
-      _dragSrcIdx = parseInt(card.dataset.idx);
-      card.style.opacity = '0.45';
-      e.dataTransfer.effectAllowed = 'move';
-    });
-    card.addEventListener('dragend', function() {
-      card.style.opacity = '';
-      grid.querySelectorAll('.gal-card').forEach(function(c) { c.style.outline = ''; });
-    });
-    card.addEventListener('dragover', function(e) {
-      e.preventDefault();
-      e.dataTransfer.dropEffect = 'move';
-      grid.querySelectorAll('.gal-card').forEach(function(c) { c.style.outline = ''; });
-      card.style.outline = '2px solid #c9a96e';
-    });
-    card.addEventListener('dragleave', function() { card.style.outline = ''; });
-    card.addEventListener('drop', function(e) {
-      e.preventDefault();
-      var targetIdx = parseInt(card.dataset.idx);
-      if (_dragSrcIdx === null || _dragSrcIdx === targetIdx) return;
-      var moved = _galleryPhotos.splice(_dragSrcIdx, 1)[0];
-      _galleryPhotos.splice(targetIdx, 0, moved);
-      _dragSrcIdx = null;
-      renderGallery();
-      saveGalleryOrder();
-    });
-    var overlay = card.querySelector('.gal-overlay');
-    if (overlay) {
-      card.addEventListener('mouseenter', function() { overlay.style.opacity = '1'; });
-      card.addEventListener('mouseleave', function() { overlay.style.opacity = '0'; });
-    }
-  });
-}
-
-async function saveGalleryOrder() {
-  var filenames = _galleryPhotos.map(function(p) { return p.filename; });
-  try {
-    await fetch(API + '/admin/gallery/reorder?token=' + encodeURIComponent(TOKEN), {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ filenames: filenames })
-    });
-  } catch(e) {}
-}
-
-async function toggleFeatured(filename, idx, ev) {
-  ev.stopPropagation();
-  try {
-    var res = await fetch(API + '/admin/gallery/' + encodeURIComponent(filename) + '/featured?token=' + encodeURIComponent(TOKEN), { method: 'PUT' });
-    var data = await res.json();
-    if (data.ok) {
-      _galleryPhotos[idx].featured = data.featured;
-      renderGallery();
-    }
-  } catch(e) {}
-}
-
-var _galEditPos = 'center center';
-var _galPosOptions = [
-  ['left top','center top','right top'],
-  ['left center','center center','right center'],
-  ['left bottom','center bottom','right bottom']
-];
-
-function initPosGrid(filename, currentPos) {
-  _galEditPos = currentPos || 'center center';
-  var previewImg = document.getElementById('gal-pos-preview-img');
-  var photo = _galleryPhotos.find(function(p) { return p.filename === filename; });
-  previewImg.src = (photo && photo.url) ? photo.url : '/gallery/' + filename;
-  previewImg.style.objectPosition = _galEditPos;
-  var grid = document.getElementById('gal-pos-grid');
-  grid.innerHTML = '';
-  for (var row = 0; row < 3; row++) {
-    for (var col = 0; col < 3; col++) {
-      (function(pos) {
-        var btn = document.createElement('button');
-        btn.type = 'button';
-        btn.dataset.pos = pos;
-        btn.title = pos;
-        var sel = pos === _galEditPos;
-        btn.style.cssText = 'width:30px;height:30px;border-radius:5px;border:2px solid ' + (sel ? '#c9a96e' : '#e8c4bc') + ';background:' + (sel ? '#fdf2e0' : '#fff') + ';cursor:pointer;display:flex;align-items:center;justify-content:center;padding:0;';
-        var dot = document.createElement('div');
-        dot.style.cssText = 'width:8px;height:8px;border-radius:50%;background:' + (sel ? '#c9a96e' : '#cbb89a') + ';pointer-events:none;';
-        btn.appendChild(dot);
-        btn.onclick = function() {
-          _galEditPos = pos;
-          document.getElementById('gal-pos-preview-img').style.objectPosition = pos;
-          grid.querySelectorAll('button').forEach(function(b) {
-            var active = b.dataset.pos === pos;
-            b.style.border = '2px solid ' + (active ? '#c9a96e' : '#e8c4bc');
-            b.style.background = active ? '#fdf2e0' : '#fff';
-            b.querySelector('div').style.background = active ? '#c9a96e' : '#cbb89a';
-          });
-        };
-        grid.appendChild(btn);
-      })(_galPosOptions[row][col]);
-    }
-  }
-}
-
-var _galEditFilename = null;
-
-function openGalEditModal(filename, idx, ev) {
-  ev.stopPropagation();
-  _galEditFilename = filename;
-  var p = _galleryPhotos[idx];
-  document.getElementById('gal-edit-title').value = p ? p.title : '';
-  document.getElementById('gal-edit-desc').value = p ? (p.desc || '') : '';
-  var catSel = document.getElementById('gal-edit-cat');
-  catSel.value = p ? (p.category || 'glam') : 'glam';
-  document.getElementById('gal-edit-status').textContent = '';
-  initPosGrid(filename, p ? (p.objectPosition || 'center center') : 'center center');
-  var overlay = document.getElementById('gal-edit-overlay');
-  overlay.style.display = 'flex';
-  document.getElementById('gal-edit-title').focus();
-}
-
-function closeGalEditModal() {
-  document.getElementById('gal-edit-overlay').style.display = 'none';
-  _galEditFilename = null;
-}
-
-async function saveGalEdit() {
-  var status = document.getElementById('gal-edit-status');
-  var title = document.getElementById('gal-edit-title').value.trim();
-  var category = document.getElementById('gal-edit-cat').value;
-  var desc = document.getElementById('gal-edit-desc').value.trim();
-  if (!title) { status.textContent = '⚠️ Title required'; status.style.color = '#c0392b'; return; }
-  status.textContent = 'Saving…'; status.style.color = '#9e7c4a';
-  try {
-    var res = await fetch(API + '/admin/gallery/' + encodeURIComponent(_galEditFilename) + '/meta?token=' + encodeURIComponent(TOKEN), {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ title: title, category: category, desc: desc, objectPosition: _galEditPos })
-    });
-    var data = await res.json();
-    if (data.ok) {
-      var idx = _galleryPhotos.findIndex(function(p) { return p.filename === _galEditFilename; });
-      if (idx !== -1) { _galleryPhotos[idx].title = title; _galleryPhotos[idx].category = category; _galleryPhotos[idx].desc = desc; _galleryPhotos[idx].objectPosition = _galEditPos; }
-      closeGalEditModal();
-      renderGallery();
-    } else {
-      status.textContent = '❌ ' + (data.error || 'Failed'); status.style.color = '#c0392b';
-    }
-  } catch(e) {
-    status.textContent = '❌ Failed'; status.style.color = '#c0392b';
-  }
-}
-
-async function loadGallery() {
-  var grid = document.getElementById('gal-grid');
-  try {
-    var res = await fetch(API + '/gallery/list');
-    _galleryPhotos = await res.json();
-    renderGallery();
-  } catch(e) {
-    grid.innerHTML = '<div style="color:#c0392b;font-size:0.85rem;padding:20px 0;">Failed to load gallery.</div>';
-  }
-}
-
-async function uploadGalleryPhoto() {
-  const file = document.getElementById('gal-file').files[0];
-  const title = document.getElementById('gal-title').value.trim();
-  const category = document.getElementById('gal-cat').value;
-  const desc = document.getElementById('gal-desc').value.trim();
-  const status = document.getElementById('gal-upload-status');
-  if (!file) { status.textContent = '⚠️ Please select a photo'; status.style.color='#c0392b'; return; }
-  if (!title) { status.textContent = '⚠️ Please add a title'; status.style.color='#c0392b'; return; }
-  const btn = document.getElementById('gal-upload-btn');
-  btn.disabled = true; btn.textContent = 'Uploading…';
-  status.textContent = '';
-  const formData = new FormData();
-  formData.append('photo', file);
-  formData.append('title', title);
-  formData.append('category', category);
-  formData.append('desc', desc);
-  try {
-    const res = await fetch(API + '/admin/upload-gallery?token=' + encodeURIComponent(TOKEN), { method:'POST', body:formData });
-    const data = await res.json();
-    if (data.ok) {
-      status.textContent = '✅ Uploaded!'; status.style.color='#2c6e3f';
-      document.getElementById('gal-file').value='';
-      document.getElementById('gal-title').value='';
-      document.getElementById('gal-desc').value='';
-      loadGallery();
-    } else {
-      status.textContent = '❌ ' + (data.error||'Upload failed'); status.style.color='#c0392b';
-    }
-  } catch(e) {
-    status.textContent = '❌ Upload failed'; status.style.color='#c0392b';
-  } finally {
-    btn.disabled=false; btn.textContent='Upload Photo ✦';
-  }
-}
-
-async function deleteGalleryPhoto(filename) {
-  if (!confirm('Delete this photo from the gallery?')) return;
-  const res = await fetch(API + '/admin/gallery/' + encodeURIComponent(filename) + '?token=' + encodeURIComponent(TOKEN), { method:'DELETE' });
-  const data = await res.json();
-  if (data.ok) loadGallery();
-  else alert('Delete failed: ' + (data.error||'Unknown error'));
-}
-
-loadGallery();
-loadCoupons();
-
-async function regenToken() {
-  const btn = document.getElementById('regen-btn');
-  const status = document.getElementById('regen-status');
-  btn.disabled = true;
-  status.textContent = 'Regenerating…';
-  try {
-    const res = await fetch(API + '/admin/regenerate-token?token=' + encodeURIComponent(TOKEN), { method: 'POST' });
-    const json = await res.json();
-    if (!res.ok) throw new Error(json.error || 'Failed');
-    status.textContent = '✅ New link sent to your email! This page will no longer work.';
-    btn.style.display = 'none';
-  } catch(e) {
-    status.textContent = '❌ Failed to regenerate. Try again.';
-    btn.disabled = false;
-  }
-}
-
-async function loadCoupons() {
-  const listEl = document.getElementById('cp-list');
-  try {
-    const res = await fetch(API + '/admin/coupons?token=' + encodeURIComponent(TOKEN));
-    const data = await res.json();
-    if (!res.ok || !Array.isArray(data)) {
-      listEl.innerHTML = '<div style="color:#c0392b;font-size:0.85rem;">Could not load promo codes.</div>';
-      return;
-    }
-    if (!data.length) {
-      listEl.innerHTML = '<div style="color:#9e7c4a;font-size:0.85rem;padding:10px 0;">No promo codes yet.</div>';
-      return;
-    }
-    listEl.innerHTML = data.map(c => {
-      const discountType = c.discountType || c.discount_type || 'percent';
-      const discountValue = c.discountValue || c.discount_value || '0';
-      const expiresAt = c.expiresAt || c.expires_at;
-      const maxUsesVal = c.maxUses || c.max_uses;
-      const usesCountVal = c.usesCount || c.uses_count || 0;
-      const isActive = c.active === 'true' || c.active === true || c.valid === true || c.valid === 'true';
-      const discLabel = discountType === 'fixed' ? 'A$' + Number(discountValue).toFixed(2) + ' off' : Number(discountValue).toFixed(0) + '% off';
-      const expiry = expiresAt ? ' · Expires ' + new Date(expiresAt).toLocaleDateString('en-AU', {day:'numeric',month:'short',year:'numeric'}) : '';
-      const maxUsesStr = maxUsesVal ? ' · Max ' + maxUsesVal + ' uses' : '';
-      const uses = ' · Used ' + usesCountVal + 'x';
-      return '<div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding:12px 16px;background:' + (isActive?'#fdf8f4':'#fafafa') + ';border:1.5px solid ' + (isActive?'#e8c4bc':'#e0e0e0') + ';border-radius:8px;">'
-        + '<div style="flex:1;min-width:200px;">'
-        + '<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">'
-        + '<code style="font-size:0.95rem;font-weight:700;color:#6b3d2e;background:#fff;padding:2px 8px;border-radius:4px;border:1px solid #e8c4bc;">' + c.code + '</code>'
-        + '<span style="font-size:0.88rem;font-weight:700;color:#2c6e3f;">−' + discLabel + '</span>'
-        + (!isActive ? '<span style="font-size:0.75rem;background:#f5f5f5;color:#999;padding:2px 8px;border-radius:12px;border:1px solid #e0e0e0;">Inactive</span>' : '')
-        + '</div>'
-        + (c.description ? '<div style="font-size:0.8rem;color:#9e7c4a;margin-top:3px;">' + c.description + '</div>' : '')
-        + '<div style="font-size:0.78rem;color:#b0937c;margin-top:2px;">' + uses + maxUsesStr + expiry + '</div>'
-        + '</div>'
-        + '<div style="display:flex;gap:8px;flex-shrink:0;">'
-        + '<button onclick="openCpEditModal(' + c.id + ',\'' + c.code + '\',\'' + discountType + '\',' + Number(discountValue) + ',\'' + (c.description||'').replace(/'/g,"\\'") + '\',' + JSON.stringify(expiresAt ? new Date(expiresAt).toISOString().split('T')[0] : '') + ',' + JSON.stringify(maxUsesVal||'') + ')" style="background:none;border:1.5px solid #c9a96e;color:#9e7c4a;padding:6px 12px;border-radius:6px;font-size:0.8rem;cursor:pointer;font-family:inherit;font-weight:600;">Edit</button>'
-        + '<button onclick="toggleCoupon(' + c.id + ')" class="btn-outline" style="font-size:0.8rem;padding:6px 12px;">' + (isActive?'Deactivate':'Activate') + '</button>'
-        + '<button onclick="deleteCoupon(' + c.id + ')" style="background:none;border:1.5px solid #f5c0c0;color:#c0392b;padding:6px 12px;border-radius:6px;font-size:0.8rem;cursor:pointer;font-family:inherit;font-weight:600;">Delete</button>'
-        + '</div></div>';
-    }).join('');
-  } catch { listEl.innerHTML = '<div style="color:#c0392b;font-size:0.85rem;">Error loading promo codes.</div>'; }
-}
-
-async function createCoupon() {
-  const btn = document.getElementById('cp-create-btn');
-  const status = document.getElementById('cp-create-status');
-  const code = (document.getElementById('cp-code').value || '').trim().toUpperCase();
-  const type = document.getElementById('cp-type').value;
-  const value = parseFloat(document.getElementById('cp-value').value);
-  const desc = document.getElementById('cp-desc').value.trim();
-  const expiry = document.getElementById('cp-expiry').value;
-  const maxUsesRaw = parseInt(document.getElementById('cp-max-uses').value);
-  if (!code) { status.textContent = '⚠️ Enter a code'; status.style.color = '#c0392b'; return; }
-  if (!value || value <= 0) { status.textContent = '⚠️ Enter a value'; status.style.color = '#c0392b'; return; }
-  btn.disabled = true; btn.textContent = 'Creating…'; status.textContent = '';
-  try {
-    const res = await fetch(API + '/admin/coupons?token=' + encodeURIComponent(TOKEN), {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ code, discountType: type, discountValue: value, description: desc, expiresAt: expiry || undefined, maxUses: isNaN(maxUsesRaw) ? undefined : maxUsesRaw })
-    });
-    const data = await res.json();
-    if (data.ok) {
-      status.textContent = '✅ Created!'; status.style.color = '#2c6e3f';
-      ['cp-code','cp-value','cp-desc','cp-expiry','cp-max-uses'].forEach(id => { document.getElementById(id).value = ''; });
-      loadCoupons();
-    } else { status.textContent = '❌ ' + (data.error || 'Failed'); status.style.color = '#c0392b'; }
-  } catch { status.textContent = '❌ Error'; status.style.color = '#c0392b'; }
-  finally { btn.disabled = false; btn.textContent = 'Create Code ✦'; }
-}
-
-async function toggleCoupon(id) {
-  const res = await fetch(API + '/admin/coupons/' + id + '/toggle?token=' + encodeURIComponent(TOKEN), { method: 'PUT' });
-  const data = await res.json();
-  if (data.ok) loadCoupons();
-  else alert('Failed: ' + (data.error || 'Unknown'));
-}
-
-function openCpEditModal(id, code, type, value, desc, expiry, maxUses) {
-  document.getElementById('cp-edit-id').value = id;
-  document.getElementById('cp-edit-code').value = code;
-  document.getElementById('cp-edit-type').value = type;
-  document.getElementById('cp-edit-value').value = value;
-  document.getElementById('cp-edit-desc').value = desc || '';
-  document.getElementById('cp-edit-expiry').value = expiry || '';
-  document.getElementById('cp-edit-max-uses').value = maxUses || '';
-  document.getElementById('cp-edit-status').textContent = '';
-  var overlay = document.getElementById('cp-edit-overlay');
-  overlay.style.display = 'flex';
-  document.getElementById('cp-edit-code').focus();
-}
-
-function closeCpEditModal() {
-  document.getElementById('cp-edit-overlay').style.display = 'none';
-}
-
-async function saveCouponEdit() {
-  var id = document.getElementById('cp-edit-id').value;
-  var code = (document.getElementById('cp-edit-code').value || '').trim().toUpperCase();
-  var type = document.getElementById('cp-edit-type').value;
-  var value = parseFloat(document.getElementById('cp-edit-value').value);
-  var desc = document.getElementById('cp-edit-desc').value.trim();
-  var expiry = document.getElementById('cp-edit-expiry').value;
-  var maxUsesRaw = parseInt(document.getElementById('cp-edit-max-uses').value);
-  var status = document.getElementById('cp-edit-status');
-  if (!code) { status.textContent = '⚠️ Enter a code'; status.style.color = '#c0392b'; return; }
-  if (!value || value <= 0) { status.textContent = '⚠️ Enter a value'; status.style.color = '#c0392b'; return; }
-  var btn = document.getElementById('cp-edit-save-btn');
-  btn.disabled = true; btn.textContent = 'Saving…'; status.textContent = '';
-  try {
-    var res = await fetch(API + '/admin/coupons/' + id + '?token=' + encodeURIComponent(TOKEN), {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ code, discountType: type, discountValue: value, description: desc, expiresAt: expiry || undefined, maxUses: isNaN(maxUsesRaw) ? undefined : maxUsesRaw })
-    });
-    var data = await res.json();
-    if (data.ok) {
-      closeCpEditModal();
-      loadCoupons();
-    } else { status.textContent = '❌ ' + (data.error || 'Failed'); status.style.color = '#c0392b'; }
-  } catch { status.textContent = '❌ Error'; status.style.color = '#c0392b'; }
-  finally { btn.disabled = false; btn.textContent = 'Save Changes ✦'; }
-}
-
-async function deleteCoupon(id) {
-  if (!confirm('Delete this promo code? This cannot be undone.')) return;
-  const res = await fetch(API + '/admin/coupons/' + id + '?token=' + encodeURIComponent(TOKEN), { method: 'DELETE' });
-  const data = await res.json();
-  if (data.ok) loadCoupons();
-  else alert('Delete failed: ' + (data.error || 'Unknown'));
-}
-</script>
-
-<!-- Message Modal -->
-<div id="msg-modal-overlay" onclick="if(event.target===this)closeMessageModal()" style="display:none;position:fixed;inset:0;background:rgba(44,24,16,0.45);z-index:1000;align-items:center;justify-content:center;padding:20px;">
-  <div style="background:#fdf8f4;border:1px solid #e8c4bc;border-radius:12px;width:100%;max-width:480px;box-shadow:0 8px 32px rgba(0,0,0,0.18);overflow:hidden;">
-    <div style="background:linear-gradient(135deg,#c9a96e,#9e7c4a);padding:18px 24px;display:flex;align-items:center;justify-content:space-between;">
-      <div>
-        <h3 style="margin:0;color:#fff;font-family:Georgia,serif;font-size:1.05rem;">💬 Message for client</h3>
-        <p id="modal-client-name" style="margin:3px 0 0;color:rgba(255,255,255,0.85);font-size:0.82rem;"></p>
-      </div>
-      <button onclick="closeMessageModal()" style="background:none;border:none;color:#fff;font-size:1.3rem;cursor:pointer;padding:4px 8px;line-height:1;">✕</button>
-    </div>
-    <div style="padding:20px 24px;">
-      <p style="font-size:0.85rem;color:#6b3d2e;margin:0 0 12px;">This message will appear in the client's 9AM reminder email on the day of their appointment.</p>
-      <textarea id="modal-textarea" placeholder="e.g. Please arrive with a clean face, no eye makeup. Park on the street. See you soon! 🌸" style="width:100%;padding:10px 13px;border:1.5px solid #e0c8c0;border-radius:6px;font-size:0.92rem;color:#2c1810;background:#fff;font-family:inherit;outline:none;resize:vertical;min-height:120px;box-sizing:border-box;" onfocus="this.style.borderColor='#c9a96e'" onblur="this.style.borderColor='#e0c8c0'"></textarea>
+<div id="message-modal" style="display:none;position:fixed;inset:0;background:rgba(44,24,16,0.55);z-index:9999;align-items:center;justify-content:center;padding:20px;">
+  <div style="background:#fff;border-radius:12px;max-width:500px;width:100%;box-shadow:0 20px 60px rgba(0,0,0,0.2);">
+    <div style="background:linear-gradient(135deg,#c9a96e,#9e7c4a);padding:16px 22px;border-radius:12px 12px 0 0;"><h3 style="color:#fff;margin:0;font-size:1rem;" id="modal-title">Client Message</h3></div>
+    <div style="padding:20px 22px;">
+      <textarea id="modal-textarea" placeholder="e.g. Please arrive with a clean face. Park on the street." style="width:100%;padding:10px 13px;border:1.5px solid #e0c8c0;border-radius:6px;font-size:0.92rem;color:#2c1810;background:#fff;font-family:inherit;outline:none;resize:vertical;min-height:120px;box-sizing:border-box;"></textarea>
       <div style="display:flex;align-items:center;justify-content:space-between;margin-top:14px;gap:10px;flex-wrap:wrap;">
         <span id="modal-save-status" style="font-size:0.82rem;"></span>
         <div style="display:flex;gap:8px;">
           <button onclick="closeMessageModal()" style="background:none;border:1.5px solid #c9a96e;color:#9e7c4a;padding:8px 18px;border-radius:6px;font-size:0.88rem;font-weight:600;cursor:pointer;font-family:inherit;">Cancel</button>
-          <button id="modal-save-btn" onclick="saveClientMessage()" style="background:linear-gradient(135deg,#c9a96e,#9e7c4a);border:none;color:#fff;padding:8px 20px;border-radius:6px;font-size:0.88rem;font-weight:700;cursor:pointer;font-family:Georgia,serif;">Save Message</button>
+          <button id="modal-save-btn" onclick="saveClientMessage()" style="background:linear-gradient(135deg,#c9a96e,#9e7c4a);border:none;color:#fff;padding:8px 20px;border-radius:6px;font-size:0.88rem;font-weight:700;cursor:pointer;font-family:inherit;">Save Message</button>
         </div>
       </div>
     </div>
   </div>
 </div>
+<script>
+var TOKEN=${JSON.stringify(token)};
+var CLOUD_NAME=${JSON.stringify(cloudName)};
+var _galPhotos=[];
+var _galEditFilename='';
+var _galEditPos='center center';
+var _galUploadPos='center center';
+var _cpCoupons=[];
+var _modalBookingId=null;
+var _modalBookingIdx=null;
+function toggleDetails(idx){var d=document.getElementById('detail-'+idx);if(d)d.style.display=d.style.display==='none'?'table-row':'none';}
+function filterTable(){
+  var q=document.getElementById('search-input').value.toLowerCase();
+  var rows=document.querySelectorAll('#bookings-tbody .brow');
+  var details=document.querySelectorAll('.brow-detail');
+  var shown=0;
+  rows.forEach(function(r,i){var txt=r.textContent.toLowerCase();var show=!q||txt.indexOf(q)>=0;r.style.display=show?'':'none';if(details[i])details[i].style.display='none';if(show)shown++;});
+  document.getElementById('no-results').style.display=shown===0&&q?'block':'none';
+}
+function prefillEmail(email){document.getElementById('e-to').value=email;document.getElementById('e-to').scrollIntoView({behavior:'smooth'});}
+function exportCSV(){
+  var rows=document.querySelectorAll('#bookings-table tr');
+  var lines=[];
+  rows.forEach(function(r){lines.push(Array.from(r.querySelectorAll('th,td')).map(function(c){return '"'+c.textContent.trim().replace(/"/g,'""')+'"';}).join(','));});
+  var csv=lines.join(String.fromCharCode(10));
+  var a=document.createElement('a');a.href='data:text/csv;charset=utf-8,'+encodeURIComponent(csv);a.download='bookings.csv';a.click();
+}
+function openMessageModal(id,idx,e){
+  if(e)e.stopPropagation();
+  _modalBookingId=id;_modalBookingIdx=idx;
+  var preview=document.getElementById('msg-preview-'+idx);
+  document.getElementById('modal-textarea').value=preview&&preview.style.display!=='none'?preview.textContent:'';
+  document.getElementById('modal-save-status').textContent='';
+  document.getElementById('message-modal').style.display='flex';
+}
+function closeMessageModal(){document.getElementById('message-modal').style.display='none';}
+async function saveClientMessage(){
+  var btn=document.getElementById('modal-save-btn');
+  var status=document.getElementById('modal-save-status');
+  var msg=document.getElementById('modal-textarea').value.trim();
+  btn.disabled=true;btn.textContent='Saving...';status.textContent='';
+  try{
+    var r=await fetch('/api/admin/save-client-message?token='+encodeURIComponent(TOKEN),{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({bookingId:_modalBookingId,message:msg})});
+    var j=await r.json();if(!r.ok)throw new Error(j.error||'Failed');
+    status.textContent='Saved!';status.style.color='#2c6e3f';
+    var preview=document.getElementById('msg-preview-'+_modalBookingIdx);
+    if(preview){preview.textContent=msg;preview.style.display=msg?'block':'none';}
+    setTimeout(function(){closeMessageModal();},800);
+  }catch(e){status.textContent='Error: '+e.message;status.style.color='#c0392b';}
+  btn.disabled=false;btn.textContent='Save Message';
+}
+async function sendEmail(){
+  var to=document.getElementById('e-to').value.trim();
+  var subject=document.getElementById('e-subject').value.trim();
+  var body=document.getElementById('e-body').value.trim();
+  var succ=document.getElementById('email-success');var err=document.getElementById('email-error');
+  succ.style.display='none';err.style.display='none';
+  if(!to||!subject||!body){err.textContent='Please fill in all fields.';err.style.display='block';return;}
+  try{
+    var r=await fetch('/api/admin-send-email?token='+encodeURIComponent(TOKEN),{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({to,subject,body})});
+    var j=await r.json();if(!r.ok)throw new Error(j.error||'Failed');
+    succ.textContent='Email sent to '+to+'!';succ.style.display='block';
+    document.getElementById('e-to').value='';document.getElementById('e-subject').value='';document.getElementById('e-body').value='';
+  }catch(e){err.textContent='Could not send email. Please try again.';err.style.display='block';}
+}
+async function regenToken(){
+  var btn=document.getElementById('regen-btn'),status=document.getElementById('regen-status');
+  btn.disabled=true;status.textContent='Regenerating...';
+  try{
+    var r=await fetch('/api/admin?token='+encodeURIComponent(TOKEN),{method:'POST'});
+    var j=await r.json();if(!r.ok)throw new Error(j.error||'Failed');
+    status.textContent='New link sent to your email!';btn.style.display='none';
+  }catch(e){status.textContent='Failed. Try again.';btn.disabled=false;}
+}
+function galSetPos(e,box,imgId,dotId,valId,isUpload){
+  var rect=box.getBoundingClientRect();
+  var x=Math.round(((e.clientX-rect.left)/rect.width)*100);
+  var y=Math.round(((e.clientY-rect.top)/rect.height)*100);
+  var pos=x+'% '+y+'%';
+  document.getElementById(imgId).style.objectPosition=pos;
+  document.getElementById(dotId).style.left=x+'%';
+  document.getElementById(dotId).style.top=y+'%';
+  document.getElementById(valId).textContent='Focus: '+pos;
+  if(isUpload){_galUploadPos=pos;}else{_galEditPos=pos;}
+}
+function galApplyPreset(pos,imgId,dotId,valId,isUpload){
+  document.getElementById(imgId).style.objectPosition=pos;
+  var parts=pos.split(' ');
+  var py=parts[0]||'center';var px=parts[1]||'center';
+  var xMap={left:'0%',center:'50%',right:'100%'};
+  var yMap={top:'0%',center:'50%',bottom:'100%'};
+  document.getElementById(dotId).style.left=xMap[px]||'50%';
+  document.getElementById(dotId).style.top=yMap[py]||'50%';
+  document.getElementById(valId).textContent='Focus: '+pos;
+  if(isUpload){_galUploadPos=pos;}else{_galEditPos=pos;}
+}
+function galApplyUploadPos(pos){galApplyPreset(pos,'gal-preview-img','gal-focus-dot','gal-pos-val',true);}
+function galEditApplyPos(pos){galApplyPreset(pos,'gal-edit-img','gal-edit-dot','gal-edit-pos-val',false);}
+function galPreviewFile(e){
+  var file=e.target.files[0];if(!file)return;
+  var reader=new FileReader();
+  reader.onload=function(ev){document.getElementById('gal-preview-img').src=ev.target.result;document.getElementById('gal-preview-wrap').style.display='block';};
+  reader.readAsDataURL(file);
+  _galUploadPos='center center';
+  document.getElementById('gal-focus-dot').style.left='50%';
+  document.getElementById('gal-focus-dot').style.top='50%';
+  document.getElementById('gal-pos-val').textContent='Focus: center center';
+}
+async function loadGallery(){
+  try{
+    var r=await fetch('/api/gallery/list');
+    _galPhotos=await r.json();
+    renderGallery();
+  }catch(e){console.error('Gallery load error',e);}
+}
+function renderGallery(){
+  var grid=document.getElementById('gal-grid');
+  var empty=document.getElementById('gal-empty');
+  if(!_galPhotos||!_galPhotos.length){grid.innerHTML='';empty.style.display='block';return;}
+  empty.style.display='none';
+  grid.innerHTML=_galPhotos.map(function(p){
+    var imgUrl=p.url||('/gallery/'+p.filename);
+    var pos=p.objectPosition||p.object_position||'center center';
+    var fn=p.filename.replace(/'/g,"\\'");
+    return '<div draggable="true" ondragstart="galDragStart(event,\''+fn+'\')" ondragover="galDragOver(event)" ondrop="galDrop(event,\''+fn+'\')" style="position:relative;aspect-ratio:1;overflow:hidden;border-radius:8px;border:1.5px solid #e8c4bc;cursor:pointer;background:#f5e8e0;" onclick="galOpenEdit(\''+fn+'\')">'+
+      (p.featured?'<div style="position:absolute;top:5px;left:5px;z-index:2;background:rgba(201,169,110,0.95);border-radius:4px;padding:2px 7px;font-size:0.66rem;color:#fff;font-weight:700;pointer-events:none;">Featured</div>':'')+
+      '<img src="'+imgUrl+'" style="width:100%;height:100%;object-fit:cover;object-position:'+pos+';display:block;pointer-events:none;" alt="'+(p.title||'')+'">'+
+      '<div style="position:absolute;bottom:0;left:0;right:0;padding:7px 8px;color:#fff;font-size:0.7rem;font-weight:600;text-shadow:0 1px 3px rgba(0,0,0,0.7);pointer-events:none;background:linear-gradient(transparent,rgba(0,0,0,0.55));">'+(p.title||'')+'</div>'+
+      '</div>';
+  }).join('');
+}
+var _galDragSrc='';
+function galDragStart(e,fn){_galDragSrc=fn;e.dataTransfer.effectAllowed='move';}
+function galDragOver(e){e.preventDefault();e.dataTransfer.dropEffect='move';}
+async function galDrop(e,targetFn){
+  e.preventDefault();if(_galDragSrc===targetFn)return;
+  var si=_galPhotos.findIndex(function(p){return p.filename===_galDragSrc;});
+  var ti=_galPhotos.findIndex(function(p){return p.filename===targetFn;});
+  if(si===-1||ti===-1)return;
+  var moved=_galPhotos.splice(si,1)[0];_galPhotos.splice(ti,0,moved);
+  renderGallery();
+  try{await fetch('/api/admin/gallery/reorder?token='+encodeURIComponent(TOKEN),{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify({filenames:_galPhotos.map(function(p){return p.filename;})})});}catch(e){console.error('Reorder failed',e);}
+}
+async function galUpload(){
+  var fileInput=document.getElementById('gal-file');
+  var file=fileInput.files[0];if(!file){alert('Please select a photo first.');return;}
+  var title=document.getElementById('gal-title').value.trim();
+  var category=document.getElementById('gal-category').value;
+  var desc=document.getElementById('gal-desc').value.trim();
+  var btn=document.getElementById('gal-upload-btn');
+  var status=document.getElementById('gal-upload-status');
+  btn.disabled=true;btn.textContent='Uploading...';status.textContent='Uploading...';
+  try{
+    var fd=new FormData();
+    fd.append('photo',file);
+    fd.append('title',title||file.name.replace(/\.[^.]+$/,''));
+    fd.append('category',category);
+    fd.append('desc',desc);
+    fd.append('objectPosition',_galUploadPos);
+    var sr=await fetch('/api/admin/upload-gallery?token='+encodeURIComponent(TOKEN),{method:'POST',body:fd});
+    if(!sr.ok){var se=await sr.json().catch(function(){return{};});throw new Error(se.error||'Upload failed');}
+    status.innerHTML='<span style="color:#2e7d32;">Photo uploaded successfully!</span>';
+    fileInput.value='';
+    document.getElementById('gal-preview-wrap').style.display='none';
+    document.getElementById('gal-title').value='';
+    document.getElementById('gal-desc').value='';
+    _galUploadPos='center center';
+    await loadGallery();
+  }catch(e){status.innerHTML='<span style="color:#c0392b;">'+e.message+'</span>';}
+  btn.disabled=false;btn.textContent='Upload Photo';
+}
+function galOpenEdit(filename){
+  var p=_galPhotos.find(function(x){return x.filename===filename;});if(!p)return;
+  _galEditFilename=filename;
+  _galEditPos=p.objectPosition||p.object_position||'center center';
+  var img=document.getElementById('gal-edit-img');
+  img.src=p.url||('/gallery/'+p.filename);
+  img.style.objectPosition=_galEditPos;
+  document.getElementById('gal-edit-dot').style.left='50%';
+  document.getElementById('gal-edit-dot').style.top='50%';
+  document.getElementById('gal-edit-pos-val').textContent='Focus: '+_galEditPos;
+  document.getElementById('gal-edit-title').value=p.title||'';
+  document.getElementById('gal-edit-cat').value=p.category||'glam';
+  document.getElementById('gal-edit-desc').value=p.desc||p.description||'';
+  document.getElementById('gal-edit-err').style.display='none';
+  document.getElementById('gal-feat-btn').textContent=p.featured?'Unfeature':'Feature';
+  document.getElementById('gal-modal').style.display='flex';
+}
+function galCloseModal(){document.getElementById('gal-modal').style.display='none';}
+async function galEditSave(){
+  var btn=document.getElementById('gal-save-btn');var err=document.getElementById('gal-edit-err');
+  var title=document.getElementById('gal-edit-title').value.trim();
+  var category=document.getElementById('gal-edit-cat').value;
+  var desc=document.getElementById('gal-edit-desc').value.trim();
+  btn.disabled=true;btn.textContent='Saving...';err.style.display='none';
+  try{
+    var r=await fetch('/api/admin/gallery/'+encodeURIComponent(_galEditFilename)+'/meta?token='+encodeURIComponent(TOKEN),{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify({title,category,desc,objectPosition:_galEditPos})});
+    if(!r.ok)throw new Error('Failed to save');
+    galCloseModal();await loadGallery();
+  }catch(e){err.textContent=e.message;err.style.display='block';}
+  btn.disabled=false;btn.textContent='Save';
+}
+async function galToggleFeatured(){
+  var r=await fetch('/api/admin/gallery/'+encodeURIComponent(_galEditFilename)+'/featured?token='+encodeURIComponent(TOKEN),{method:'PUT'});
+  if(r.ok){galCloseModal();await loadGallery();}else alert('Failed to update featured status.');
+}
+async function galDelete(){
+  if(!confirm('Delete this photo permanently?'))return;
+  var r=await fetch('/api/admin/gallery/'+encodeURIComponent(_galEditFilename)+'?token='+encodeURIComponent(TOKEN),{method:'DELETE'});
+  if(r.ok){galCloseModal();await loadGallery();}else alert('Delete failed. Please try again.');
+}
+async function loadCoupons(){
+  try{
+    var r=await fetch('/api/admin/coupons?token='+encodeURIComponent(TOKEN));
+    _cpCoupons=await r.json();
+    renderCoupons();
+  }catch(e){document.getElementById('cp-list').innerHTML='<p style="color:#c0392b;font-size:0.85rem;">Failed to load coupons.</p>';}
+}
+function renderCoupons(){
+  var el=document.getElementById('cp-list');
+  if(!_cpCoupons||!_cpCoupons.length){el.innerHTML='<p style="color:#9e7c4a;font-size:0.85rem;">No promo codes yet.</p>';return;}
+  el.innerHTML='<table style="width:100%;border-collapse:collapse;font-size:0.88rem;"><thead><tr>'+
+    '<th style="padding:8px 12px;text-align:left;font-size:0.75rem;font-weight:700;color:#6b3d2e;text-transform:uppercase;background:#fdf5f0;border-bottom:1px solid #e8c4bc;">Code</th>'+
+    '<th style="padding:8px 12px;text-align:left;font-size:0.75rem;font-weight:700;color:#6b3d2e;text-transform:uppercase;background:#fdf5f0;border-bottom:1px solid #e8c4bc;">Discount</th>'+
+    '<th style="padding:8px 12px;text-align:left;font-size:0.75rem;font-weight:700;color:#6b3d2e;text-transform:uppercase;background:#fdf5f0;border-bottom:1px solid #e8c4bc;">Description</th>'+
+    '<th style="padding:8px 12px;text-align:left;font-size:0.75rem;font-weight:700;color:#6b3d2e;text-transform:uppercase;background:#fdf5f0;border-bottom:1px solid #e8c4bc;">Status</th>'+
+    '<th style="padding:8px 12px;background:#fdf5f0;border-bottom:1px solid #e8c4bc;"></th>'+
+    '</tr></thead><tbody>'+
+    _cpCoupons.map(function(c){
+      var dt=c.discount_type||c.discountType||'percent';
+      var dv=Number(c.discount_value||c.discountValue||0);
+      var disc=dt==='fixed'?'A$'+dv.toFixed(2)+' off':dv+'% off';
+      var isValid=c.valid!==undefined?c.valid:(c.active==='true');
+      var badge=isValid?'<span style="background:#e8f4e8;color:#2c6e3f;padding:2px 8px;border-radius:20px;font-size:0.75rem;font-weight:700;">Active</span>':
+                       '<span style="background:#f5e8e8;color:#c0392b;padding:2px 8px;border-radius:20px;font-size:0.75rem;font-weight:700;">Inactive</span>';
+      return '<tr style="border-bottom:1px solid #f0ddd6;">'+
+        '<td style="padding:10px 12px;font-weight:700;font-family:monospace;font-size:0.9rem;">'+c.code+'</td>'+
+        '<td style="padding:10px 12px;">'+disc+'</td>'+
+        '<td style="padding:10px 12px;color:#6b3d2e;font-size:0.85rem;">'+(c.description||'&mdash;')+'</td>'+
+        '<td style="padding:10px 12px;">'+badge+'</td>'+
+        '<td style="padding:10px 12px;"><button onclick="cpOpenEdit('+c.id+')" style="padding:5px 12px;border:1.5px solid #c9a96e;border-radius:6px;background:#fff;color:#9e7c4a;font-weight:700;font-size:0.8rem;cursor:pointer;font-family:inherit;">Edit</button></td>'+
+        '</tr>';
+    }).join('')+'</tbody></table>';
+}
+async function cpAdd(){
+  var code=document.getElementById('cp-code').value.trim().toUpperCase();
+  var type=document.getElementById('cp-type').value;
+  var value=document.getElementById('cp-value').value;
+  var desc=document.getElementById('cp-desc').value.trim();
+  var status=document.getElementById('cp-add-status');
+  var btn=document.getElementById('cp-add-btn');
+  if(!code||!value){status.innerHTML='<span style="color:#c0392b;">Code and value are required.</span>';return;}
+  btn.disabled=true;btn.textContent='Adding...';status.textContent='';
+  try{
+    var r=await fetch('/api/admin/coupons?token='+encodeURIComponent(TOKEN),{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({code,discount_type:type,discount_value:parseFloat(value),description:desc})});
+    var j=await r.json();if(!r.ok)throw new Error(j.error||'Failed');
+    status.innerHTML='<span style="color:#2c6e3f;">Code added!</span>';
+    document.getElementById('cp-code').value='';document.getElementById('cp-value').value='';document.getElementById('cp-desc').value='';
+    await loadCoupons();
+  }catch(e){status.innerHTML='<span style="color:#c0392b;">'+e.message+'</span>';}
+  btn.disabled=false;btn.textContent='Add Code';
+}
+function cpOpenEdit(id){
+  var c=_cpCoupons.find(function(x){return x.id===id;});if(!c)return;
+  document.getElementById('cp-edit-id').value=c.id;
+  document.getElementById('cp-edit-code').value=c.code;
+  document.getElementById('cp-edit-type').value=c.discount_type||c.discountType||'percent';
+  document.getElementById('cp-edit-value').value=Number(c.discount_value||c.discountValue||0);
+  document.getElementById('cp-edit-desc').value=c.description||'';
+  document.getElementById('cp-edit-valid').checked=c.valid!==undefined?c.valid:(c.active==='true');
+  document.getElementById('cp-edit-err').style.display='none';
+  document.getElementById('cp-modal').style.display='flex';
+}
+function cpCloseModal(){document.getElementById('cp-modal').style.display='none';}
+async function cpEditSave(){
+  var id=document.getElementById('cp-edit-id').value;
+  var code=document.getElementById('cp-edit-code').value.trim().toUpperCase();
+  var type=document.getElementById('cp-edit-type').value;
+  var value=document.getElementById('cp-edit-value').value;
+  var desc=document.getElementById('cp-edit-desc').value.trim();
+  var valid=document.getElementById('cp-edit-valid').checked;
+  var err=document.getElementById('cp-edit-err');
+  if(!code||!value){err.textContent='Code and value are required.';err.style.display='block';return;}
+  try{
+    var r=await fetch('/api/admin/coupons/'+id+'?token='+encodeURIComponent(TOKEN),{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify({code,discount_type:type,discount_value:parseFloat(value),description:desc,valid})});
+    var j=await r.json();if(!r.ok)throw new Error(j.error||'Failed');
+    cpCloseModal();await loadCoupons();
+  }catch(e){err.textContent=e.message;err.style.display='block';}
+}
+async function cpEditDelete(){
+  var id=document.getElementById('cp-edit-id').value;
+  var code=document.getElementById('cp-edit-code').value;
+  if(!confirm('Delete promo code '+code+'?'))return;
+  try{
+    var r=await fetch('/api/admin/coupons/'+id+'?token='+encodeURIComponent(TOKEN),{method:'DELETE'});
+    if(r.ok){cpCloseModal();await loadCoupons();}else alert('Delete failed.');
+  }catch(e){alert('Delete failed.');}
+}
+(function(){
+  var galM=document.getElementById('gal-modal');
+  var cpM=document.getElementById('cp-modal');
+  var msgM=document.getElementById('message-modal');
+  if(galM)galM.addEventListener('click',function(e){if(e.target===this)galCloseModal();});
+  if(cpM)cpM.addEventListener('click',function(e){if(e.target===this)cpCloseModal();});
+  if(msgM)msgM.addEventListener('click',function(e){if(e.target===this)closeMessageModal();});
+})();
+loadGallery();
+loadCoupons();
+</script>
 </body>
 </html>`;
-
   res.setHeader("Content-Type", "text/html; charset=utf-8");
   res.send(html);
 });
@@ -1453,7 +1109,13 @@ router.get("/admin/coupons", async (req, res) => {
   if (!valid) { res.status(403).json({ error: "Unauthorized" }); return; }
   try {
     const all = await db.select().from(coupons).orderBy(desc(coupons.createdAt));
-    res.json(all);
+    res.json(all.map(c => ({
+      id: c.id, code: c.code,
+      discount_type: c.discountType, discount_value: c.discountValue,
+      description: c.description || "",
+      valid: c.active === "true",
+      created_at: c.createdAt,
+    })));
   } catch { res.status(500).json({ error: "Could not fetch coupons" }); }
 });
 
@@ -1462,19 +1124,18 @@ router.post("/admin/coupons", async (req, res) => {
   const token = req.query.token as string;
   const valid = await validateToken(token).catch(() => false);
   if (!valid) { res.status(403).json({ error: "Unauthorized" }); return; }
-  const { code, discountType, discountValue, description, expiresAt, maxUses } = req.body as {
-    code: string; discountType: string; discountValue: number;
-    description?: string; expiresAt?: string; maxUses?: number;
-  };
-  if (!code || !discountType || !discountValue) { res.status(400).json({ error: "Code, type, and value are required" }); return; }
+  const _b = req.body as any;
+  const code = _b.code;
+  const discountType = _b.discountType || _b.discount_type;
+  const discountValue = _b.discountValue ?? _b.discount_value;
+  const description = _b.description;
+  if (!code || !discountType || discountValue == null) { res.status(400).json({ error: "Code, type, and value are required" }); return; }
   try {
     const [inserted] = await db.insert(coupons).values({
-      code: code.trim().toUpperCase(),
-      discountType,
+      code: String(code).trim().toUpperCase(),
+      discountType: String(discountType),
       discountValue: String(discountValue),
       description: description || "",
-      expiresAt: expiresAt ? new Date(expiresAt) : undefined,
-      maxUses: maxUses ? String(maxUses) : undefined,
       usesCount: "0",
       active: "true",
     }).returning();
@@ -1505,22 +1166,23 @@ router.put("/admin/coupons/:id", async (req, res) => {
   if (!valid) { res.status(403).json({ error: "Unauthorized" }); return; }
   const id = parseInt(req.params.id);
   if (isNaN(id)) { res.status(400).json({ error: "Invalid ID" }); return; }
-  const { code, discountType, discountValue, description, expiresAt, maxUses } = req.body as {
-    code: string; discountType: string; discountValue: number;
-    description?: string; expiresAt?: string; maxUses?: number;
+  const _b2 = req.body as any;
+  const code = _b2.code;
+  const discountType = _b2.discountType || _b2.discount_type;
+  const discountValue = _b2.discountValue ?? _b2.discount_value;
+  const description = _b2.description;
+  if (!code || !discountType || discountValue == null) { res.status(400).json({ error: "Code, type, and value are required" }); return; }
+  const updateSet: Record<string, any> = {
+    code: String(code).trim().toUpperCase(),
+    discountType: String(discountType),
+    discountValue: String(discountValue),
+    description: description || "",
   };
-  if (!code || !discountType || !discountValue) { res.status(400).json({ error: "Code, type, and value are required" }); return; }
+  if (_b2.valid !== undefined) updateSet.active = _b2.valid ? "true" : "false";
   try {
     const rows = await db.select().from(coupons).where(eq(coupons.id, id)).limit(1);
     if (!rows.length) { res.status(404).json({ error: "Coupon not found" }); return; }
-    await db.update(coupons).set({
-      code: code.trim().toUpperCase(),
-      discountType,
-      discountValue: String(discountValue),
-      description: description || "",
-      expiresAt: expiresAt ? new Date(expiresAt) : undefined,
-      maxUses: maxUses ? String(maxUses) : undefined,
-    }).where(eq(coupons.id, id));
+    await db.update(coupons).set(updateSet).where(eq(coupons.id, id));
     res.json({ ok: true });
   } catch (e: any) {
     if (e.code === "23505") { res.status(409).json({ error: "A coupon with that code already exists" }); }

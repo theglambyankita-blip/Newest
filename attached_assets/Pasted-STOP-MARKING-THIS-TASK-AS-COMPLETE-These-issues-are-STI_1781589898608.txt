@@ -1,0 +1,238 @@
+STOP MARKING THIS TASK AS COMPLETE.
+
+These issues are STILL NOT FIXED on the LIVE deployed website.
+
+I have now reported the same problems multiple times and they continue to exist after deployment. This means the root cause has not been identified or the fixes are not actually being verified on the live environment.
+
+I need you to stop making assumptions and perform a full investigation of the live production system.
+
+IMPORTANT:
+
+This is NOT an old deployment.
+This is NOT a cache issue.
+This is NOT me looking at the wrong version.
+
+The latest version is deployed and these issues are still present.
+
+========================================
+ISSUE 1: ALL PROMO CODES PAGE IS STILL BROKEN
+========================================
+
+The "All Promo Codes" section in the Admin Dashboard is not functioning.
+
+It remains stuck on:
+
+"Loading"
+
+and never displays any promo codes.
+
+The CONDITNCREW promo code works successfully in the booking form, which proves that promo code data exists somewhere in the system.
+
+Therefore there is absolutely no reason why the Admin Dashboard should be unable to load promo codes.
+
+I need you to identify the EXACT failure point.
+
+Perform ALL of the following:
+
+STEP 1
+Open the live Admin Dashboard.
+
+STEP 2
+Open browser developer tools.
+
+STEP 3
+Open the Network tab.
+
+STEP 4
+Navigate to All Promo Codes.
+
+STEP 5
+Identify every API request being made.
+
+STEP 6
+Check:
+• Request URL
+• Request method
+• Response status code
+• Response body
+• Response time
+
+STEP 7
+Determine whether:
+• The request never fires
+• The request fails
+• The request returns empty data
+• The request returns valid data but the frontend fails to render it
+
+STEP 8
+Inspect browser console errors.
+
+STEP 9
+Inspect server logs.
+
+STEP 10
+Inspect database queries.
+
+STEP 11
+Confirm which database table/collection stores promo codes.
+
+STEP 12
+Confirm the CONDITNCREW promo code exists in that table.
+
+STEP 13
+Run the exact query being used by the Admin Dashboard.
+
+STEP 14
+Compare query results against the API response.
+
+STEP 15
+Determine exactly where the failure occurs.
+
+DO NOT GUESS.
+
+Provide the actual root cause.
+
+========================================
+ISSUE 2: ALL PHOTOS PAGE IS STILL BROKEN
+========================================
+
+The "All Photos" section remains broken.
+
+The website gallery displays images successfully.
+
+The Admin Dashboard does not.
+
+This means the images already exist.
+
+The problem is the Admin Dashboard.
+
+I need you to perform a complete investigation.
+
+STEP 1
+Determine where gallery images are stored.
+
+STEP 2
+Confirm whether images are stored in:
+• Cloudinary
+• Database
+• Static assets
+• Another storage provider
+
+STEP 3
+List the exact image records currently visible on the live website.
+
+STEP 4
+Inspect the API endpoint used by the public gallery.
+
+STEP 5
+Inspect the API endpoint used by All Photos.
+
+STEP 6
+Compare both endpoints.
+
+STEP 7
+Determine whether they are reading from different sources.
+
+STEP 8
+Verify all Cloudinary credentials.
+
+STEP 9
+Verify all environment variables.
+
+STEP 10
+Verify Cloudinary API responses.
+
+STEP 11
+Verify database records.
+
+STEP 12
+Verify image URLs.
+
+STEP 13
+Inspect browser console errors.
+
+STEP 14
+Inspect network requests.
+
+STEP 15
+Inspect server logs.
+
+STEP 16
+Determine exactly why the dashboard cannot display images that the live gallery can already display.
+
+Again:
+
+DO NOT GUESS.
+
+Find the actual failure point.
+
+========================================
+VERIFY THE LIVE WEBSITE
+========================================
+
+I am providing the live website/admin URL for a reason.
+
+Use it.
+
+Access the live deployment.
+
+Inspect the live system.
+
+Inspect the live network requests.
+
+Inspect the live API responses.
+
+Inspect the live console errors.
+
+Inspect the live server logs.
+
+Do NOT tell me the code looks correct.
+
+Do NOT tell me the deployment should work.
+
+Do NOT tell me the issue might be caching.
+
+Actually verify that the live deployed website is functioning correctly.
+
+========================================
+DO NOT CLOSE THIS TASK UNTIL:
+========================================
+
+ALL PROMO CODES:
+
+✓ Loads successfully
+✓ Displays all promo codes
+✓ Displays CONDITNCREW
+✓ Allows creation of new codes
+✓ Allows editing existing codes
+✓ No loading spinner remains
+
+ALL PHOTOS:
+
+✓ Loads successfully
+✓ Displays every image currently visible in the website gallery
+✓ Displays newly uploaded images
+✓ No loading spinner remains
+✓ No broken images remain
+
+TECHNICAL VERIFICATION:
+
+✓ No console errors
+✓ No failed API requests
+✓ No failed database queries
+✓ No failed Cloudinary requests
+✓ No infinite loading states
+✓ No unhandled exceptions
+
+FINAL REQUIREMENT:
+
+After fixing the issues, provide:
+
+1. The exact root cause of the Promo Codes issue.
+2. The exact root cause of the All Photos issue.
+3. The files that were changed.
+4. The database/API changes that were made.
+5. Evidence that the live deployed website was tested.
+6. Confirmation that the fix was deployed successfully.
+
+Do NOT mark this task as complete until every item above has been verified on the LIVE production website.
