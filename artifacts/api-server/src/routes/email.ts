@@ -610,7 +610,7 @@ router.post("/send-confirmation", async (req, res) => {
     contentType: "text/calendar; charset=utf-8; method=REQUEST",
   }] : [];
 
-  const detailRows = Object.entries(confirmed_data)
+  const detailRows = Object.entries(confirmed_data || {})
     .filter(([, v]) => v)
     .map(([k, v]) => `<tr>
       <td style="padding:6px 14px;font-weight:600;color:#6b3d2e;white-space:nowrap;background:#fdf0ee;">${k}</td>
