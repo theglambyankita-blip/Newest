@@ -1,0 +1,98 @@
+The issues are still NOT resolved.
+
+1. CONDITNCREW PROMO CODE IS STILL BROKEN
+
+The promo code:
+
+CONDITNCREW
+
+still does not work on the booking page.
+
+It continues to return an error and cannot be successfully applied during booking.
+
+Please stop assuming this is fixed and thoroughly investigate the entire promo code validation system.
+
+I need you to determine:
+
+• Whether the promo code exists in the database
+• Whether the promo code API is returning data correctly
+• Whether the frontend is communicating with the backend correctly
+• Whether the validation endpoint is failing
+• Whether the promo code is marked as active
+• Whether there are any database, schema, environment variable, or deployment issues preventing it from working
+
+Do not simply patch the frontend error message. Find the actual root cause and fix it.
+
+2. "ALL PROMO CODES" SECTION IS NOT WORKING
+
+In the Admin Dashboard, the "All Promo Codes" section is not loading.
+
+I only see:
+
+"Loading"
+
+and no promo codes ever appear.
+
+This means the dashboard is clearly failing to fetch promo code data.
+
+Please investigate and fix:
+
+• The API endpoint
+• Database queries
+• Authentication issues
+• Loading state issues
+• Frontend data fetching issues
+• Any console or server errors
+
+The section should display all promo codes correctly and allow them to be managed.
+
+Until the codes actually appear in the dashboard, I cannot verify that promo code management is working.
+
+3. ALL PHOTOS SECTION IS STILL BROKEN
+
+I still cannot see all gallery images in the Admin Dashboard "All Photos" section.
+
+The images are clearly visible on the public website gallery, yet they are not appearing in the admin dashboard.
+
+Please investigate why the admin dashboard is not displaying the same image data that the website gallery is using.
+
+I need you to verify:
+
+• Where the website gallery images are being stored
+• Whether the admin dashboard is reading from the correct source
+• Whether database records are missing
+• Whether image URLs are invalid
+• Whether permissions are blocking access
+• Whether API requests are failing
+• Whether the dashboard is using a different dataset than the public gallery
+
+The admin dashboard should display ALL gallery images that currently appear on the website.
+
+4. VERIFY DATA, NOT JUST UI
+
+Do not only fix the user interface.
+
+I need confirmation that:
+
+• Promo codes actually exist in the database
+• Promo codes are being returned by the API
+• Promo codes are visible in the dashboard
+• Promo codes can be applied during booking
+• Gallery images actually exist in storage/database
+• Gallery images are being returned by the API
+• Gallery images are visible in the admin dashboard
+
+5. TEST BEFORE MARKING COMPLETE
+
+Before saying this is fixed, please provide evidence that you tested:
+
+• Loading all promo codes
+• Creating a promo code
+• Editing a promo code
+• Applying the CONDITNCREW promo code
+• Loading all gallery images
+• Viewing images in the Admin Dashboard
+
+If any section still shows "Loading" or displays no data, then the issue is NOT resolved.
+
+Please find the root causes and fully fix these issues, then commit, push to GitHub, deploy, and confirm exactly what was changed.
