@@ -1,0 +1,136 @@
+I have identified an important detail that should help you find the root cause, and this now requires immediate attention.
+
+THIS IS URGENT.
+
+Please prioritise this issue and investigate it immediately, as critical Admin Dashboard functionality is currently not working on the live website.
+
+In the Replit Preview environment, both sections work correctly:
+
+• All Photos displays all gallery images  
+• All Promo Codes displays all promo codes  
+
+However, in the actual live Admin Dashboard on the deployed website, neither section works correctly.
+
+PLEASE INVESTIGATE THIS IMMEDIATELY.
+
+LATEST DEPLOYMENT IS ALREADY LIVE
+
+Before you suggest caching, redeploying, or that I am viewing an old version:
+
+• I am on the latest deployment  
+• The latest deployment is already live  
+• The problem still exists on the live Admin Dashboard  
+
+This is a real production issue that needs to be fixed right now.
+
+WHAT I AM SEEING
+
+REPLIT PREVIEW:
+
+✓ All Photos loads correctly  
+✓ All Promo Codes loads correctly  
+
+LIVE DEPLOYED ADMIN DASHBOARD:
+
+✗ All Photos does not load correctly  
+✗ All Promo Codes does not load correctly  
+✗ Sections remain stuck or fail to display data  
+
+Because Preview works and Production does not, I need you to focus on differences between the Preview environment and the Production deployment.
+
+PLEASE INVESTIGATE ALL OF THE FOLLOWING
+
+1. ENVIRONMENT VARIABLES
+
+Compare every environment variable between Preview and Production.
+
+Verify that production contains all required values for:
+
+• Database connection  
+• Cloudinary  
+• Authentication  
+• API configuration  
+• Promo code management  
+• Gallery image retrieval  
+
+Identify any missing or incorrect production variables.
+
+2. API ENDPOINTS
+
+Verify:
+
+• Which API endpoint Preview is calling  
+• Which API endpoint Production is calling  
+
+Confirm they are identical.
+
+Check whether Production requests are failing, returning empty responses, or being blocked.
+
+3. DATABASE CONNECTIONS
+
+Confirm that Production is connected to the correct database.
+
+Verify that:
+
+• Promo codes exist in the production database  
+• Gallery image records exist in the production database  
+• Production queries return records successfully  
+
+4. CLOUDINARY
+
+Since gallery images are involved, investigate Cloudinary thoroughly.
+
+Verify:
+
+• Cloudinary environment variables  
+• Cloudinary API credentials  
+• Cloudinary responses  
+• Cloudinary permissions  
+• Cloudinary requests from Production  
+
+If Preview can access the images but Production cannot, determine exactly why.
+
+5. AUTHENTICATION & PERMISSIONS
+
+Verify that Admin Dashboard authentication is not preventing data from loading.
+
+Check:
+
+• Session handling  
+• Authentication middleware  
+• API permissions  
+• Admin access controls  
+
+6. NETWORK REQUESTS
+
+Open the live deployed Admin Dashboard.
+
+Inspect:
+
+• Network requests  
+• Response codes  
+• Response bodies  
+• Failed requests  
+• JavaScript errors  
+
+I need to know exactly what request is failing and why.
+
+DO NOT GUESS
+
+At this point, I do not want assumptions or theories.
+
+Preview works.  
+Production does not.
+
+Find the exact difference, fix it immediately, deploy the fix, and verify it on the LIVE Admin Dashboard.
+
+DO NOT MARK THIS COMPLETE UNTIL:
+
+✓ All Promo Codes loads successfully in the LIVE Admin Dashboard  
+✓ All Photos loads successfully in the LIVE Admin Dashboard  
+✓ No loading loops remain  
+✓ No failed API requests remain  
+✓ No console errors remain  
+✓ The issue has been verified on the deployed website, not just in Preview  
+
+Then provide a summary explaining exactly what the root cause was, exactly what was changed to fix it, and confirmation that the fix has been tested on the LIVE production website.

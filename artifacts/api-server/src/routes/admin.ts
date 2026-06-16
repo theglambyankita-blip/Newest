@@ -615,9 +615,16 @@ function galPreviewFile(e){
 async function loadGallery(){
   try{
     var r=await fetch('/api/gallery/list');
+    if(!r.ok)throw new Error('Server error '+r.status);
     _galPhotos=await r.json();
     renderGallery();
-  }catch(e){console.error('Gallery load error',e);}
+  }catch(e){
+    console.error('Gallery load error',e);
+    var g=document.getElementById('gal-grid');
+    var em=document.getElementById('gal-empty');
+    if(g)g.innerHTML='<p style="color:#c0392b;font-size:0.85rem;padding:10px 0;">Failed to load photos. Please refresh the page.</p>';
+    if(em)em.style.display='none';
+  }
 }
 function renderGallery(){
   var grid=document.getElementById('gal-grid');
@@ -718,9 +725,14 @@ async function galDelete(){
 async function loadCoupons(){
   try{
     var r=await fetch('/api/admin/coupons?token='+encodeURIComponent(TOKEN));
+    if(!r.ok)throw new Error('Server error '+r.status);
     _cpCoupons=await r.json();
     renderCoupons();
-  }catch(e){document.getElementById('cp-list').innerHTML='<p style="color:#c0392b;font-size:0.85rem;">Failed to load coupons.</p>';}
+  }catch(e){
+    console.error('Coupons load error',e);
+    var el=document.getElementById('cp-list');
+    if(el)el.innerHTML='<p style="color:#c0392b;font-size:0.85rem;">Failed to load coupons. Please refresh the page.</p>';
+  }
 }
 function renderCoupons(){
   var el=document.getElementById('cp-list');
