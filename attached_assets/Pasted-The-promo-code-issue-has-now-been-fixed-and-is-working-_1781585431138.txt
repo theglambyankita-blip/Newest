@@ -1,0 +1,88 @@
+The promo code issue has now been fixed and is working correctly in the booking form, so thank you for that.
+
+However, there are still two major issues in the Admin Dashboard that remain unresolved and need to be fixed immediately.
+
+I am NOT looking at an old deployment. The latest version is deployed and these issues are still occurring on the live website.
+
+1. ALL PROMO CODES SECTION IS STILL BROKEN
+
+The "All Promo Codes" section in the Admin Dashboard still does not load any promo codes.
+
+It only shows:
+
+"Loading"
+
+and never actually displays any data.
+
+Since the CONDITNCREW code is now working on the booking page, that proves promo codes exist somewhere in the system. Therefore, the problem is likely with the Admin Dashboard fetching, displaying, or querying the data.
+
+Please investigate:
+
+• Whether the dashboard API endpoint is failing
+• Whether the frontend request is failing
+• Whether the request is stuck in a loading state
+• Whether there are console errors preventing rendering
+• Whether there are server-side errors
+• Whether authentication or permissions are blocking the request
+• Whether the dashboard is querying the wrong database table or collection
+• Whether the API is returning data but the frontend is failing to render it
+
+The page should load and display all promo codes, not remain stuck on "Loading".
+
+2. ALL PHOTOS SECTION IS STILL BROKEN
+
+The "All Photos" section in the Admin Dashboard is also still not displaying the gallery images.
+
+The images exist and are visible on the live website gallery, but they are not appearing inside the Admin Dashboard.
+
+This means the issue is likely related to how the dashboard retrieves image data.
+
+Please investigate thoroughly, including:
+
+• Cloudinary integration
+• Cloudinary API responses
+• Cloudinary credentials and environment variables
+• Database image records
+• Gallery API endpoints
+• Dashboard image fetching logic
+• Image permissions
+• Broken queries
+• Loading state issues
+• Frontend rendering issues
+• Any console or server errors
+
+If the website gallery can display the images, then the Admin Dashboard should also be able to retrieve and display those same images.
+
+3. USE THE LINK I AM PROVIDING
+
+I am providing the live website/admin link specifically so you can access it, inspect the issue directly, and identify what is failing.
+
+Please do not assume it is a deployment issue or tell me to redeploy again. The latest version is already deployed.
+
+Please access the live version, inspect the network requests, console errors, API responses, and dashboard functionality directly.
+
+4. FIND THE ROOT CAUSE
+
+I do not want temporary fixes or assumptions.
+
+I need you to identify exactly why:
+
+• "All Promo Codes" remains stuck on Loading
+• "All Photos" fails to display gallery images
+
+Then fix the underlying issue, not just the symptoms.
+
+5. VERIFY BEFORE MARKING COMPLETE
+
+Before closing this task, confirm that:
+
+• All Promo Codes loads successfully
+• Existing promo codes are visible
+• New promo codes appear correctly
+• All Photos loads successfully
+• All gallery images are visible
+• No loading loops remain
+• No console errors remain
+• No API failures remain
+
+Then commit the changes, push to GitHub, deploy, and provide a summary explaining the root cause and exactly what was fixed.
