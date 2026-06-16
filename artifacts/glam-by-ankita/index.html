@@ -213,7 +213,7 @@
     .hero-pill { display: inline-flex; align-items: center; gap: 0.5rem; background: var(--champagne); color: var(--gold-dark); border: 1px solid var(--gold-light); border-radius: 100px; padding: 0.4rem 1rem; font-size: 0.78rem; font-weight: 600; margin-bottom: 1.5rem; width: fit-content; }
     .hero-pill .dot { width: 8px; height: 8px; background: var(--gold); border-radius: 50%; display: inline-block; animation: pulse-dot 2s ease-in-out infinite; }
     .hero-h1 { font-family: 'Playfair Display', serif; font-size: clamp(3.5rem, 6.5vw, 7.5rem); font-weight: 700; line-height: 1.05; color: var(--text-dark); margin-bottom: 0.3rem; }
-    .hero-h1 em { font-style: italic; color: var(--gold-dark); }
+    .hero-h1 em { font-style: italic; color: var(--gold-dark); animation: em-glow-pulse 3s ease-in-out infinite; }
     .hero-script { font-family: 'Dancing Script', cursive; font-size: clamp(1.8rem, 2.8vw, 2.8rem); margin-bottom: 1.6rem; color: var(--gold); }
     .hero-p { font-size: 1.15rem; font-weight: 400; line-height: 1.9; color: var(--text-mid); max-width: 520px; margin-bottom: 2.5rem; }
     .hero-btns { display: flex; gap: 1rem; flex-wrap: wrap; margin-bottom: 2.5rem; }
@@ -223,7 +223,7 @@
     .btn-primary:hover { background: var(--gold-dark); transform: translateY(-2px); box-shadow: 0 8px 24px rgba(158,124,74,0.35); }
     .btn-secondary { background: transparent; color: var(--gold-dark); border: 1.5px solid var(--gold); font-family: 'Nunito', sans-serif; font-weight: 600; font-size: 0.95rem; padding: 0.85rem 2rem; border-radius: 4px; cursor: pointer; transition: background 0.2s, transform 0.2s; }
     .btn-secondary:hover { background: var(--blush); transform: translateY(-2px); }
-    .hero-stats { display: flex; gap: 2rem; flex-wrap: wrap; }
+    .hero-stats { display: flex; gap: 2rem; flex-wrap: wrap; background: rgba(255,255,255,0.55); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); border: 1px solid rgba(201,169,110,0.22); border-radius: 14px; padding: 1rem 1.4rem; width: fit-content; }
     .hero-stat-num { font-family: 'Playfair Display', serif; font-size: 3.2rem; font-weight: 700; color: var(--gold-dark); line-height: 1; }
     .hero-stat-lbl { font-size: 0.82rem; font-weight: 600; color: var(--text-light); text-transform: uppercase; letter-spacing: 0.12em; margin-top: 0.3rem; }
     .hero-stat-div { width: 1px; background: var(--blush-deep); align-self: stretch; margin: 0.2rem 0; }
@@ -234,10 +234,10 @@
     .hero-gold-bar { position: absolute; bottom: 0; left: 0; right: 0; height: 4px; background: linear-gradient(90deg, transparent, var(--gold), var(--gold-light), transparent); }
 
     /* MARQUEE */
-    .marquee-bar { background: var(--gold); padding: 0.8rem 0; overflow: hidden; }
+    .marquee-bar { background: #1a0f0a; padding: 0.8rem 0; overflow: hidden; border-top: 1px solid rgba(201,169,110,0.18); border-bottom: 1px solid rgba(201,169,110,0.18); }
     .marquee-inner { display: flex; animation: marquee 10s linear infinite; white-space: nowrap; }
-    .marquee-inner span { font-size: 0.72rem; font-weight: 700; letter-spacing: 0.25em; text-transform: uppercase; color: var(--white); padding: 0 1.8rem; }
-    .marquee-inner .sep { opacity: 0.45; padding: 0 0.3rem; }
+    .marquee-inner span { font-size: 0.72rem; font-weight: 700; letter-spacing: 0.25em; text-transform: uppercase; color: rgba(255,240,220,0.9); padding: 0 1.8rem; }
+    .marquee-inner .sep { color: var(--gold); opacity: 0.7; padding: 0 0.3rem; }
     @keyframes marquee { 0% { transform: translateX(0); } 100% { transform: translateX(-50%); } }
 
     /* SECTIONS */
@@ -722,6 +722,74 @@
     #scroll-top-btn.visible { opacity: 0.85; visibility: visible; transform: translateY(0); }
     #scroll-top-btn:hover { opacity: 1; transform: translateY(-2px); }
     #scroll-top-btn:focus-visible { outline: 2px solid var(--gold-dark); outline-offset: 3px; }
+
+    /* ── BLEND ANIMATIONS (Petal Luxe A + Cinema Editorial B + Silk&Gold C) ── */
+
+    /* Hero em gold glow pulse (B) */
+    @keyframes em-glow-pulse {
+      0%,100% { text-shadow: 0 0 8px rgba(201,169,110,0.25); }
+      50% { text-shadow: 0 0 22px rgba(201,169,110,0.7), 0 0 44px rgba(201,169,110,0.25); }
+    }
+
+    /* Floating sparkle particles keyframe (A) */
+    @keyframes hero-sparkle-float {
+      0%   { opacity: 0; transform: translateY(0) scale(0.5) rotate(0deg); }
+      15%  { opacity: 1; }
+      85%  { opacity: 0.7; }
+      100% { opacity: 0; transform: translateY(-130px) scale(1.1) rotate(360deg); }
+    }
+
+    /* Morphing orb keyframe (C) */
+    @keyframes orb-morph {
+      0%,100% { border-radius: 60% 40% 30% 70% / 60% 30% 70% 40%; }
+      33%     { border-radius: 40% 60% 70% 30% / 40% 50% 60% 50%; }
+      66%     { border-radius: 50% 50% 30% 70% / 30% 60% 40% 70%; }
+    }
+
+    /* Service card gold shimmer sweep (C) */
+    @keyframes shimmer-sweep {
+      from { transform: translateX(-120%) skewX(-15deg); }
+      to   { transform: translateX(250%) skewX(-15deg); }
+    }
+    .svc-card::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0;
+      width: 45%;
+      height: 100%;
+      background: linear-gradient(90deg, transparent, rgba(201,169,110,0.18), transparent);
+      transform: translateX(-120%) skewX(-15deg);
+      pointer-events: none;
+      z-index: 1;
+    }
+    .svc-card:hover::before { animation: shimmer-sweep 0.75s ease forwards; }
+    .svc-card .svc-num, .svc-card .svc-emoji, .svc-card .svc-name,
+    .svc-card .svc-desc, .svc-card .svc-tag { position: relative; z-index: 2; }
+
+    /* Ripple on btn-primary (A) */
+    @keyframes ripple-expand {
+      to { transform: scale(5); opacity: 0; }
+    }
+    .btn-ripple {
+      position: absolute;
+      border-radius: 50%;
+      background: rgba(255,255,255,0.45);
+      width: 12px; height: 12px;
+      margin-left: -6px; margin-top: -6px;
+      pointer-events: none;
+      animation: ripple-expand 0.65s ease-out forwards;
+    }
+
+    /* Gallery 3D tilt (B) */
+    .photo-item {
+      transform-style: preserve-3d;
+      will-change: transform;
+      transition: box-shadow 0.35s ease, transform 0.1s ease-out;
+    }
+    .photo-item:hover { box-shadow: 0 18px 44px rgba(44,24,16,0.22); }
+
+    /* Hero-left children z-index above orbs */
+    .hero-left > *:not(.blend-orb) { position: relative; z-index: 2; }
   </style>
 </head>
 <body>
