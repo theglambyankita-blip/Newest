@@ -34,6 +34,7 @@ async function runMigrations() {
         active TEXT NOT NULL DEFAULT 'true',
         created_at TIMESTAMP DEFAULT NOW() NOT NULL
       );
+      ALTER TABLE coupons ADD COLUMN IF NOT EXISTS active TEXT DEFAULT 'true';
       INSERT INTO coupons (code, discount_type, discount_value, description, active)
         VALUES ('CONDITNCREW', 'percent', 30, '30% off — CONDITN crew discount', 'true')
         ON CONFLICT (code) DO NOTHING;

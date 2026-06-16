@@ -574,6 +574,11 @@ router.post("/send-confirmation", async (req, res) => {
   const paymentToken = toUrlSafeBase64({
     confirmed_data,
     total_aud: finalAmount,
+    ...(discountAmount > 0 ? {
+      original_aud: origAmount,
+      coupon_code,
+      discount_amount: discountAmount,
+    } : {}),
     notes: notes || "",
     client_name,
     client_email,
