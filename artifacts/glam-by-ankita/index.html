@@ -2835,6 +2835,103 @@
     const wrap = heroRight.querySelector('.hero-photo-wrap');
     if (wrap) wrap.style.transform = `translate(${x}px,${y}px)`;
   });
+
+  // ── BLEND ANIMATIONS ────────────────────────────────────────────
+
+  // A: FLOATING GOLD SPARKLE PARTICLES on hero-left
+  (function() {
+    const heroLeft = document.querySelector('.hero-left');
+    if (!heroLeft) return;
+    const CHARS = ['✦','✧','⋆','✺','✹','❋','❃','◈','✵','⊹'];
+    function spawnSparkle() {
+      const el = document.createElement('span');
+      el.textContent = CHARS[Math.floor(Math.random() * CHARS.length)];
+      const size = Math.floor(Math.random() * 9) + 7;
+      const alpha = (Math.random() * 0.45 + 0.25).toFixed(2);
+      const dur   = (Math.random() * 2 + 2.2).toFixed(1);
+      el.style.cssText = [
+        'position:absolute',
+        'pointer-events:none',
+        'z-index:1',
+        'left:' + (Math.random() * 88 + 4) + '%',
+        'bottom:' + (Math.random() * 40 + 5) + '%',
+        'font-size:' + size + 'px',
+        'color:rgba(201,169,110,' + alpha + ')',
+        'animation:hero-sparkle-float ' + dur + 's ease-out both',
+        'will-change:transform,opacity'
+      ].join(';');
+      heroLeft.appendChild(el);
+      el.addEventListener('animationend', () => el.remove(), { once: true });
+    }
+    const _sparkleInterval = setInterval(spawnSparkle, 550);
+    // Pause when page is not home
+    document.addEventListener('visibilitychange', () => {
+      if (document.hidden) clearInterval(_sparkleInterval);
+    });
+  })();
+
+  // A: RIPPLE on .btn-primary clicks
+  document.addEventListener('click', function(e) {
+    const btn = e.target.closest('.btn-primary');
+    if (!btn) return;
+    const rect = btn.getBoundingClientRect();
+    const r = document.createElement('span');
+    r.className = 'btn-ripple';
+    r.style.left = (e.clientX - rect.left) + 'px';
+    r.style.top  = (e.clientY - rect.top) + 'px';
+    btn.appendChild(r);
+    r.addEventListener('animationend', () => r.remove(), { once: true });
+  }, true);
+
+  // B: 3D PERSPECTIVE TILT on gallery photo items
+  (function() {
+    let _lastTiltItem = null;
+    document.addEventListener('mousemove', function(e) {
+      const item = e.target.closest('#photoGrid .photo-item');
+      if (item !== _lastTiltItem) {
+        if (_lastTiltItem) _lastTiltItem.style.transform = '';
+        _lastTiltItem = item;
+      }
+      if (!item) return;
+      const rect = item.getBoundingClientRect();
+      const cx = rect.left + rect.width / 2;
+      const cy = rect.top + rect.height / 2;
+      const rx = ((e.clientY - cy) / (rect.height / 2)) * 7;
+      const ry = ((e.clientX - cx) / (rect.width / 2)) * -7;
+      item.style.transform = 'perspective(700px) rotateX(' + rx + 'deg) rotateY(' + ry + 'deg) scale(1.025)';
+    });
+    document.addEventListener('mouseleave', function() {
+      if (_lastTiltItem) { _lastTiltItem.style.transform = ''; _lastTiltItem = null; }
+    });
+  })();
+
+  // C: MORPHING BLUSH/GOLD ORBS injected into hero-left background
+  (function() {
+    const heroLeft = document.querySelector('.hero-left');
+    if (!heroLeft) return;
+    const configs = [
+      { cls:'orb-gold', w:200, h:200, top:'-55px', left:'-55px', dur:'9s', delay:'0s', opacity:'0.17' },
+      { cls:'orb-blush', w:160, h:160, bottom:'-35px', right:'-25px', dur:'13s', delay:'-4s', opacity:'0.20' }
+    ];
+    configs.forEach(cfg => {
+      const orb = document.createElement('div');
+      orb.classList.add('blend-orb', cfg.cls);
+      orb.style.cssText = [
+        'position:absolute',
+        'width:' + cfg.w + 'px',
+        'height:' + cfg.h + 'px',
+        cfg.top    ? 'top:' + cfg.top       : '',
+        cfg.bottom ? 'bottom:' + cfg.bottom : '',
+        cfg.left   ? 'left:' + cfg.left     : '',
+        cfg.right  ? 'right:' + cfg.right   : '',
+        'opacity:' + cfg.opacity,
+        'animation:orb-morph ' + cfg.dur + ' ease-in-out ' + cfg.delay + ' infinite',
+        'pointer-events:none',
+        'z-index:0'
+      ].filter(Boolean).join(';');
+      heroLeft.insertBefore(orb, heroLeft.firstChild);
+    });
+  })();
 </script>
 <script type="module" src="/src/main.tsx"></script>
 </body>
