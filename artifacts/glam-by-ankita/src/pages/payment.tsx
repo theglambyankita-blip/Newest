@@ -127,6 +127,14 @@ type Booking = ReturnType<typeof normalise>;
 const fadeUp = { initial: { opacity: 0, y: 18 }, animate: { opacity: 1, y: 0 }, exit: { opacity: 0, y: -10 } };
 const slideRight = { initial: { opacity: 0, x: 40 }, animate: { opacity: 1, x: 0 }, exit: { opacity: 0, x: -40 } };
 
+function TestModeBanner() {
+  return (
+    <div style={{ background: "#ff6b00", color: "#fff", textAlign: "center", padding: "10px 16px", fontSize: "0.85rem", fontWeight: 700, letterSpacing: "0.04em", position: "sticky", top: 0, zIndex: 100 }}>
+      🧪 TEST MODE — No real charge. Use card <strong>4242 4242 4242 4242</strong>, any future expiry &amp; any CVC.
+    </div>
+  );
+}
+
 export default function PaymentPage() {
   const [screen, setScreen] = useState<Screen>("loading");
   const [errorMsg, setErrorMsg] = useState("");
@@ -137,11 +145,13 @@ export default function PaymentPage() {
   const [payError, setPayError] = useState("");
   const [paying, setPaying] = useState(false);
   const [cashLoading, setCashLoading] = useState(false);
+  const [isTestMode, setIsTestMode] = useState(false);
   const stripeLoaded = useRef(false);
 
   useEffect(() => {
     try {
       const params = new URLSearchParams(window.location.search);
+      if (params.get("testpayment") === "1") setIsTestMode(true);
       const token = params.get("t") || params.get("b") || "";
       if (!token) { setErrorMsg("No booking data found. Please use the link from your email."); setScreen("error"); return; }
       setRawToken(token);
@@ -161,12 +171,12 @@ export default function PaymentPage() {
     stripeLoaded.current = true;
     setScreen("card-loading");
     try {
-      const cfgRes = await fetch(`${BASE}/api/config`);
+      const cfgRes = await fetch(`${BASE}/api/config${isTestMode ? "?test=1" : ""}`);
       const cfg = await cfgRes.json();
-      if (!cfg.stripePublishableKey) throw new Error("Stripe not configured.");
+      if (!cfg.stripePublishableKey) throw new Error(isTestMode ? "Test Stripe keys not configured. Please add STRIPE_TEST_SECRET_KEY and STRIPE_TEST_PUBLISHABLE_KEY as Replit secrets." : "Stripe not configured.");
       const stripe = await loadStripe(cfg.stripePublishableKey);
       if (!stripe) throw new Error("Failed to load Stripe.");
-      const piRes = await fetch(`${BASE}/api/create-payment-intent`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ token: rawToken }) });
+      const piRes = await fetch(`${BASE}/api/create-payment-intent`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ token: rawToken, testMode: isTestMode }) });
       const piJson = await piRes.json();
       if (!piRes.ok) throw new Error(piJson.error || "Could not create payment.");
       const els = stripe.elements({
@@ -185,13 +195,14 @@ export default function PaymentPage() {
     const { error } = await stripeObj.confirmPayment({ elements, confirmParams: { return_url: window.location.href, receipt_email: booking.clientEmail || undefined }, redirect: "if_required" });
     if (error) { setPayError(error.message || "Payment failed. Please try again."); setPaying(false); setScreen("card-ready"); }
     else {
-      try { await fetch(`${BASE}/api/confirm-payment`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ token: rawToken }) }); } catch {}
+      try { await fetch(`${BASE}/api/confirm-payment`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ token: rawToken, testMode: isTestMode }) }); } catch {}
       setPaying(false); setScreen("success-card");
     }
   }
 
   async function handleCash() {
     if (!booking) return;
+    if (isTestMode) { setScreen("success-cash"); return; }
     setCashLoading(true);
     try { await fetch(`${BASE}/api/select-cash`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ token: rawToken }) }); } catch {}
     setCashLoading(false); setScreen("success-cash");
@@ -215,7 +226,7 @@ export default function PaymentPage() {
   );
 
   if (screen === "error") return (
-    <div style={page}><Header />
+    <div style={page}>{isTestMode && <TestModeBanner />}<Header />
       <div style={{ display: "flex", alignItems: "center", justifyContent: "center", padding: 24, minHeight: "80vh" }}>
         <motion.div initial={{ scale: 0.8, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} transition={{ type: "spring", stiffness: 200 }}
           style={{ background: "#fff0f0", border: "1px solid #f5c0c0", borderRadius: 10, padding: "32px 28px", maxWidth: 480, textAlign: "center", color: "#c0392b" }}>
@@ -227,7 +238,7 @@ export default function PaymentPage() {
   );
 
   if (screen === "success-card") return (
-    <div style={{ ...page, overflow: "hidden" }}><Header />
+    <div style={{ ...page, overflow: "hidden" }}>{isTestMode && <TestModeBanner />}<Header />
       <Sparkles />
       <div style={{ maxWidth: 560, margin: "0 auto", padding: "32px 16px 60px", position: "relative", zIndex: 1 }}>
         <motion.div initial={{ scale: 0.6, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} transition={{ type: "spring", stiffness: 180, damping: 14 }}
@@ -260,7 +271,7 @@ export default function PaymentPage() {
   );
 
   if (screen === "success-cash") return (
-    <div style={{ ...page, overflow: "hidden" }}><Header />
+    <div style={{ ...page, overflow: "hidden" }}>{isTestMode && <TestModeBanner />}<Header />
       <Sparkles />
       <div style={{ maxWidth: 560, margin: "0 auto", padding: "32px 16px 60px", position: "relative", zIndex: 1 }}>
         <motion.div initial={{ scale: 0.6, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} transition={{ type: "spring", stiffness: 180, damping: 14 }}
@@ -298,6 +309,7 @@ export default function PaymentPage() {
 
   return (
     <div style={page}>
+      {isTestMode && <TestModeBanner />}
       <Header />
 
       <motion.div initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.35 }}

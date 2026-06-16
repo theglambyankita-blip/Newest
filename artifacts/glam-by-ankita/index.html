@@ -1593,6 +1593,9 @@
       </div>
     </div>
   </div>
+  <div id="sp-test-mode-banner" style="display:none;background:#ff6b00;color:#fff;text-align:center;padding:10px 16px;font-size:0.85rem;font-weight:700;letter-spacing:0.04em;position:sticky;top:0;z-index:100;">
+    🧪 TEST MODE — No real charge. Use card <strong>4242 4242 4242 4242</strong>, any future expiry &amp; any CVC.
+  </div>
   <div class="sp-body">
     <div class="sp-loading" id="booking-loading">
       <div style="width:34px;height:34px;border:3px solid #c9a96e;border-top-color:transparent;border-radius:50%;animation:spin 0.8s linear infinite;margin:0 auto 12px;"></div>
@@ -1878,7 +1881,10 @@
     if (el) { el.style.display = 'block'; el.classList.add('active'); }
     window.scrollTo({top:0});
     if (pageId === 'review') loadReviewPage(token);
-    if (pageId === 'booking') loadBookingPage(token);
+    if (pageId === 'booking') {
+      if (_testMode) { const b = document.getElementById('sp-test-mode-banner'); if (b) b.style.display = 'block'; }
+      loadBookingPage(token);
+    }
   }
 
   // Handle browser back / forward buttons
@@ -1892,6 +1898,7 @@
   let _reviewBookingData = null;
   let _stripe = null, _stripeElements = null, _bookingToken = null;
   let _appliedCoupon = null;
+  const _testMode = new URLSearchParams(window.location.search).get('testpayment') === '1';
 
   // Navigate to correct page on direct URL visit
   (function () {
@@ -2291,7 +2298,7 @@
     // Init Stripe if not done yet
     if (!_stripeInitStarted && _bookingToken) {
       _stripeInitStarted = true;
-      fetch('/api/config').then(r => r.json()).then(cfg => {
+      fetch('/api/config' + (_testMode ? '?test=1' : '')).then(r => r.json()).then(cfg => {
         if (cfg.stripePublishableKey) initStripe(cfg.stripePublishableKey, _bookingToken);
         else { document.getElementById('payment-ready').style.display = 'none'; document.getElementById('payment-no-stripe').style.display = 'block'; }
       }).catch(() => { document.getElementById('payment-ready').style.display = 'none'; document.getElementById('payment-no-stripe').style.display = 'block'; });
@@ -2413,7 +2420,7 @@
       const res = await fetch('/api/create-payment-intent', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ token })
+        body: JSON.stringify({ token, testMode: _testMode })
       });
       const json = await res.json();
       if (json.error || !json.client_secret) {
@@ -2449,14 +2456,16 @@
     btn.style.opacity = '0.6';
     const origContent = btn.innerHTML;
     btn.innerHTML = '<div style="display:flex;flex-direction:column;align-items:center;gap:6px;"><span class="sp-method-icon"><span class="sp-spinner" style="border-color:rgba(107,61,46,0.3);border-top-color:#6b3d2e;"></span></span><span class="sp-method-title" style="font-family:\'Nunito\',sans-serif;font-size:0.88rem;">Confirming…</span></div>';
-    try {
-      let body = { token: _bookingToken };
+    if (!_testMode) {
       try {
-        const d = _decodeBookingToken(_bookingToken);
-        body = { client_name: d.client_name, client_email: d.client_email, total_aud: d.total_aud, confirmed_data: d.confirmed_data };
-      } catch (_) {}
-      await fetch('/api/select-cash', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
-    } catch (e) { /* best effort */ }
+        let body = { token: _bookingToken };
+        try {
+          const d = _decodeBookingToken(_bookingToken);
+          body = { client_name: d.client_name, client_email: d.client_email, total_aud: d.total_aud, confirmed_data: d.confirmed_data };
+        } catch (_) {}
+        await fetch('/api/select-cash', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+      } catch (e) { /* best effort */ }
+    }
     // Build cash deposit note
     try {
       const d = _decodeBookingToken(_bookingToken);
@@ -2491,7 +2500,7 @@
       err.style.animation = 'none'; void err.offsetWidth;
       err.style.animation = '';
     } else {
-      try { await fetch('/api/confirm-payment', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ token: _bookingToken, payment_intent_id: paymentIntent?.id || null }) }); } catch {}
+      try { await fetch('/api/confirm-payment', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ token: _bookingToken, payment_intent_id: paymentIntent?.id || null, testMode: _testMode }) }); } catch {}
       document.getElementById('pay-card-screen').style.display = 'none';
       _showSuccessCard({});
     }

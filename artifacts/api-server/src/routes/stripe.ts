@@ -28,19 +28,25 @@ function fromUrlSafeBase64(token: string): Record<string, unknown> {
   return JSON.parse(Buffer.from(b64 + "=".repeat(pad), "base64").toString("utf8"));
 }
 
-router.get("/config", (_req, res) => {
-  const stripePublishableKey = process.env["STRIPE_PUBLISHABLE_KEY"] ?? null;
-  res.json({ stripePublishableKey });
+router.get("/config", (req, res) => {
+  const isTest = req.query["test"] === "1";
+  const stripePublishableKey = isTest
+    ? (process.env["STRIPE_TEST_PUBLISHABLE_KEY"] ?? null)
+    : (process.env["STRIPE_PUBLISHABLE_KEY"] ?? null);
+  res.json({ stripePublishableKey, testMode: isTest });
 });
 
 router.post("/create-payment-intent", async (req, res) => {
-  const secretKey = process.env["STRIPE_SECRET_KEY"];
+  const { testMode } = req.body as { testMode?: boolean };
+  const secretKey = testMode
+    ? process.env["STRIPE_TEST_SECRET_KEY"]
+    : process.env["STRIPE_SECRET_KEY"];
   if (!secretKey) {
-    res.status(503).json({ error: "Stripe not configured." });
+    res.status(503).json({ error: testMode ? "Test Stripe keys not configured. Add STRIPE_TEST_SECRET_KEY and STRIPE_TEST_PUBLISHABLE_KEY as Replit secrets." : "Stripe not configured." });
     return;
   }
 
-  const { token } = req.body as { token?: string };
+  const { token } = req.body as { token?: string; testMode?: boolean };
   if (!token) {
     res.status(400).json({ error: "Missing token." });
     return;
@@ -98,9 +104,9 @@ router.post("/create-payment-intent", async (req, res) => {
 });
 
 router.post("/confirm-payment", async (req, res) => {
-  const { token, payment_intent_id } = req.body as { token?: string; payment_intent_id?: string };
+  const { token, payment_intent_id, testMode } = req.body as { token?: string; payment_intent_id?: string; testMode?: boolean };
 
-  res.json({ ok: true });
+  res.json({ ok: true, testMode: !!testMode });
 
   if (!token) return;
 
@@ -113,6 +119,12 @@ router.post("/confirm-payment", async (req, res) => {
   const clientEmail = String(bookingData.client_email || bookingData.clientEmail || "");
   const totalAud    = Number(bookingData.total_aud    || bookingData.totalAud    || 0);
   const cd = (bookingData.confirmed_data || bookingData.confirmedData || {}) as Record<string, string>;
+
+  // Skip DB save and emails in test mode — no real booking, no real charge
+  if (testMode) {
+    console.log(`[TEST MODE] Payment confirmed for ${clientName} (${clientEmail}) A$${totalAud} — no DB insert, no emails sent.`);
+    return;
+  }
 
   // Save to DB
   db.insert(bookings).values({
