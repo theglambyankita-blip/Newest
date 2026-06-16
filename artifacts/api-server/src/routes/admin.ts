@@ -1014,11 +1014,16 @@ async function loadCoupons() {
       return;
     }
     listEl.innerHTML = data.map(c => {
-      const discLabel = c.discountType === 'fixed' ? 'A$' + Number(c.discountValue).toFixed(2) + ' off' : c.discountValue + '% off';
-      const expiry = c.expiresAt ? ' · Expires ' + new Date(c.expiresAt).toLocaleDateString('en-AU', {day:'numeric',month:'short',year:'numeric'}) : '';
-      const maxUses = c.maxUses ? ' · Max ' + c.maxUses + ' uses' : '';
-      const uses = ' · Used ' + (c.usesCount || 0) + 'x';
-      const isActive = c.active === 'true';
+      const discountType = c.discountType || c.discount_type || 'percent';
+      const discountValue = c.discountValue || c.discount_value || '0';
+      const expiresAt = c.expiresAt || c.expires_at;
+      const maxUsesVal = c.maxUses || c.max_uses;
+      const usesCountVal = c.usesCount || c.uses_count || 0;
+      const isActive = c.active === 'true' || c.active === true || c.valid === true || c.valid === 'true';
+      const discLabel = discountType === 'fixed' ? 'A$' + Number(discountValue).toFixed(2) + ' off' : Number(discountValue).toFixed(0) + '% off';
+      const expiry = expiresAt ? ' · Expires ' + new Date(expiresAt).toLocaleDateString('en-AU', {day:'numeric',month:'short',year:'numeric'}) : '';
+      const maxUsesStr = maxUsesVal ? ' · Max ' + maxUsesVal + ' uses' : '';
+      const uses = ' · Used ' + usesCountVal + 'x';
       return '<div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding:12px 16px;background:' + (isActive?'#fdf8f4':'#fafafa') + ';border:1.5px solid ' + (isActive?'#e8c4bc':'#e0e0e0') + ';border-radius:8px;">'
         + '<div style="flex:1;min-width:200px;">'
         + '<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">'
@@ -1027,10 +1032,10 @@ async function loadCoupons() {
         + (!isActive ? '<span style="font-size:0.75rem;background:#f5f5f5;color:#999;padding:2px 8px;border-radius:12px;border:1px solid #e0e0e0;">Inactive</span>' : '')
         + '</div>'
         + (c.description ? '<div style="font-size:0.8rem;color:#9e7c4a;margin-top:3px;">' + c.description + '</div>' : '')
-        + '<div style="font-size:0.78rem;color:#b0937c;margin-top:2px;">' + uses + maxUses + expiry + '</div>'
+        + '<div style="font-size:0.78rem;color:#b0937c;margin-top:2px;">' + uses + maxUsesStr + expiry + '</div>'
         + '</div>'
         + '<div style="display:flex;gap:8px;flex-shrink:0;">'
-        + '<button onclick="openCpEditModal(' + c.id + ',\'' + c.code + '\',\'' + c.discountType + '\',' + Number(c.discountValue) + ',\'' + (c.description||'').replace(/'/g,"\\'") + '\',' + JSON.stringify(c.expiresAt ? new Date(c.expiresAt).toISOString().split('T')[0] : '') + ',' + JSON.stringify(c.maxUses||'') + ')" style="background:none;border:1.5px solid #c9a96e;color:#9e7c4a;padding:6px 12px;border-radius:6px;font-size:0.8rem;cursor:pointer;font-family:inherit;font-weight:600;">Edit</button>'
+        + '<button onclick="openCpEditModal(' + c.id + ',\'' + c.code + '\',\'' + discountType + '\',' + Number(discountValue) + ',\'' + (c.description||'').replace(/'/g,"\\'") + '\',' + JSON.stringify(expiresAt ? new Date(expiresAt).toISOString().split('T')[0] : '') + ',' + JSON.stringify(maxUsesVal||'') + ')" style="background:none;border:1.5px solid #c9a96e;color:#9e7c4a;padding:6px 12px;border-radius:6px;font-size:0.8rem;cursor:pointer;font-family:inherit;font-weight:600;">Edit</button>'
         + '<button onclick="toggleCoupon(' + c.id + ')" class="btn-outline" style="font-size:0.8rem;padding:6px 12px;">' + (isActive?'Deactivate':'Activate') + '</button>'
         + '<button onclick="deleteCoupon(' + c.id + ')" style="background:none;border:1.5px solid #f5c0c0;color:#c0392b;padding:6px 12px;border-radius:6px;font-size:0.8rem;cursor:pointer;font-family:inherit;font-weight:600;">Delete</button>'
         + '</div></div>';
