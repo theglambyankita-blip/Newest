@@ -420,6 +420,9 @@ router.post("/send-email", upload.array("files", 5), async (req, res) => {
     postcode:       "Postcode",
     referral:       "How They Found You",
     vision:         "Look / Vision",
+    coupon_code:    "Promo Code",
+    discount_type:  "Discount Type",
+    discount_value: "Discount Value",
     name:           "Name",
     brand:          "Brand / Company",
     collab_email:   "Email",
@@ -427,7 +430,7 @@ router.post("/send-email", upload.array("files", 5), async (req, res) => {
     collab_type:    "Collaboration Type",
     project_desc:   "Project Description",
   };
-  const skipEmailFields = new Set(["owner_email", "from_email", "_client_email", "_client_name"]);
+  const skipEmailFields = new Set(["owner_email", "from_email", "_client_email", "_client_name", "discount_type", "discount_value"]);
   const toTitleCase = (k: string) =>
     k.split("_").map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(" ");
 
@@ -517,19 +520,46 @@ router.post("/send-confirmation", async (req, res) => {
     return;
   }
 
-  const { client_name, client_email, confirmed_data, notes, total_aud } = req.body as {
+  const { client_name, client_email, confirmed_data, notes, total_aud, coupon_code, discount_type, discount_value } = req.body as {
     client_name: string;
     client_email: string;
     confirmed_data: Record<string, string>;
     notes?: string;
     total_aud: number;
+    coupon_code?: string;
+    discount_type?: string;
+    discount_value?: number;
   };
 
   if (!client_email) { res.status(400).json({ error: "Missing client email." }); return; }
 
+  const origAmount = Number(total_aud);
+  let finalAmount = origAmount;
+  let discountAmount = 0;
+  let discountLabel = "";
+
+  if (coupon_code && discount_value && origAmount > 0) {
+    if (discount_type === "fixed") {
+      discountAmount = Math.min(Number(discount_value), origAmount);
+    } else {
+      discountAmount = Math.round((origAmount * Number(discount_value) / 100) * 100) / 100;
+    }
+    finalAmount = Math.max(0, origAmount - discountAmount);
+    discountLabel = discount_type === "fixed"
+      ? `${coupon_code} (A$${Number(discount_value).toFixed(2)} off)`
+      : `${coupon_code} (${discount_value}% off)`;
+    try {
+      const { pool: dbPool } = await import("@workspace/db");
+      await dbPool.query(
+        `UPDATE coupons SET uses_count = uses_count + 1 WHERE code = $1`,
+        [coupon_code]
+      );
+    } catch { /* non-fatal */ }
+  }
+
   const paymentToken = toUrlSafeBase64({
     confirmed_data,
-    total_aud: Number(total_aud),
+    total_aud: finalAmount,
     notes: notes || "",
     client_name,
     client_email,
@@ -553,7 +583,7 @@ router.post("/send-confirmation", async (req, res) => {
       "The Glam by Ankita — Your Appointment",
       bkService  ? `Service: ${bkService}`   : "",
       bkLocation ? `Location: ${bkLocation}` : "",
-      `Amount: A$${Number(total_aud).toFixed(2)}`,
+      `Amount: A$${finalAmount.toFixed(2)}`,
       "Contact: theglambyankita@gmail.com",
     ].filter(Boolean).join("\\n"),
     organizerEmail: process.env["GMAIL_USER"],
@@ -573,6 +603,16 @@ router.post("/send-confirmation", async (req, res) => {
       <td style="padding:6px 14px;color:#2c1810;">${v}</td>
     </tr>`).join("");
 
+  const couponSection = discountLabel ? `
+      <div style="padding:12px 32px;background:#f0faf4;border-top:1px solid #b8e0c4;">
+        <p style="margin:0;font-size:0.88rem;color:#2c6e3f;">🏷️ Promo applied: <strong>${discountLabel}</strong> — saving you A$${discountAmount.toFixed(2)}</p>
+      </div>` : "";
+
+  const paymentBlock = discountLabel
+    ? `<p style="margin:0 0 2px;font-size:0.85rem;color:#6b3d2e;text-decoration:line-through;">Original: A$${origAmount.toFixed(2)}</p>
+       <p style="margin:0 0 4px;font-size:1.05rem;font-weight:700;color:#6b3d2e;">You pay: A$${finalAmount.toFixed(2)}</p>`
+    : `<p style="margin:0 0 4px;font-size:1rem;font-weight:700;color:#6b3d2e;">Payment: A$${finalAmount.toFixed(2)}</p>`;
+
   const clientHtml = `
     <div style="font-family:sans-serif;max-width:600px;margin:0 auto;background:#fdf8f4;border:1px solid #e8c4bc;border-radius:8px;overflow:hidden;">
       <div style="background:linear-gradient(135deg,#c9a96e,#9e7c4a);padding:24px 32px;">
@@ -584,9 +624,10 @@ router.post("/send-confirmation", async (req, res) => {
         <p style="font-size:0.95rem;color:#4a2e22;line-height:1.7;margin:0 0 20px;">I'm so excited to work with you! Here are your confirmed booking details:</p>
       </div>
       <table style="width:100%;border-collapse:collapse;font-size:0.9rem;">${detailRows}</table>
+      ${couponSection}
       ${notes ? `<div style="padding:14px 32px;background:#fff9f0;border-top:1px solid #e8c4bc;"><p style="margin:0;font-size:0.88rem;color:#4a2e22;line-height:1.6;font-style:italic;">💬 ${notes}</p></div>` : ""}
       <div style="padding:22px 32px;background:#f7e9d0;border-top:1px solid #e8c4bc;text-align:center;">
-        <p style="margin:0 0 4px;font-size:1rem;font-weight:700;color:#6b3d2e;">Payment: A$${Number(total_aud).toFixed(2)}</p>
+        ${paymentBlock}
         <p style="margin:0 0 ${icsBuffer ? "10px" : "16px"};font-size:0.85rem;color:#4a2e22;">Please complete your payment to secure your appointment.</p>
         ${icsBuffer ? `<p style="margin:0 0 14px;font-size:0.83rem;color:#4a2e22;">📅 A calendar invite is attached — add the date to your calendar now!</p>` : ""}
         <a href="${paymentUrl}" style="display:inline-block;background:linear-gradient(135deg,#c9a96e,#9e7c4a);color:#fff;text-decoration:none;font-family:Georgia,serif;font-weight:700;font-size:0.95rem;padding:14px 32px;border-radius:6px;">✦ Review Details & Pay Now</a>
@@ -603,7 +644,8 @@ router.post("/send-confirmation", async (req, res) => {
         <h2 style="margin:0;color:#fff;font-size:1rem;">✅ Confirmation sent to ${client_name}</h2>
       </div>
       <div style="padding:18px 24px;">
-        <p style="color:#2c1810;font-size:0.9rem;margin:0 0 6px;">Payment: <strong>A$${Number(total_aud).toFixed(2)}</strong></p>
+        ${discountLabel ? `<p style="color:#2c6e3f;font-size:0.88rem;margin:0 0 4px;">🏷️ Promo: ${discountLabel}</p>` : ""}
+        <p style="color:#2c1810;font-size:0.9rem;margin:0 0 6px;">Payment: <strong>A$${finalAmount.toFixed(2)}</strong>${discountLabel ? ` <span style="color:#999;font-weight:400;font-size:0.82rem;">(was A$${origAmount.toFixed(2)})</span>` : ""}</p>
         <p style="color:#6b3d2e;font-size:0.85rem;margin:0;">Client: ${client_email}</p>
       </div>
     </div>`;

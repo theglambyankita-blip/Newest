@@ -26,6 +26,21 @@ export const bookings = pgTable("bookings", {
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
+export const coupons = pgTable("coupons", {
+  id: serial("id").primaryKey(),
+  code: text("code").notNull().unique(),
+  discountType: text("discount_type").notNull().default("percent"),
+  discountValue: numeric("discount_value").notNull(),
+  description: text("description").default(""),
+  expiresAt: timestamp("expires_at"),
+  maxUses: numeric("max_uses"),
+  usesCount: numeric("uses_count").notNull().default("0"),
+  active: text("active").notNull().default("true"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
 export type AdminToken = typeof adminTokens.$inferSelect;
 export type Booking = typeof bookings.$inferSelect;
 export type InsertBooking = typeof bookings.$inferInsert;
+export type Coupon = typeof coupons.$inferSelect;
+export type InsertCoupon = typeof coupons.$inferInsert;

@@ -3,3 +3,4 @@
 - [Booking page TDZ bug](glam-booking-tdz.md) — `let` state vars declared after the IIFE caused a silent TDZ ReferenceError inside the async loadBookingPage; fix is to declare all state vars before the IIFE.
 - [Clerk auth setup](glam-clerk-setup.md) — Replit-managed Clerk provisioned; React app wired into index.html via #root overlay; account/sign-in/sign-up are React routes; vanilla JS hides itself for these paths.
 - [Gallery GALLERY_DIR path fix](glam-gallery-dir.md) — process.cwd() resolves to artifacts/api-server/ (wrong); must use import.meta.url to reliably reach the gallery folder.
+- [Supabase → Replit DB fallback](db-supabase-fallback.md) — DATABASE_URL secret pointed to deleted Supabase; lib/db/src/index.ts now falls back to PG* env vars when URL contains "supabase.co".

@@ -1205,6 +1205,14 @@
                 <p class="file-drop-hint">JPG, PNG, PDF accepted · Max 5 files</p>
               </div>
             </div>
+            <div class="fgroup" id="coupon-group">
+              <label>Promo / Discount Code <span style="font-size:0.75rem;color:var(--text-light);">(optional)</span></label>
+              <div style="display:flex;gap:8px;align-items:flex-start;">
+                <input type="text" id="book-coupon" placeholder="e.g. CONDITNCREW" style="flex:1;text-transform:uppercase;" oninput="clearCouponResult()">
+                <button type="button" onclick="applyCoupon()" style="padding:12px 18px;background:linear-gradient(135deg,#c9a96e,#9e7c4a);color:#fff;border:none;border-radius:8px;font-weight:700;font-family:Georgia,serif;cursor:pointer;white-space:nowrap;font-size:0.88rem;flex-shrink:0;">Apply</button>
+              </div>
+              <div id="coupon-result" style="margin-top:6px;font-size:0.85rem;"></div>
+            </div>
             <div class="form-submit-row">
               <button id="btn-book" onclick="submitForm('booking')">Send Booking Request</button>
               <p class="form-note">Response within 24–48 hrs 🌸</p>
@@ -1657,6 +1665,7 @@
   let _reviewToken = null;
   let _reviewBookingData = null;
   let _stripe = null, _stripeElements = null, _bookingToken = null;
+  let _appliedCoupon = null;
 
   // Navigate to correct page on direct URL visit
   (function () {
@@ -1725,6 +1734,29 @@
     set('rv-location', d.location);
     set('rv-date', d.preferred_date);
     set('rv-time', d.time);
+    const existingCouponPreview = document.getElementById('rv-coupon-preview');
+    if (existingCouponPreview) existingCouponPreview.remove();
+    if (d.coupon_code) {
+      const totalInput = document.getElementById('rv-total');
+      const couponDiv = document.createElement('div');
+      couponDiv.id = 'rv-coupon-preview';
+      couponDiv.style.cssText = 'margin-top:10px;padding:10px 14px;background:#f0faf4;border:1px solid #a8e6b8;border-radius:6px;font-size:0.87rem;color:#2c6e3f;';
+      const discInfo = d.discount_type === 'fixed' ? 'A$' + Number(d.discount_value).toFixed(2) + ' off' : d.discount_value + '% off';
+      couponDiv.innerHTML = '<span>🏷️ <strong>' + d.coupon_code + '</strong> applied — ' + discInfo + '</span>'
+        + '<div id="rv-discount-calc" style="margin-top:5px;font-size:0.82rem;color:#3a6b47;"></div>';
+      if (totalInput && totalInput.parentElement) totalInput.parentElement.appendChild(couponDiv);
+      function updateDiscountCalc() {
+        const amt = parseFloat(totalInput.value);
+        const calcEl = document.getElementById('rv-discount-calc');
+        if (!calcEl || !amt || amt <= 0) { if (calcEl) calcEl.textContent = ''; return; }
+        const disc = d.discount_type === 'fixed'
+          ? Math.min(Number(d.discount_value), amt)
+          : Math.round(amt * Number(d.discount_value) / 100 * 100) / 100;
+        const final = Math.max(0, amt - disc);
+        calcEl.innerHTML = 'Original: A$' + amt.toFixed(2) + ' → Discount: −A$' + disc.toFixed(2) + ' → <strong>Client pays: A$' + final.toFixed(2) + '</strong>';
+      }
+      totalInput.addEventListener('input', updateDiscountCalc);
+    }
     document.getElementById('review-loading').style.display = 'none';
     document.getElementById('review-content').style.display = 'block';
   }
@@ -1803,7 +1835,10 @@
           client_email: resolvedEmail,
           confirmed_data,
           notes: document.getElementById('rv-notes').value,
-          total_aud: total
+          total_aud: total,
+          coupon_code: (_reviewBookingData && _reviewBookingData.coupon_code) || undefined,
+          discount_type: (_reviewBookingData && _reviewBookingData.discount_type) || undefined,
+          discount_value: (_reviewBookingData && _reviewBookingData.discount_value) || undefined
         })
       });
       const json = await res.json();
@@ -2513,6 +2548,9 @@
       postcode:         document.getElementById('book-postcode').value.trim(),
       referral:         document.getElementById('book-referral').value,
       vision:           document.getElementById('book-vision').value.trim(),
+      coupon_code:      (_appliedCoupon && _appliedCoupon.code) ? _appliedCoupon.code : undefined,
+      discount_type:    (_appliedCoupon && _appliedCoupon.code) ? _appliedCoupon.discountType : undefined,
+      discount_value:   (_appliedCoupon && _appliedCoupon.code) ? _appliedCoupon.discountValue : undefined,
       owner_email:      'nishankn.ankita@gmail.com',
       from_email:       'theglambyankita@gmail.com'
     };
@@ -2533,6 +2571,36 @@
       owner_email:   'nishankn.ankita@gmail.com',
       from_email:    'theglambyankita@gmail.com'
     };
+  }
+
+  async function applyCoupon() {
+    const codeEl = document.getElementById('book-coupon');
+    const resultEl = document.getElementById('coupon-result');
+    const code = (codeEl.value || '').trim().toUpperCase();
+    if (!code) { resultEl.innerHTML = '<span style="color:#c0392b;">Please enter a promo code.</span>'; return; }
+    resultEl.innerHTML = '<span style="color:#9e7c4a;">Checking…</span>';
+    try {
+      const res = await fetch('/api/validate-coupon?code=' + encodeURIComponent(code));
+      const data = await res.json();
+      if (data.valid) {
+        _appliedCoupon = data;
+        const label = data.discountType === 'fixed' ? 'A$' + Number(data.discountValue).toFixed(2) + ' off' : data.discountValue + '% off';
+        resultEl.innerHTML = '<span style="color:#2c6e3f;font-weight:700;">✅ ' + data.code + ' applied — ' + label + '!</span>'
+          + (data.description ? '<span style="color:#3a6b47;font-size:0.82rem;display:block;margin-top:2px;">' + data.description + '</span>' : '');
+      } else {
+        _appliedCoupon = null;
+        resultEl.innerHTML = '<span style="color:#c0392b;">❌ ' + (data.error || 'Invalid promo code') + '</span>';
+      }
+    } catch {
+      _appliedCoupon = null;
+      resultEl.innerHTML = '<span style="color:#c0392b;">Could not validate code. Please try again.</span>';
+    }
+  }
+
+  function clearCouponResult() {
+    _appliedCoupon = null;
+    const resultEl = document.getElementById('coupon-result');
+    if (resultEl) resultEl.innerHTML = '';
   }
 
   function toggleTravelNote() {

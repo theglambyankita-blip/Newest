@@ -22,6 +22,21 @@ async function runMigrations() {
     await pool.query(`
       ALTER TABLE bookings ADD COLUMN IF NOT EXISTS send_reminder TEXT DEFAULT 'false';
       ALTER TABLE bookings ADD COLUMN IF NOT EXISTS reminder_sent TEXT DEFAULT 'false';
+      CREATE TABLE IF NOT EXISTS coupons (
+        id SERIAL PRIMARY KEY,
+        code TEXT NOT NULL UNIQUE,
+        discount_type TEXT NOT NULL DEFAULT 'percent',
+        discount_value NUMERIC NOT NULL,
+        description TEXT DEFAULT '',
+        expires_at TIMESTAMP,
+        max_uses NUMERIC,
+        uses_count NUMERIC NOT NULL DEFAULT 0,
+        active TEXT NOT NULL DEFAULT 'true',
+        created_at TIMESTAMP DEFAULT NOW() NOT NULL
+      );
+      INSERT INTO coupons (code, discount_type, discount_value, description, active)
+        VALUES ('CONDITNCREW', 'percent', 30, '30% off — CONDITN crew discount', 'true')
+        ON CONFLICT (code) DO NOTHING;
     `);
     logger.info("DB migrations applied");
   } catch (e) {

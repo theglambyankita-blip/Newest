@@ -2,7 +2,7 @@ import { Router } from "express";
 import nodemailer from "nodemailer";
 import { randomUUID } from "crypto";
 import { fileURLToPath } from "url";
-import { db, adminTokens, bookings } from "@workspace/db";
+import { db, adminTokens, bookings, coupons } from "@workspace/db";
 import { eq, desc } from "drizzle-orm";
 import multer from "multer";
 import path from "path";
@@ -472,6 +472,56 @@ router.get("/admin", async (req, res) => {
   </div>
 
   <div class="section">
+    <div class="section-title">🏷️ Promo Code Manager</div>
+    <div class="card" style="padding:20px 24px;">
+      <div style="margin-bottom:24px;padding-bottom:20px;border-bottom:1px solid #f0ddd6;">
+        <h3 style="font-size:0.95rem;color:#6b3d2e;margin:0 0 14px;font-family:Georgia,serif;">Create New Promo Code</h3>
+        <div style="display:grid;gap:10px;">
+          <div style="display:flex;gap:10px;flex-wrap:wrap;">
+            <div class="field" style="margin:0;flex:1;min-width:140px;">
+              <label style="font-size:0.8rem;">Code</label>
+              <input type="text" id="cp-code" placeholder="e.g. SUMMER20" style="text-transform:uppercase;">
+            </div>
+            <div class="field" style="margin:0;min-width:110px;">
+              <label style="font-size:0.8rem;">Type</label>
+              <select id="cp-type" class="filter-sel">
+                <option value="percent">% Off</option>
+                <option value="fixed">Fixed ($)</option>
+              </select>
+            </div>
+            <div class="field" style="margin:0;min-width:90px;">
+              <label style="font-size:0.8rem;">Value</label>
+              <input type="number" id="cp-value" min="1" step="0.01" placeholder="30">
+            </div>
+          </div>
+          <div style="display:flex;gap:10px;flex-wrap:wrap;">
+            <div class="field" style="margin:0;flex:1;min-width:160px;">
+              <label style="font-size:0.8rem;">Description (optional)</label>
+              <input type="text" id="cp-desc" placeholder="e.g. Friends &amp; family discount">
+            </div>
+            <div class="field" style="margin:0;min-width:130px;">
+              <label style="font-size:0.8rem;">Expiry Date (optional)</label>
+              <input type="date" id="cp-expiry">
+            </div>
+            <div class="field" style="margin:0;min-width:90px;">
+              <label style="font-size:0.8rem;">Max Uses (optional)</label>
+              <input type="number" id="cp-max-uses" min="1" placeholder="Unlimited">
+            </div>
+          </div>
+          <div style="display:flex;gap:10px;align-items:center;">
+            <button class="btn" id="cp-create-btn" onclick="createCoupon()">Create Code ✦</button>
+            <span id="cp-create-status" style="font-size:0.83rem;"></span>
+          </div>
+        </div>
+      </div>
+      <h3 style="font-size:0.95rem;color:#6b3d2e;margin:0 0 14px;font-family:Georgia,serif;">Active Promo Codes</h3>
+      <div id="cp-list" style="display:flex;flex-direction:column;gap:10px;">
+        <div style="color:#9e7c4a;font-size:0.85rem;padding:10px 0;">Loading…</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="section">
     <div class="section-title">🔑 Admin Access Link</div>
     <div class="card" style="padding:20px 24px;">
       <p style="font-size:0.9rem;color:#4a2e22;margin-bottom:16px;">Regenerate your admin link. The new link will be emailed to you, and this one will stop working immediately.</p>
@@ -884,6 +934,7 @@ async function deleteGalleryPhoto(filename) {
 }
 
 loadGallery();
+loadCoupons();
 
 async function regenToken() {
   const btn = document.getElementById('regen-btn');
@@ -900,6 +951,86 @@ async function regenToken() {
     status.textContent = '❌ Failed to regenerate. Try again.';
     btn.disabled = false;
   }
+}
+
+async function loadCoupons() {
+  const listEl = document.getElementById('cp-list');
+  try {
+    const res = await fetch(API + '/admin/coupons?token=' + encodeURIComponent(TOKEN));
+    const data = await res.json();
+    if (!res.ok || !Array.isArray(data)) {
+      listEl.innerHTML = '<div style="color:#c0392b;font-size:0.85rem;">Could not load promo codes.</div>';
+      return;
+    }
+    if (!data.length) {
+      listEl.innerHTML = '<div style="color:#9e7c4a;font-size:0.85rem;padding:10px 0;">No promo codes yet.</div>';
+      return;
+    }
+    listEl.innerHTML = data.map(c => {
+      const discLabel = c.discountType === 'fixed' ? 'A$' + Number(c.discountValue).toFixed(2) + ' off' : c.discountValue + '% off';
+      const expiry = c.expiresAt ? ' · Expires ' + new Date(c.expiresAt).toLocaleDateString('en-AU', {day:'numeric',month:'short',year:'numeric'}) : '';
+      const maxUses = c.maxUses ? ' · Max ' + c.maxUses + ' uses' : '';
+      const uses = ' · Used ' + (c.usesCount || 0) + 'x';
+      const isActive = c.active === 'true';
+      return '<div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding:12px 16px;background:' + (isActive?'#fdf8f4':'#fafafa') + ';border:1.5px solid ' + (isActive?'#e8c4bc':'#e0e0e0') + ';border-radius:8px;">'
+        + '<div style="flex:1;min-width:200px;">'
+        + '<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">'
+        + '<code style="font-size:0.95rem;font-weight:700;color:#6b3d2e;background:#fff;padding:2px 8px;border-radius:4px;border:1px solid #e8c4bc;">' + c.code + '</code>'
+        + '<span style="font-size:0.88rem;font-weight:700;color:#2c6e3f;">−' + discLabel + '</span>'
+        + (!isActive ? '<span style="font-size:0.75rem;background:#f5f5f5;color:#999;padding:2px 8px;border-radius:12px;border:1px solid #e0e0e0;">Inactive</span>' : '')
+        + '</div>'
+        + (c.description ? '<div style="font-size:0.8rem;color:#9e7c4a;margin-top:3px;">' + c.description + '</div>' : '')
+        + '<div style="font-size:0.78rem;color:#b0937c;margin-top:2px;">' + uses + maxUses + expiry + '</div>'
+        + '</div>'
+        + '<div style="display:flex;gap:8px;flex-shrink:0;">'
+        + '<button onclick="toggleCoupon(' + c.id + ')" class="btn-outline" style="font-size:0.8rem;padding:6px 12px;">' + (isActive?'Deactivate':'Activate') + '</button>'
+        + '<button onclick="deleteCoupon(' + c.id + ')" style="background:none;border:1.5px solid #f5c0c0;color:#c0392b;padding:6px 12px;border-radius:6px;font-size:0.8rem;cursor:pointer;font-family:inherit;font-weight:600;">Delete</button>'
+        + '</div></div>';
+    }).join('');
+  } catch { listEl.innerHTML = '<div style="color:#c0392b;font-size:0.85rem;">Error loading promo codes.</div>'; }
+}
+
+async function createCoupon() {
+  const btn = document.getElementById('cp-create-btn');
+  const status = document.getElementById('cp-create-status');
+  const code = (document.getElementById('cp-code').value || '').trim().toUpperCase();
+  const type = document.getElementById('cp-type').value;
+  const value = parseFloat(document.getElementById('cp-value').value);
+  const desc = document.getElementById('cp-desc').value.trim();
+  const expiry = document.getElementById('cp-expiry').value;
+  const maxUsesRaw = parseInt(document.getElementById('cp-max-uses').value);
+  if (!code) { status.textContent = '⚠️ Enter a code'; status.style.color = '#c0392b'; return; }
+  if (!value || value <= 0) { status.textContent = '⚠️ Enter a value'; status.style.color = '#c0392b'; return; }
+  btn.disabled = true; btn.textContent = 'Creating…'; status.textContent = '';
+  try {
+    const res = await fetch(API + '/admin/coupons?token=' + encodeURIComponent(TOKEN), {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ code, discountType: type, discountValue: value, description: desc, expiresAt: expiry || undefined, maxUses: isNaN(maxUsesRaw) ? undefined : maxUsesRaw })
+    });
+    const data = await res.json();
+    if (data.ok) {
+      status.textContent = '✅ Created!'; status.style.color = '#2c6e3f';
+      ['cp-code','cp-value','cp-desc','cp-expiry','cp-max-uses'].forEach(id => { document.getElementById(id).value = ''; });
+      loadCoupons();
+    } else { status.textContent = '❌ ' + (data.error || 'Failed'); status.style.color = '#c0392b'; }
+  } catch { status.textContent = '❌ Error'; status.style.color = '#c0392b'; }
+  finally { btn.disabled = false; btn.textContent = 'Create Code ✦'; }
+}
+
+async function toggleCoupon(id) {
+  const res = await fetch(API + '/admin/coupons/' + id + '/toggle?token=' + encodeURIComponent(TOKEN), { method: 'PUT' });
+  const data = await res.json();
+  if (data.ok) loadCoupons();
+  else alert('Failed: ' + (data.error || 'Unknown'));
+}
+
+async function deleteCoupon(id) {
+  if (!confirm('Delete this promo code? This cannot be undone.')) return;
+  const res = await fetch(API + '/admin/coupons/' + id + '?token=' + encodeURIComponent(TOKEN), { method: 'DELETE' });
+  const data = await res.json();
+  if (data.ok) loadCoupons();
+  else alert('Delete failed: ' + (data.error || 'Unknown'));
 }
 </script>
 
@@ -1044,6 +1175,26 @@ router.post("/admin/regenerate-token", async (req, res) => {
   }
 });
 
+// ── GET /api/gallery/image/:filename — serve local gallery images ─
+router.get("/gallery/image/:filename", (req, res) => {
+  const { filename } = req.params;
+  if (!filename || filename.includes("/") || filename.includes("..")) {
+    res.status(400).send("Invalid filename"); return;
+  }
+  const filepath = path.join(GALLERY_DIR, filename);
+  if (!fs.existsSync(filepath)) {
+    res.status(404).send("Image not found"); return;
+  }
+  const ext = path.extname(filename).toLowerCase();
+  const mimes: Record<string, string> = {
+    ".jpg": "image/jpeg", ".jpeg": "image/jpeg",
+    ".png": "image/png", ".gif": "image/gif", ".webp": "image/webp",
+  };
+  res.setHeader("Content-Type", mimes[ext] || "application/octet-stream");
+  res.setHeader("Cache-Control", "public, max-age=86400");
+  fs.createReadStream(filepath).pipe(res);
+});
+
 // ── GET /api/gallery/list — public, used by frontend ────────────
 router.get("/gallery/list", (_req, res) => {
   const meta = readGalleryMeta();
@@ -1179,6 +1330,89 @@ router.delete("/admin/gallery/:filename", async (req, res) => {
 
   writeGalleryMeta(meta.filter((p) => p.filename !== filename));
   res.json({ ok: true });
+});
+
+// ── GET /api/validate-coupon — public ────────────────────────────
+router.get("/validate-coupon", async (req, res) => {
+  const code = ((req.query.code as string) || "").trim().toUpperCase();
+  if (!code) { res.status(400).json({ valid: false, error: "No code provided" }); return; }
+  try {
+    const rows = await db.select().from(coupons).where(eq(coupons.code, code)).limit(1);
+    if (!rows.length) { res.json({ valid: false, error: "Invalid promo code" }); return; }
+    const c = rows[0];
+    if (c.active !== "true") { res.json({ valid: false, error: "This promo code is no longer active" }); return; }
+    if (c.expiresAt && new Date() > c.expiresAt) { res.json({ valid: false, error: "This promo code has expired" }); return; }
+    if (c.maxUses && Number(c.usesCount) >= Number(c.maxUses)) { res.json({ valid: false, error: "This promo code has reached its usage limit" }); return; }
+    res.json({ valid: true, code: c.code, discountType: c.discountType, discountValue: Number(c.discountValue), description: c.description || "" });
+  } catch { res.status(500).json({ valid: false, error: "Could not validate code" }); }
+});
+
+// ── GET /api/admin/coupons ────────────────────────────────────────
+router.get("/admin/coupons", async (req, res) => {
+  const token = req.query.token as string;
+  const valid = await validateToken(token).catch(() => false);
+  if (!valid) { res.status(403).json({ error: "Unauthorized" }); return; }
+  try {
+    const all = await db.select().from(coupons).orderBy(desc(coupons.createdAt));
+    res.json(all);
+  } catch { res.status(500).json({ error: "Could not fetch coupons" }); }
+});
+
+// ── POST /api/admin/coupons ───────────────────────────────────────
+router.post("/admin/coupons", async (req, res) => {
+  const token = req.query.token as string;
+  const valid = await validateToken(token).catch(() => false);
+  if (!valid) { res.status(403).json({ error: "Unauthorized" }); return; }
+  const { code, discountType, discountValue, description, expiresAt, maxUses } = req.body as {
+    code: string; discountType: string; discountValue: number;
+    description?: string; expiresAt?: string; maxUses?: number;
+  };
+  if (!code || !discountType || !discountValue) { res.status(400).json({ error: "Code, type, and value are required" }); return; }
+  try {
+    const [inserted] = await db.insert(coupons).values({
+      code: code.trim().toUpperCase(),
+      discountType,
+      discountValue: String(discountValue),
+      description: description || "",
+      expiresAt: expiresAt ? new Date(expiresAt) : undefined,
+      maxUses: maxUses ? String(maxUses) : undefined,
+      usesCount: "0",
+      active: "true",
+    }).returning();
+    res.json({ ok: true, coupon: inserted });
+  } catch (e: any) {
+    if (e.code === "23505") { res.status(409).json({ error: "A coupon with that code already exists" }); }
+    else { res.status(500).json({ error: "Could not create coupon" }); }
+  }
+});
+
+// ── DELETE /api/admin/coupons/:id ─────────────────────────────────
+router.delete("/admin/coupons/:id", async (req, res) => {
+  const token = req.query.token as string;
+  const valid = await validateToken(token).catch(() => false);
+  if (!valid) { res.status(403).json({ error: "Unauthorized" }); return; }
+  const id = parseInt(req.params.id);
+  if (isNaN(id)) { res.status(400).json({ error: "Invalid ID" }); return; }
+  try {
+    await db.delete(coupons).where(eq(coupons.id, id));
+    res.json({ ok: true });
+  } catch { res.status(500).json({ error: "Could not delete coupon" }); }
+});
+
+// ── PUT /api/admin/coupons/:id/toggle ────────────────────────────
+router.put("/admin/coupons/:id/toggle", async (req, res) => {
+  const token = req.query.token as string;
+  const valid = await validateToken(token).catch(() => false);
+  if (!valid) { res.status(403).json({ error: "Unauthorized" }); return; }
+  const id = parseInt(req.params.id);
+  if (isNaN(id)) { res.status(400).json({ error: "Invalid ID" }); return; }
+  try {
+    const rows = await db.select().from(coupons).where(eq(coupons.id, id)).limit(1);
+    if (!rows.length) { res.status(404).json({ error: "Not found" }); return; }
+    const newActive = rows[0].active === "true" ? "false" : "true";
+    await db.update(coupons).set({ active: newActive }).where(eq(coupons.id, id));
+    res.json({ ok: true, active: newActive });
+  } catch { res.status(500).json({ error: "Could not toggle coupon" }); }
 });
 
 // ── POST /api/admin/init — create first token if none exists ─────
