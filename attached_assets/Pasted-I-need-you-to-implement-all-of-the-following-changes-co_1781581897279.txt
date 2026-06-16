@@ -1,0 +1,121 @@
+I need you to implement all of the following changes completely. Please do not just analyze the code or tell me what needs to be done. I need these changes fully implemented, tested, committed to GitHub, and deployed.
+
+1. ADD COUPON MANAGEMENT TO THE ADMIN DASHBOARD
+
+Create a dedicated "Promo Codes" section within the Admin Dashboard.
+
+The admin should be able to:
+
+• Create new promo codes
+• Edit existing promo codes
+• Activate or deactivate promo codes
+• Set discount percentages or fixed discount amounts
+• Set optional expiry dates
+• View all promo codes in one place
+• Clearly see which codes are active and inactive
+
+This needs to be fully connected to the booking system so that any promo code created in the dashboard works immediately on the website.
+
+2. FIX THE CONDITNCREW PROMO CODE
+
+The promo code:
+
+CONDITNCREW
+
+currently returns the error:
+
+"Could not validate code. Please try again."
+
+when entered during booking.
+
+Please investigate the entire validation process and fix the issue properly.
+
+Requirements:
+
+• The code validates successfully
+• The correct discount is applied
+• The booking total updates correctly
+• The code works in production, not just locally
+• The full booking flow is tested from start to finish
+
+3. REMOVE THE REAL PROMO CODE FROM THE BOOKING FORM
+
+Currently, the booking page displays:
+
+CONDITNCREW
+
+as the example/placeholder text inside the promo code field.
+
+This is a real promo code and should not be exposed publicly as a placeholder.
+
+Replace it with a generic example such as:
+
+EXAMPLECODE
+
+or another generic placeholder.
+
+No real promo codes should ever appear as placeholders anywhere on the website.
+
+4. USE CONSISTENT WORDING
+
+Currently the booking form uses wording similar to:
+
+"Promo / Discount Code"
+
+This looks inconsistent and unprofessional.
+
+Choose ONE term and use it consistently throughout the website.
+
+Use:
+
+"Promo Code"
+
+Update all labels, placeholders, validation messages, success messages, and related UI text so the same terminology is used everywhere.
+
+5. FIX THE ADMIN DASHBOARD PHOTO LIBRARY
+
+I still cannot see the uploaded photos inside the Admin Dashboard under the "All Photos" section.
+
+This issue has not been resolved.
+
+Please investigate and fix the entire photo management system.
+
+Requirements:
+
+• Previously uploaded photos appear correctly
+• New uploads appear immediately
+• No broken thumbnails
+• No missing images
+• Any database, storage, retrieval, or permissions issues are fixed
+• Images are being pulled from the correct source
+• The "All Photos" section functions properly
+
+6. TEST EVERYTHING BEFORE COMPLETING THE TASK
+
+Do not mark this task as complete until all functionality has been tested.
+
+Test:
+
+• Creating promo codes
+• Editing promo codes
+• Activating and deactivating promo codes
+• Applying promo codes during booking
+• The CONDITNCREW promo code
+• Photo uploads
+• Photo visibility in "All Photos"
+• Dashboard functionality
+• Browser console for errors
+• Server logs for errors
+
+7. COMMIT, PUSH, AND DEPLOY
+
+Once all changes are working:
+
+• Commit all changes to GitHub
+• Push the changes to the repository
+• Deploy the latest version
+• Verify that the deployment is successful
+• Provide a summary of every change made
+• Confirm that each feature was tested and is functioning correctly
+
+Please implement all of the above completely. Do not leave any item partially finished, and do not provide recommendations without actually making the changes.

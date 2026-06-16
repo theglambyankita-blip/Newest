@@ -514,9 +514,56 @@ router.get("/admin", async (req, res) => {
           </div>
         </div>
       </div>
-      <h3 style="font-size:0.95rem;color:#6b3d2e;margin:0 0 14px;font-family:Georgia,serif;">Active Promo Codes</h3>
+      <h3 style="font-size:0.95rem;color:#6b3d2e;margin:0 0 14px;font-family:Georgia,serif;">All Promo Codes</h3>
       <div id="cp-list" style="display:flex;flex-direction:column;gap:10px;">
         <div style="color:#9e7c4a;font-size:0.85rem;padding:10px 0;">Loading…</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- COUPON EDIT MODAL -->
+  <div id="cp-edit-overlay" style="display:none;position:fixed;inset:0;background:rgba(44,24,16,0.55);z-index:999;align-items:center;justify-content:center;padding:20px;">
+    <div style="background:#fff;border-radius:10px;padding:28px 28px 22px;max-width:460px;width:100%;box-shadow:0 8px 40px rgba(0,0,0,0.22);position:relative;">
+      <button onclick="closeCpEditModal()" style="position:absolute;top:14px;right:16px;background:none;border:none;font-size:1.3rem;color:#9e7c4a;cursor:pointer;line-height:1;">✕</button>
+      <h3 style="font-family:Georgia,serif;color:#6b3d2e;margin:0 0 18px;font-size:1.05rem;">✏️ Edit Promo Code</h3>
+      <input type="hidden" id="cp-edit-id">
+      <div style="display:grid;gap:10px;">
+        <div style="display:flex;gap:10px;flex-wrap:wrap;">
+          <div class="field" style="margin:0;flex:1;min-width:140px;">
+            <label style="font-size:0.8rem;">Code</label>
+            <input type="text" id="cp-edit-code" style="text-transform:uppercase;font-weight:700;">
+          </div>
+          <div class="field" style="margin:0;min-width:110px;">
+            <label style="font-size:0.8rem;">Type</label>
+            <select id="cp-edit-type" class="filter-sel">
+              <option value="percent">% Off</option>
+              <option value="fixed">Fixed ($)</option>
+            </select>
+          </div>
+          <div class="field" style="margin:0;min-width:90px;">
+            <label style="font-size:0.8rem;">Value</label>
+            <input type="number" id="cp-edit-value" min="1" step="0.01">
+          </div>
+        </div>
+        <div style="display:flex;gap:10px;flex-wrap:wrap;">
+          <div class="field" style="margin:0;flex:1;min-width:160px;">
+            <label style="font-size:0.8rem;">Description (optional)</label>
+            <input type="text" id="cp-edit-desc" placeholder="e.g. Friends &amp; family discount">
+          </div>
+          <div class="field" style="margin:0;min-width:130px;">
+            <label style="font-size:0.8rem;">Expiry Date (optional)</label>
+            <input type="date" id="cp-edit-expiry">
+          </div>
+          <div class="field" style="margin:0;min-width:90px;">
+            <label style="font-size:0.8rem;">Max Uses (optional)</label>
+            <input type="number" id="cp-edit-max-uses" min="1" placeholder="Unlimited">
+          </div>
+        </div>
+        <div style="display:flex;gap:10px;align-items:center;margin-top:6px;">
+          <button class="btn" id="cp-edit-save-btn" onclick="saveCouponEdit()">Save Changes ✦</button>
+          <button class="btn-outline" onclick="closeCpEditModal()">Cancel</button>
+          <span id="cp-edit-status" style="font-size:0.83rem;"></span>
+        </div>
       </div>
     </div>
   </div>
@@ -983,6 +1030,7 @@ async function loadCoupons() {
         + '<div style="font-size:0.78rem;color:#b0937c;margin-top:2px;">' + uses + maxUses + expiry + '</div>'
         + '</div>'
         + '<div style="display:flex;gap:8px;flex-shrink:0;">'
+        + '<button onclick="openCpEditModal(' + c.id + ',\'' + c.code + '\',\'' + c.discountType + '\',' + Number(c.discountValue) + ',\'' + (c.description||'').replace(/'/g,"\\'") + '\',' + JSON.stringify(c.expiresAt ? new Date(c.expiresAt).toISOString().split('T')[0] : '') + ',' + JSON.stringify(c.maxUses||'') + ')" style="background:none;border:1.5px solid #c9a96e;color:#9e7c4a;padding:6px 12px;border-radius:6px;font-size:0.8rem;cursor:pointer;font-family:inherit;font-weight:600;">Edit</button>'
         + '<button onclick="toggleCoupon(' + c.id + ')" class="btn-outline" style="font-size:0.8rem;padding:6px 12px;">' + (isActive?'Deactivate':'Activate') + '</button>'
         + '<button onclick="deleteCoupon(' + c.id + ')" style="background:none;border:1.5px solid #f5c0c0;color:#c0392b;padding:6px 12px;border-radius:6px;font-size:0.8rem;cursor:pointer;font-family:inherit;font-weight:600;">Delete</button>'
         + '</div></div>';
@@ -1023,6 +1071,52 @@ async function toggleCoupon(id) {
   const data = await res.json();
   if (data.ok) loadCoupons();
   else alert('Failed: ' + (data.error || 'Unknown'));
+}
+
+function openCpEditModal(id, code, type, value, desc, expiry, maxUses) {
+  document.getElementById('cp-edit-id').value = id;
+  document.getElementById('cp-edit-code').value = code;
+  document.getElementById('cp-edit-type').value = type;
+  document.getElementById('cp-edit-value').value = value;
+  document.getElementById('cp-edit-desc').value = desc || '';
+  document.getElementById('cp-edit-expiry').value = expiry || '';
+  document.getElementById('cp-edit-max-uses').value = maxUses || '';
+  document.getElementById('cp-edit-status').textContent = '';
+  var overlay = document.getElementById('cp-edit-overlay');
+  overlay.style.display = 'flex';
+  document.getElementById('cp-edit-code').focus();
+}
+
+function closeCpEditModal() {
+  document.getElementById('cp-edit-overlay').style.display = 'none';
+}
+
+async function saveCouponEdit() {
+  var id = document.getElementById('cp-edit-id').value;
+  var code = (document.getElementById('cp-edit-code').value || '').trim().toUpperCase();
+  var type = document.getElementById('cp-edit-type').value;
+  var value = parseFloat(document.getElementById('cp-edit-value').value);
+  var desc = document.getElementById('cp-edit-desc').value.trim();
+  var expiry = document.getElementById('cp-edit-expiry').value;
+  var maxUsesRaw = parseInt(document.getElementById('cp-edit-max-uses').value);
+  var status = document.getElementById('cp-edit-status');
+  if (!code) { status.textContent = '⚠️ Enter a code'; status.style.color = '#c0392b'; return; }
+  if (!value || value <= 0) { status.textContent = '⚠️ Enter a value'; status.style.color = '#c0392b'; return; }
+  var btn = document.getElementById('cp-edit-save-btn');
+  btn.disabled = true; btn.textContent = 'Saving…'; status.textContent = '';
+  try {
+    var res = await fetch(API + '/admin/coupons/' + id + '?token=' + encodeURIComponent(TOKEN), {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ code, discountType: type, discountValue: value, description: desc, expiresAt: expiry || undefined, maxUses: isNaN(maxUsesRaw) ? undefined : maxUsesRaw })
+    });
+    var data = await res.json();
+    if (data.ok) {
+      closeCpEditModal();
+      loadCoupons();
+    } else { status.textContent = '❌ ' + (data.error || 'Failed'); status.style.color = '#c0392b'; }
+  } catch { status.textContent = '❌ Error'; status.style.color = '#c0392b'; }
+  finally { btn.disabled = false; btn.textContent = 'Save Changes ✦'; }
 }
 
 async function deleteCoupon(id) {
@@ -1397,6 +1491,36 @@ router.delete("/admin/coupons/:id", async (req, res) => {
     await db.delete(coupons).where(eq(coupons.id, id));
     res.json({ ok: true });
   } catch { res.status(500).json({ error: "Could not delete coupon" }); }
+});
+
+// ── PUT /api/admin/coupons/:id — edit ────────────────────────────
+router.put("/admin/coupons/:id", async (req, res) => {
+  const token = req.query.token as string;
+  const valid = await validateToken(token).catch(() => false);
+  if (!valid) { res.status(403).json({ error: "Unauthorized" }); return; }
+  const id = parseInt(req.params.id);
+  if (isNaN(id)) { res.status(400).json({ error: "Invalid ID" }); return; }
+  const { code, discountType, discountValue, description, expiresAt, maxUses } = req.body as {
+    code: string; discountType: string; discountValue: number;
+    description?: string; expiresAt?: string; maxUses?: number;
+  };
+  if (!code || !discountType || !discountValue) { res.status(400).json({ error: "Code, type, and value are required" }); return; }
+  try {
+    const rows = await db.select().from(coupons).where(eq(coupons.id, id)).limit(1);
+    if (!rows.length) { res.status(404).json({ error: "Coupon not found" }); return; }
+    await db.update(coupons).set({
+      code: code.trim().toUpperCase(),
+      discountType,
+      discountValue: String(discountValue),
+      description: description || "",
+      expiresAt: expiresAt ? new Date(expiresAt) : undefined,
+      maxUses: maxUses ? String(maxUses) : undefined,
+    }).where(eq(coupons.id, id));
+    res.json({ ok: true });
+  } catch (e: any) {
+    if (e.code === "23505") { res.status(409).json({ error: "A coupon with that code already exists" }); }
+    else { res.status(500).json({ error: "Could not update coupon" }); }
+  }
 });
 
 // ── PUT /api/admin/coupons/:id/toggle ────────────────────────────
