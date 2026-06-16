@@ -1,0 +1,26 @@
+uploads = []
+outputs = []
+
+[[generated]]
+id = "7qAMQS-jzjg-yYNKw3qWw"
+uri = "file://artifacts/mockup-sandbox/public/images/glam-dark-hero.png"
+type = "image"
+title = "luxe moody makeup editorial"
+
+[[generated]]
+id = "ObAB5CqsDcd8PmalJ0zci"
+uri = "file://artifacts/mockup-sandbox/public/images/glam-dark-about.png"
+type = "image"
+title = "elegant portrait placeholder"
+
+[[generated]]
+id = "PJtQFJ9bHJromf4Ve8z6E"
+uri = "file://artifacts/mockup-sandbox/public/images/glam-editorial-hero.png"
+type = "image"
+title = "Soft editorial beauty portrait"
+
+[[generated]]
+id = "dqFjXFkmiXAyk8aduI7RD"
+uri = "file://artifacts/mockup-sandbox/public/images/bold-gold-hero.png"
+type = "image"
+title = "Confident woman, warm lighting, rich espresso tones"
