@@ -677,6 +677,47 @@ app.get('/admin', async (req, res) => {
   </div>
 </div>`;
 
+  const couponSectionHtml = `<div class="section"><div class="section-title">🏷️ Promo Codes</div>
+  <div class="card" style="padding:20px 24px;margin-bottom:16px;">
+    <h3 style="font-size:0.93rem;color:#2c1810;margin:0 0 14px;padding-bottom:8px;border-bottom:1px solid #f0ddd8;">Add New Promo Code</h3>
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:12px;align-items:end;flex-wrap:wrap;">
+      <div class="field" style="margin:0;"><label>Code</label><input type="text" id="cp-code" placeholder="e.g. SAVE20" style="text-transform:uppercase;"></div>
+      <div class="field" style="margin:0;"><label>Type</label><select id="cp-type" style="width:100%;padding:10px 13px;border:1.5px solid #e0c8c0;border-radius:6px;font-size:0.92rem;color:#2c1810;background:#fff;font-family:inherit;"><option value="percent">Percent (%)</option><option value="fixed">Fixed (A$)</option></select></div>
+      <div class="field" style="margin:0;"><label>Value</label><input type="number" id="cp-value" placeholder="e.g. 20" min="0" step="0.01"></div>
+      <div class="field" style="margin:0;"><label>Description</label><input type="text" id="cp-desc" placeholder="e.g. 20% off for crew"></div>
+    </div>
+    <div style="margin-top:12px;display:flex;align-items:center;gap:12px;">
+      <button class="btn" onclick="cpAdd()" id="cp-add-btn" style="padding:10px 22px;font-size:0.88rem;">Add Code ✦</button>
+      <span id="cp-add-status" style="font-size:0.83rem;"></span>
+    </div>
+  </div>
+  <div class="card" style="padding:20px 24px;">
+    <h3 style="font-size:0.93rem;color:#2c1810;margin:0 0 14px;padding-bottom:8px;border-bottom:1px solid #f0ddd8;">All Promo Codes</h3>
+    <div id="cp-list"><p style="color:#9e7c4a;font-size:0.85rem;">Loading…</p></div>
+  </div>
+</div>
+<div id="cp-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:9999;align-items:center;justify-content:center;padding:16px;">
+  <div style="background:#fff;border-radius:12px;max-width:480px;width:100%;box-shadow:0 20px 60px rgba(0,0,0,0.2);">
+    <div style="background:linear-gradient(135deg,#c9a96e,#9e7c4a);padding:18px 24px;border-radius:12px 12px 0 0;"><h3 style="color:#fff;margin:0;font-size:1.05rem;">✏️ Edit Promo Code</h3></div>
+    <div style="padding:20px 24px;">
+      <input type="hidden" id="cp-edit-id">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px;">
+        <div class="field" style="margin:0;"><label>Code</label><input type="text" id="cp-edit-code" style="text-transform:uppercase;"></div>
+        <div class="field" style="margin:0;"><label>Type</label><select id="cp-edit-type" style="width:100%;padding:10px 13px;border:1.5px solid #e0c8c0;border-radius:6px;font-size:0.92rem;color:#2c1810;background:#fff;font-family:inherit;"><option value="percent">Percent (%)</option><option value="fixed">Fixed (A$)</option></select></div>
+        <div class="field" style="margin:0;"><label>Value</label><input type="number" id="cp-edit-value" min="0" step="0.01"></div>
+        <div class="field" style="margin:0;"><label>Description</label><input type="text" id="cp-edit-desc"></div>
+      </div>
+      <div style="margin-bottom:14px;display:flex;align-items:center;gap:8px;"><input type="checkbox" id="cp-edit-valid" style="width:auto;"><label style="text-transform:none;font-size:0.9rem;letter-spacing:0;" for="cp-edit-valid">Active (can be used)</label></div>
+      <div id="cp-edit-err" style="background:#fff0f0;border:1px solid #f5c0c0;color:#c62828;padding:10px 14px;border-radius:4px;font-size:0.85rem;margin-bottom:12px;display:none;"></div>
+      <div style="display:flex;gap:10px;flex-wrap:wrap;">
+        <button class="btn" style="flex:1;" onclick="cpEditSave()">Save ✦</button>
+        <button onclick="cpEditDelete()" style="padding:13px 16px;border:1.5px solid #f5c0c0;border-radius:8px;background:#fff;color:#c0392b;font-weight:700;font-size:0.88rem;cursor:pointer;font-family:inherit;">🗑️ Delete</button>
+        <button onclick="cpCloseModal()" style="padding:13px 16px;border:1.5px solid #e0c8c0;border-radius:8px;background:#fff;color:#6b3d2e;font-weight:700;font-size:0.88rem;cursor:pointer;font-family:inherit;">Cancel</button>
+      </div>
+    </div>
+  </div>
+</div>`;
+
   res.setHeader('Content-Type','text/html; charset=utf-8');
   res.send(`<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Admin Dashboard · The Glam by Ankita</title><style>*{box-sizing:border-box;margin:0;padding:0}body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#fdf8f4;color:#2c1810;min-height:100vh;}.topbar{display:flex;align-items:center;justify-content:space-between;padding:16px 28px;background:#fff;border-bottom:1px solid #e8c4bc;}.logo-text{font-size:1rem;color:#6b3d2e;font-style:italic;}.header{background:linear-gradient(135deg,#c9a96e,#9e7c4a);padding:28px 32px;color:#fff;}.header h1{font-size:1.5rem;margin-bottom:4px;}.stats{display:flex;gap:16px;flex-wrap:wrap;margin-top:20px;}.stat{background:rgba(255,255,255,0.18);border-radius:8px;padding:12px 20px;text-align:center;min-width:100px;border:2px solid transparent;text-decoration:none;color:inherit;display:block;}.stat-val{font-size:1.6rem;font-weight:700;}.stat-lbl{font-size:0.75rem;opacity:0.88;margin-top:2px;}.content{max-width:1100px;margin:0 auto;padding:28px 20px 60px;}.section{margin-bottom:32px;}.section-title{font-size:1rem;color:#6b3d2e;margin-bottom:14px;padding-bottom:8px;border-bottom:2px solid #e8c4bc;}.toolbar{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px;align-items:center;}.card{background:#fff;border:1px solid #e8c4bc;border-radius:10px;overflow:hidden;}.table-wrap{overflow-x:auto;}table{width:100%;border-collapse:collapse;font-size:0.88rem;}th{padding:10px 12px;text-align:left;font-size:0.75rem;font-weight:700;color:#6b3d2e;text-transform:uppercase;letter-spacing:0.05em;background:#fdf5f0;border-bottom:1px solid #e8c4bc;white-space:nowrap;}tr:hover td{background:#fdf5f0;}.email-form{padding:24px;}.field{margin-bottom:16px;}label{display:block;font-size:0.75rem;font-weight:700;color:#6b3d2e;text-transform:uppercase;letter-spacing:0.06em;margin-bottom:6px;}input,textarea{width:100%;padding:10px 13px;border:1.5px solid #e0c8c0;border-radius:6px;font-size:0.92rem;color:#2c1810;background:#fff;font-family:inherit;outline:none;transition:border-color .2s;}input:focus,textarea:focus{border-color:#c9a96e;}textarea{resize:vertical;min-height:140px;}.btn{display:inline-block;padding:13px 28px;background:linear-gradient(135deg,#c9a96e,#9e7c4a);color:#fff;border:none;border-radius:8px;font-size:0.95rem;font-weight:700;cursor:pointer;}.btn:disabled{opacity:0.5;cursor:not-allowed;}.alert{padding:12px 16px;border-radius:6px;font-size:0.88rem;margin-bottom:16px;display:none;}.alert-success{background:#f0fff4;border:1px solid #a8e6b8;color:#2c6e3f;}.alert-error{background:#fff0f0;border:1px solid #f5c0c0;color:#c0392b;}</style></head><body>
 <div class="topbar"><span class="logo-text">The Glam by Ankita</span><span style="background:#fdf0ee;color:#6b3d2e;font-size:0.75rem;font-weight:700;padding:4px 10px;border-radius:20px;border:1px solid #e8c4bc;">Admin Dashboard</span></div>
@@ -703,6 +744,7 @@ app.get('/admin', async (req, res) => {
     </div></div>
   </div>
   ${gallerySectionHtml}
+  ${couponSectionHtml}
   <div class="section"><div class="section-title">🔗 Admin Link</div>
     <div class="card" style="padding:20px 24px;">
       <p style="font-size:0.88rem;color:#4a2e22;margin-bottom:14px;">Regenerate your admin link (a new one will be emailed to you and this page will no longer work).</p>
@@ -886,7 +928,87 @@ async function galDelete(){
 // ── Email & admin ─────────────────────────────────────────────────
 async function sendEmail(){var btn=event.target,success=document.getElementById('email-success'),error=document.getElementById('email-error');success.style.display='none';error.style.display='none';var to=document.getElementById('e-to').value.trim(),subject=document.getElementById('e-subject').value.trim(),body=document.getElementById('e-body').value.trim();if(!to||!subject||!body){error.textContent='Please fill in all fields.';error.style.display='block';return;}btn.disabled=true;btn.textContent='Sending…';try{var res=await fetch('/api/admin-send-email?token='+encodeURIComponent(TOKEN),{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({to,subject,body})});var json=await res.json();if(!res.ok)throw new Error(json.error||'Failed');success.textContent='Email sent to '+to+'!';success.style.display='block';document.getElementById('e-to').value='';document.getElementById('e-subject').value='';document.getElementById('e-body').value='';}catch(e){error.textContent='Could not send email. Please try again.';error.style.display='block';}finally{btn.disabled=false;btn.textContent='Send Email ✦';}}
 async function regenToken(){var btn=document.getElementById('regen-btn'),status=document.getElementById('regen-status');btn.disabled=true;status.textContent='Regenerating…';try{var res=await fetch('/api/admin?token='+encodeURIComponent(TOKEN),{method:'POST'});var json=await res.json();if(!res.ok)throw new Error(json.error||'Failed');status.textContent='✅ New link sent to your email!';btn.style.display='none';}catch(e){status.textContent='❌ Failed. Try again.';btn.disabled=false;}}
+
+// ── Coupon management ─────────────────────────────────────────────
+var _cpCoupons=[];
+async function loadCoupons(){
+  try{
+    var r=await fetch('/api/admin/coupons?token='+encodeURIComponent(TOKEN));
+    _cpCoupons=await r.json();
+    renderCoupons();
+  }catch(e){document.getElementById('cp-list').innerHTML='<p style="color:#c0392b;font-size:0.85rem;">Failed to load coupons.</p>';}
+}
+function renderCoupons(){
+  var el=document.getElementById('cp-list');
+  if(!_cpCoupons.length){el.innerHTML='<p style="color:#9e7c4a;font-size:0.85rem;">No promo codes yet.</p>';return;}
+  el.innerHTML='<table style="width:100%;border-collapse:collapse;font-size:0.88rem;"><thead><tr><th style="padding:8px 12px;text-align:left;font-size:0.75rem;font-weight:700;color:#6b3d2e;text-transform:uppercase;background:#fdf5f0;border-bottom:1px solid #e8c4bc;">Code</th><th style="padding:8px 12px;text-align:left;font-size:0.75rem;font-weight:700;color:#6b3d2e;text-transform:uppercase;background:#fdf5f0;border-bottom:1px solid #e8c4bc;">Discount</th><th style="padding:8px 12px;text-align:left;font-size:0.75rem;font-weight:700;color:#6b3d2e;text-transform:uppercase;background:#fdf5f0;border-bottom:1px solid #e8c4bc;">Description</th><th style="padding:8px 12px;text-align:left;font-size:0.75rem;font-weight:700;color:#6b3d2e;text-transform:uppercase;background:#fdf5f0;border-bottom:1px solid #e8c4bc;">Status</th><th style="padding:8px 12px;background:#fdf5f0;border-bottom:1px solid #e8c4bc;"></th></tr></thead><tbody>'+
+    _cpCoupons.map(function(c){
+      var disc=c.discount_type==='fixed'?'A$'+Number(c.discount_value).toFixed(2)+' off':Number(c.discount_value)+'% off';
+      var badge=c.valid?'<span style="background:#e8f4e8;color:#2c6e3f;padding:2px 8px;border-radius:20px;font-size:0.75rem;font-weight:700;">Active</span>':'<span style="background:#f5e8e8;color:#c0392b;padding:2px 8px;border-radius:20px;font-size:0.75rem;font-weight:700;">Inactive</span>';
+      return '<tr style="border-bottom:1px solid #f0ddd6;"><td style="padding:10px 12px;font-weight:700;font-family:monospace;font-size:0.9rem;">'+c.code+'</td><td style="padding:10px 12px;">'+disc+'</td><td style="padding:10px 12px;color:#6b3d2e;font-size:0.85rem;">'+( c.description||'—')+'</td><td style="padding:10px 12px;">'+badge+'</td><td style="padding:10px 12px;"><button onclick="cpOpenEdit('+c.id+')" style="padding:5px 12px;border:1.5px solid #c9a96e;border-radius:6px;background:#fff;color:#9e7c4a;font-weight:700;font-size:0.8rem;cursor:pointer;font-family:inherit;">Edit</button></td></tr>';
+    }).join('')+'</tbody></table>';
+}
+async function cpAdd(){
+  var code=document.getElementById('cp-code').value.trim().toUpperCase();
+  var type=document.getElementById('cp-type').value;
+  var value=document.getElementById('cp-value').value;
+  var desc=document.getElementById('cp-desc').value.trim();
+  var status=document.getElementById('cp-add-status');
+  var btn=document.getElementById('cp-add-btn');
+  if(!code||!value){status.innerHTML='<span style="color:#c0392b;">Code and value are required.</span>';return;}
+  btn.disabled=true;btn.textContent='Adding…';status.textContent='';
+  try{
+    var r=await fetch('/api/admin/coupons?token='+encodeURIComponent(TOKEN),{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({code,discount_type:type,discount_value:parseFloat(value),description:desc})});
+    var j=await r.json();
+    if(!r.ok)throw new Error(j.error||'Failed');
+    status.innerHTML='<span style="color:#2c6e3f;">✅ Code added!</span>';
+    document.getElementById('cp-code').value='';document.getElementById('cp-value').value='';document.getElementById('cp-desc').value='';
+    await loadCoupons();
+  }catch(e){status.innerHTML='<span style="color:#c0392b;">❌ '+e.message+'</span>';}
+  btn.disabled=false;btn.textContent='Add Code ✦';
+}
+function cpOpenEdit(id){
+  var c=_cpCoupons.find(function(x){return x.id===id;});if(!c)return;
+  document.getElementById('cp-edit-id').value=c.id;
+  document.getElementById('cp-edit-code').value=c.code;
+  document.getElementById('cp-edit-type').value=c.discount_type;
+  document.getElementById('cp-edit-value').value=Number(c.discount_value);
+  document.getElementById('cp-edit-desc').value=c.description||'';
+  document.getElementById('cp-edit-valid').checked=c.valid;
+  document.getElementById('cp-edit-err').style.display='none';
+  document.getElementById('cp-modal').style.display='flex';
+}
+function cpCloseModal(){document.getElementById('cp-modal').style.display='none';}
+document.getElementById('cp-modal').addEventListener('click',function(e){if(e.target===this)cpCloseModal();});
+async function cpEditSave(){
+  var id=document.getElementById('cp-edit-id').value;
+  var code=document.getElementById('cp-edit-code').value.trim().toUpperCase();
+  var type=document.getElementById('cp-edit-type').value;
+  var value=document.getElementById('cp-edit-value').value;
+  var desc=document.getElementById('cp-edit-desc').value.trim();
+  var valid=document.getElementById('cp-edit-valid').checked;
+  var err=document.getElementById('cp-edit-err');
+  if(!code||!value){err.textContent='Code and value are required.';err.style.display='block';return;}
+  try{
+    var r=await fetch('/api/admin/coupons/'+id+'?token='+encodeURIComponent(TOKEN),{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify({code,discount_type:type,discount_value:parseFloat(value),description:desc,valid})});
+    var j=await r.json();
+    if(!r.ok)throw new Error(j.error||'Failed');
+    cpCloseModal();await loadCoupons();
+  }catch(e){err.textContent=e.message;err.style.display='block';}
+}
+async function cpEditDelete(){
+  var id=document.getElementById('cp-edit-id').value;
+  var code=document.getElementById('cp-edit-code').value;
+  if(!confirm('Delete promo code '+code+'?'))return;
+  try{
+    var r=await fetch('/api/admin/coupons/'+id+'?token='+encodeURIComponent(TOKEN),{method:'DELETE'});
+    if(r.ok){cpCloseModal();await loadCoupons();}
+    else alert('Delete failed.');
+  }catch(e){alert('Delete failed.');}
+}
+
 loadGallery();
+loadCoupons();
 </script></body></html>`);
 });
 
@@ -909,6 +1031,23 @@ async function ensureGalleryTable() {
   )`);
 }
 
+async function ensureCouponsTable() {
+  const db = getPool();
+  await db.query(`CREATE TABLE IF NOT EXISTS coupons (
+    id SERIAL PRIMARY KEY, code TEXT NOT NULL UNIQUE,
+    discount_type TEXT NOT NULL DEFAULT 'percent',
+    discount_value NUMERIC(10,2) NOT NULL,
+    valid BOOLEAN DEFAULT true,
+    description TEXT DEFAULT '',
+    created_at TIMESTAMPTZ DEFAULT NOW()
+  )`);
+  await db.query(
+    `INSERT INTO coupons (code,discount_type,discount_value,description,valid)
+     VALUES ('CONDITNCREW','percent',30,'30% off for crew',true)
+     ON CONFLICT (code) DO NOTHING`
+  );
+}
+
 let _gallerySynced = false;
 async function getGalleryItems() {
   await ensureGalleryTable();
@@ -919,16 +1058,10 @@ async function getGalleryItems() {
       await db.query(
         `INSERT INTO gallery_images (filename,url,title,category,description,object_position,featured,sort_order)
          VALUES ($1,$2,$3,$4,$5,$6,$7,$8)
-         ON CONFLICT (filename) DO UPDATE SET
-           url=EXCLUDED.url, title=EXCLUDED.title, category=EXCLUDED.category,
-           description=EXCLUDED.description, object_position=EXCLUDED.object_position,
-           featured=EXCLUDED.featured, sort_order=EXCLUDED.sort_order`,
+         ON CONFLICT (filename) DO NOTHING`,
         [item.filename,item.url,item.title,item.category,item.description,item.object_position,item.featured,item.sort_order]
       );
     }
-    const seedFilenames = STATIC_GALLERY_SEED.map(i => i.filename);
-    const placeholders = seedFilenames.map((_,i) => `$${i+1}`).join(',');
-    await db.query(`DELETE FROM gallery_images WHERE filename NOT IN (${placeholders})`, seedFilenames);
   }
   const { rows } = await db.query('SELECT * FROM gallery_images ORDER BY sort_order ASC, uploaded_at DESC');
   return rows;
@@ -941,6 +1074,24 @@ app.get('/gallery/list', async (req, res) => {
     items.sort((a,b) => (b.featured?1:0)-(a.featured?1:0));
     res.json(items);
   } catch(e) { console.error('gallery/list error:',e); res.json([]); }
+});
+
+// ── GET /validate-coupon ──────────────────────────────────────────
+app.get('/validate-coupon', async (req, res) => {
+  const code = (req.query.code || '').trim().toUpperCase();
+  if (!code) return res.status(400).json({ error: 'Code required' });
+  try {
+    await ensureCouponsTable();
+    const { rows } = await getPool().query(
+      'SELECT * FROM coupons WHERE UPPER(code)=$1 AND valid=true LIMIT 1', [code]
+    );
+    if (!rows.length) return res.status(404).json({ error: 'Invalid or expired promo code.' });
+    const c = rows[0];
+    res.json({ code: c.code, discountType: c.discount_type, discountValue: Number(c.discount_value), description: c.description || '' });
+  } catch(e) {
+    console.error('validate-coupon error:', e);
+    res.status(500).json({ error: 'Server error' });
+  }
 });
 
 app.post('/admin/gallery', async (req, res) => {
@@ -1007,6 +1158,63 @@ app.delete('/admin/gallery/:filename', async (req, res) => {
     await getPool().query('DELETE FROM gallery_images WHERE filename=$1',[req.params.filename]);
     res.json({ ok:true });
   } catch(e) { res.status(500).json({ error:'Failed to delete' }); }
+});
+
+// ── Admin Coupon CRUD ─────────────────────────────────────────────
+app.get('/admin/coupons', async (req, res) => {
+  const valid = await validateAdminToken(req.query.token);
+  if (!valid) return res.status(403).json({ error: 'Unauthorized' });
+  try {
+    await ensureCouponsTable();
+    const { rows } = await getPool().query('SELECT * FROM coupons ORDER BY created_at DESC');
+    res.json(rows);
+  } catch(e) { res.status(500).json({ error: 'Failed to load coupons' }); }
+});
+
+app.post('/admin/coupons', async (req, res) => {
+  const valid = await validateAdminToken(req.query.token);
+  if (!valid) return res.status(403).json({ error: 'Unauthorized' });
+  const { code, discount_type, discount_value, description } = req.body;
+  if (!code || discount_value == null) return res.status(400).json({ error: 'code and discount_value required' });
+  try {
+    await ensureCouponsTable();
+    const { rows } = await getPool().query(
+      `INSERT INTO coupons (code,discount_type,discount_value,description,valid) VALUES (UPPER($1),$2,$3,$4,true) RETURNING *`,
+      [code.trim(), discount_type||'percent', parseFloat(discount_value), description||'']
+    );
+    res.json(rows[0]);
+  } catch(e) {
+    if (e.code === '23505') return res.status(400).json({ error: 'That code already exists.' });
+    res.status(500).json({ error: 'Failed to create coupon' });
+  }
+});
+
+app.put('/admin/coupons/:id', async (req, res) => {
+  const valid = await validateAdminToken(req.query.token);
+  if (!valid) return res.status(403).json({ error: 'Unauthorized' });
+  const { code, discount_type, discount_value, description, valid: isValid } = req.body;
+  if (!code || discount_value == null) return res.status(400).json({ error: 'code and discount_value required' });
+  try {
+    await ensureCouponsTable();
+    await getPool().query(
+      `UPDATE coupons SET code=UPPER($1),discount_type=$2,discount_value=$3,description=$4,valid=$5 WHERE id=$6`,
+      [code.trim(), discount_type||'percent', parseFloat(discount_value), description||'', isValid!==false, req.params.id]
+    );
+    res.json({ ok: true });
+  } catch(e) {
+    if (e.code === '23505') return res.status(400).json({ error: 'That code already exists.' });
+    res.status(500).json({ error: 'Failed to update coupon' });
+  }
+});
+
+app.delete('/admin/coupons/:id', async (req, res) => {
+  const valid = await validateAdminToken(req.query.token);
+  if (!valid) return res.status(403).json({ error: 'Unauthorized' });
+  try {
+    await ensureCouponsTable();
+    await getPool().query('DELETE FROM coupons WHERE id=$1', [req.params.id]);
+    res.json({ ok: true });
+  } catch(e) { res.status(500).json({ error: 'Failed to delete coupon' }); }
 });
 
 // ── Export for Vercel serverless ──────────────────────────────────
