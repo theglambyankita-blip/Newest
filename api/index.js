@@ -789,21 +789,24 @@ function galEditApplyPos(pos){galApplyPreset(pos,'gal-edit-img','gal-edit-dot','
 
 // ── Load & render gallery ─────────────────────────────────────────
 async function loadGallery(){
+  var grid=document.getElementById('gal-grid');
   try{
     var r=await fetch('/api/gallery/list');
-    _galPhotos=await r.json();
+    var data=await r.json();
+    _galPhotos=Array.isArray(data)?data:[];
     renderGallery();
-  }catch(e){console.error('Gallery load error',e);}
+  }catch(e){console.error('Gallery load error',e);if(grid)grid.innerHTML='<p style="color:#c0392b;font-size:0.85rem;padding:12px;">Failed to load photos. Please refresh.</p>';}
 }
 function renderGallery(){
   var grid=document.getElementById('gal-grid');
   var empty=document.getElementById('gal-empty');
-  if(!_galPhotos.length){grid.innerHTML='';empty.style.display='block';return;}
+  if(!_galPhotos||!_galPhotos.length){grid.innerHTML='';empty.style.display='block';return;}
   empty.style.display='none';
   grid.innerHTML=_galPhotos.map(function(p){
     var imgUrl=p.url||('/gallery/'+p.filename);
-    var pos=p.objectPosition||'center center';
-    return '<div draggable="true" ondragstart="galDragStart(event,\''+p.filename+'\')" ondragover="galDragOver(event)" ondrop="galDrop(event,\''+p.filename+'\')" data-fn="'+p.filename+'" style="position:relative;aspect-ratio:1;overflow:hidden;border-radius:8px;border:1.5px solid #e8c4bc;cursor:pointer;background:#f5e8e0;transition:box-shadow 0.2s;" onclick="galOpenEdit(\''+p.filename+'\')">'+
+    var pos=p.objectPosition||p.object_position||'center center';
+    var safeFn=p.filename.replace(/"/g,'&quot;');
+    return '<div draggable="true" ondragstart="galDragStart(event,this.dataset.fn)" ondragover="galDragOver(event)" ondrop="galDrop(event,this.dataset.fn)" data-fn="'+safeFn+'" style="position:relative;aspect-ratio:1;overflow:hidden;border-radius:8px;border:1.5px solid #e8c4bc;cursor:pointer;background:#f5e8e0;transition:box-shadow 0.2s;" onclick="galOpenEdit(this.dataset.fn)">'+
       (p.featured?'<div style="position:absolute;top:5px;left:5px;z-index:2;background:rgba(201,169,110,0.95);border-radius:4px;padding:2px 7px;font-size:0.66rem;color:#fff;font-weight:700;pointer-events:none;">⭐</div>':'')+
       '<img src="'+imgUrl+'" style="width:100%;height:100%;object-fit:cover;object-position:'+pos+';display:block;pointer-events:none;" alt="'+p.title+'">'+
       '<div style="position:absolute;inset:0;background:rgba(44,24,16,0);transition:background 0.2s;pointer-events:none;" class="gal-hover-ov"></div>'+

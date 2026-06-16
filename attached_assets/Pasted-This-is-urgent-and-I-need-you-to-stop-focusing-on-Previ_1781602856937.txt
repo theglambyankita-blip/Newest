@@ -1,0 +1,61 @@
+This is urgent and I need you to stop focusing on Preview and fix the actual Admin Dashboard.
+
+My requirement is very simple:
+
+1. ALL PHOTOS MUST APPEAR IN "ALL PHOTOS"
+
+Every photo that currently exists anywhere in the website gallery must appear inside the Admin Dashboard under the "All Photos" section.
+
+I do not care whether the images are stored in Cloudinary, a database, JSON files, local storage, or anywhere else.
+
+I simply need the "All Photos" page to display every image that exists on the website.
+
+If the website gallery can display the photos, then the Admin Dashboard should also display those same photos.
+
+Please:
+
+• Find where the gallery images are being sourced from
+• Retrieve every image currently displayed on the website
+• Ensure they are all loaded into the Admin Dashboard
+• Ensure future uploaded images also appear automatically
+• Remove any loading issues, blank states, or missing images
+
+2. ALL PROMO CODES MUST APPEAR IN "ALL PROMO CODES"
+
+Every promo code that exists in the system must appear inside the Admin Dashboard under "All Promo Codes".
+
+Currently the booking system can successfully validate promo codes, which proves the codes already exist somewhere.
+
+Please:
+
+• Find where promo codes are stored
+• Retrieve all existing promo codes
+• Display them in the Admin Dashboard
+• Ensure new promo codes appear automatically
+• Remove any loading issues or infinite loading states
+
+3. FIX THE LIVE ADMIN DASHBOARD
+
+I am referring to the live deployed Admin Dashboard.
+
+Not Preview.
+
+Not local development.
+
+Not a test environment.
+
+The live Admin Dashboard.
+
+4. DO NOT MARK THIS COMPLETE UNTIL:
+
+✓ Every gallery image visible on the website is visible in "All Photos"
+
+✓ Every promo code in the system is visible in "All Promo Codes"
+
+✓ No loading spinners remain
+
+✓ No "Loading" messages remain
+
+✓ The functionality has been verified on the live deployed website
+
+Please fix the Admin Dashboard so it accurately displays all existing photos and all existing promo codes immediately.
