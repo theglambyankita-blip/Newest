@@ -219,7 +219,13 @@
   <!-- Font preconnect for faster load -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400;1,600&family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;0,700;1,300;1,400;1,600&family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600;9..40,700&family=Nunito:wght@300;400;500;600;700&family=Dancing+Script:wght@600&display=swap" rel="stylesheet">
+  <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400&family=Nunito:wght@400;500;600;700&family=Dancing+Script:wght@600&display=swap">
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400&family=Nunito:wght@400;500;600;700&family=Dancing+Script:wght@600&display=swap" rel="stylesheet">
+  <link rel="preload" href="/ankita-photo.jpeg" as="image">
+  <link rel="preload" href="/gallery/glam-city.png" as="image">
+  <link rel="preload" href="/gallery/smokey-salon.jpeg" as="image">
+  <link rel="preload" href="/gallery/soft-smokey.jpeg" as="image">
+  <link rel="preload" href="/gallery/purple-glam.jpeg" as="image">
   <style>
     :root {
       --blush: #f5ddd8;
@@ -264,7 +270,7 @@
 
     /* PAGES */
     .page { display: none; }
-    .page.active { display: block; }
+    .page.active { display: block; contain: layout style; }
 
     /* CINEMATIC ANIMATIONS */
     [data-anim] { opacity: 0; will-change: opacity, transform; transition: opacity 0.8s cubic-bezier(0.16,1,0.3,1), transform 0.8s cubic-bezier(0.16,1,0.3,1); }
@@ -367,7 +373,7 @@
 
     /* MARQUEE */
     .marquee-bar { background: #1a0f0a; padding: 0.8rem 0; overflow: hidden; border-top: 1px solid rgba(201,169,110,0.18); border-bottom: 1px solid rgba(201,169,110,0.18); }
-    .marquee-inner { display: flex; animation: marquee 10s linear infinite; white-space: nowrap; }
+    .marquee-inner { display: flex; animation: marquee 10s linear infinite; white-space: nowrap; will-change: transform; }
     .marquee-inner span { font-size: 0.72rem; font-weight: 700; letter-spacing: 0.25em; text-transform: uppercase; color: rgba(255,240,220,0.9); padding: 0 1.8rem; }
     .marquee-inner .sep { color: var(--gold); opacity: 0.7; padding: 0 0.3rem; }
     @keyframes marquee { 0% { transform: translateX(0); } 100% { transform: translateX(-50%); } }
@@ -413,7 +419,7 @@
     .stab { background: var(--white); border: 1.5px solid var(--blush-deep); color: var(--text-mid); font-family: 'Nunito', sans-serif; font-size: 0.82rem; font-weight: 600; padding: 0.5rem 1.2rem; border-radius: 100px; cursor: pointer; transition: background 0.2s, color 0.2s, border-color 0.2s; }
     .stab:hover, .stab.active { background: var(--gold); color: var(--white); border-color: var(--gold); }
     .services-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(270px, 1fr)); gap: 1.25rem; background: transparent; }
-    .svc-card { background: rgba(255,255,255,0.68); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px); padding: 2.2rem 2rem; border-radius: 16px; border: 1px solid rgba(201,169,110,0.15); position: relative; overflow: hidden; cursor: default; transition: background 0.4s cubic-bezier(0.34,1.56,0.64,1), transform 0.4s cubic-bezier(0.34,1.56,0.64,1), box-shadow 0.4s, border-color 0.3s; }
+    .svc-card { background: #fff; padding: 2.2rem 2rem; border-radius: 16px; border: 1px solid rgba(201,169,110,0.18); box-shadow: 0 2px 16px rgba(44,24,16,0.04); position: relative; overflow: hidden; cursor: default; transition: background 0.3s, transform 0.35s cubic-bezier(0.16,1,0.3,1), box-shadow 0.35s, border-color 0.3s; }
     .svc-card::after { content: ''; position: absolute; top: -50%; left: -80%; width: 60%; height: 200%; background: linear-gradient(90deg, transparent, rgba(255,255,255,0.55), rgba(201,169,110,0.12), transparent); transform: skewX(-12deg); transition: left 0.8s cubic-bezier(0.4,0,0.2,1); pointer-events: none; }
     .svc-card:hover { background: rgba(255,255,255,0.9); transform: translateY(-10px) scale(1.015); box-shadow: 0 24px 64px rgba(201,169,110,0.22), 0 0 0 1px rgba(201,169,110,0.18); border-color: rgba(201,169,110,0.32); }
     .svc-card:hover::after { left: 130%; }
@@ -1035,7 +1041,7 @@
     </div>
     <div class="hero-right" id="heroRight" style="display:flex;align-items:center;justify-content:center;">
       <div class="hero-photo-wrap" data-anim="scale">
-        <img src="/logo-original.png" alt="The Glam by Ankita" style="width:100%;display:block;">
+        <img src="/logo-original.png" alt="The Glam by Ankita" style="width:100%;display:block;" fetchpriority="high">
       </div>
       <div class="hero-gold-bar"></div>
     </div>
@@ -1117,7 +1123,7 @@
     <div class="about-photo-col" data-anim="left">
       <div style="position:relative;display:inline-block;">
         <div class="about-photo-frame">
-          <img src="/ankita-photo.jpeg" alt="Ankita Awasthi" style="width:100%;height:100%;object-fit:cover;border-radius:50%;object-position:center 22%;">
+          <img src="/ankita-photo.jpeg" alt="Ankita Awasthi" style="width:100%;height:100%;object-fit:cover;border-radius:50%;object-position:center 22%;" loading="lazy">
         </div>
         <div class="about-badge">
           <div class="about-badge-num">5</div>
@@ -1178,7 +1184,7 @@
       <button class="stab" onclick="showServiceTab('bridal',this)">Bridal</button>
       <button class="stab" onclick="showServiceTab('creative',this)">Creative</button>
     </div>
-    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(270px,1fr));gap:2px;background:var(--blush-deep);" data-stagger id="servicesGrid">
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(270px,1fr));gap:1.25rem;background:transparent;" data-stagger id="servicesGrid">
       <div class="svc-card hover-lift" data-cat="glam"><div class="svc-num">01</div><div class="svc-emoji">💄</div><h3 class="svc-name">Soft Glam</h3><p class="svc-desc">Your skin, elevated. A luminous, polished finish that enhances your natural beauty — think dewy, radiant, and effortlessly put-together.</p><p class="svc-price">$100</p><span class="svc-tag">Glam</span></div>
       <div class="svc-card hover-lift" data-cat="glam"><div class="svc-num">02</div><div class="svc-emoji">✨</div><h3 class="svc-name">Full Glam</h3><p class="svc-desc">Turn heads and own the room. Sultry eyes, a flawless base, and lash-forward drama — made for moments that deserve to be remembered.</p><p class="svc-price">$120</p><span class="svc-tag">Glam</span></div>
       <div class="svc-card hover-lift" data-cat="glam"><div class="svc-num">03</div><div class="svc-emoji">🎉</div><h3 class="svc-name">Party Glam</h3><p class="svc-desc">Wear the night. Bold, fun, and celebration-ready — whether it's a birthday bash, dinner date, or a night you'll want to remember forever.</p><p class="svc-price">$120</p><span class="svc-tag">Glam</span></div>
@@ -1247,19 +1253,19 @@
       </div>
       <div class="bts-grid">
         <div class="bts-item" onclick="openBts(0)">
-          <img src="/bts-1.jpeg" alt="Ankita doing makeup">
+          <img src="/bts-1.jpeg" alt="Ankita doing makeup" loading="lazy">
           <div class="photo-overlay"><div class="photo-overlay-txt">At Work ✨</div></div>
         </div>
         <div class="bts-item" onclick="openBts(1)">
-          <img src="/bts-2.jpeg" alt="Ankita applying makeup" style="object-position: center 20%;">
+          <img src="/bts-2.jpeg" alt="Ankita applying makeup" style="object-position: center 20%;" loading="lazy">
           <div class="photo-overlay"><div class="photo-overlay-txt">Precision & Care 💄</div></div>
         </div>
         <div class="bts-item" onclick="openBts(2)">
-          <img src="/bts-3.jpeg" alt="Ankita creating a look">
+          <img src="/bts-3.jpeg" alt="Ankita creating a look" loading="lazy">
           <div class="photo-overlay"><div class="photo-overlay-txt">The Process 🎨</div></div>
         </div>
         <div class="bts-item" onclick="openBts(3)">
-          <img src="/bts-4.jpeg" alt="Ankita at Indonesian Modest Fashion Week Melbourne">
+          <img src="/bts-4.jpeg" alt="Ankita at Indonesian Modest Fashion Week Melbourne" loading="lazy">
           <div class="photo-overlay"><div class="photo-overlay-txt">IMFWM Melbourne 🌟</div></div>
         </div>
       </div>
@@ -2491,9 +2497,11 @@
     }
   }
 
-  // SCROLL PROGRESS BAR + NAV
+  // SCROLL PROGRESS BAR + NAV (RAF-throttled for smooth 60fps performance)
   let scrollStopTimer = null;
-  window.addEventListener('scroll', () => {
+  let _rafScheduled = false;
+  function _onScrollFrame() {
+    _rafScheduled = false;
     const nav = document.getElementById('sitenav');
     nav.classList.toggle('scrolled', window.scrollY > 20);
     const scrollBtn = document.getElementById('scroll-top-btn');
@@ -2502,7 +2510,7 @@
     if (tabs && window.innerWidth > 600) {
       tabs.classList.add('tabs-hidden');
       clearTimeout(scrollStopTimer);
-      scrollStopTimer = setTimeout(() => tabs.classList.remove('tabs-hidden'), 400);
+      scrollStopTimer = setTimeout(() => tabs.classList.remove('tabs-hidden'), 120);
     }
     // Update progress bar
     const progressBar = document.getElementById('progress-bar');
@@ -2512,7 +2520,10 @@
       const pct = total > 0 ? (scrolled / total) * 100 : 0;
       progressBar.style.width = pct + '%';
     }
-  });
+  }
+  window.addEventListener('scroll', () => {
+    if (!_rafScheduled) { _rafScheduled = true; requestAnimationFrame(_onScrollFrame); }
+  }, { passive: true });
 
   // ANIMATION TRIGGER
   function triggerAnims() {
@@ -2529,7 +2540,7 @@
   }
   document.addEventListener('DOMContentLoaded', () => {
     // Pre-fetch gallery data + preload images in background so Gallery tab is instant
-    setTimeout(loadDynamicGallery, 1500);
+    setTimeout(loadDynamicGallery, 300);
     setTimeout(triggerAnims, 100);
     // Set minimum date to today for the booking date picker
     const dateInput = document.getElementById('book-date');
