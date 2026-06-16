@@ -2,7 +2,8 @@ import { Router } from "express";
 import Stripe from "stripe";
 import nodemailer from "nodemailer";
 import { buildIcs } from "../lib/ics.js";
-import { db, bookings } from "@workspace/db";
+import { db, bookings, coupons } from "@workspace/db";
+import { eq } from "drizzle-orm";
 
 const router = Router();
 
@@ -46,7 +47,7 @@ router.post("/create-payment-intent", async (req, res) => {
     return;
   }
 
-  const { token } = req.body as { token?: string; testMode?: boolean };
+  const { token, couponCode } = req.body as { token?: string; testMode?: boolean; couponCode?: string };
   if (!token) {
     res.status(400).json({ error: "Missing token." });
     return;
@@ -66,10 +67,33 @@ router.post("/create-payment-intent", async (req, res) => {
     return;
   }
 
-  const amountCents = Math.round(totalAud * 100);
+  // Apply coupon discount server-side if code provided
+  let finalAud = totalAud;
+  let appliedCouponCode: string | null = null;
+  if (couponCode && !testMode) {
+    try {
+      const codeUpper = couponCode.trim().toUpperCase();
+      const rows = await db.select().from(coupons).where(eq(coupons.code, codeUpper)).limit(1);
+      if (rows.length) {
+        const c = rows[0];
+        const isValid = c.active === "true"
+          && (!c.expiresAt || new Date() <= c.expiresAt)
+          && (!c.maxUses || Number(c.usesCount) < Number(c.maxUses));
+        if (isValid) {
+          const dv = Number(c.discountValue);
+          finalAud = c.discountType === "percent"
+            ? totalAud * (1 - dv / 100)
+            : Math.max(0, totalAud - dv);
+          appliedCouponCode = c.code;
+        }
+      }
+    } catch (e) { console.error("Coupon validation error:", e); }
+  }
+
+  const amountCents = Math.round(finalAud * 100);
   if (amountCents < 50) {
     res.status(400).json({
-      error: `The minimum card payment is A$0.50. This booking has a deposit of A$${totalAud.toFixed(2)} — please contact Ankita to arrange payment directly.`,
+      error: `The minimum card payment is A$0.50. This booking has a deposit of A$${finalAud.toFixed(2)} — please contact Ankita to arrange payment directly.`,
     });
     return;
   }
@@ -81,7 +105,7 @@ router.post("/create-payment-intent", async (req, res) => {
   const stripe = new Stripe(secretKey);
   try {
     const paymentIntent = await stripe.paymentIntents.create({
-      amount: Math.round(totalAud * 100),
+      amount: amountCents,
       currency: "aud",
       automatic_payment_methods: { enabled: true },
       receipt_email: clientEmail || undefined,
@@ -94,9 +118,11 @@ router.post("/create-payment-intent", async (req, res) => {
         booking_location: cd["Location"]         || "",
         booking_people:   cd["Number of People"] || "",
         booking_token:    token.length <= 450 ? token : "",
+        coupon_code:      appliedCouponCode || "",
+        original_aud:     appliedCouponCode ? String(totalAud) : "",
       },
     });
-    res.json({ client_secret: paymentIntent.client_secret });
+    res.json({ client_secret: paymentIntent.client_secret, couponApplied: !!appliedCouponCode, finalAud });
   } catch (err) {
     console.error("Stripe PaymentIntent error:", err);
     res.status(500).json({ error: "Could not create payment." });
@@ -104,7 +130,7 @@ router.post("/create-payment-intent", async (req, res) => {
 });
 
 router.post("/confirm-payment", async (req, res) => {
-  const { token, payment_intent_id, testMode } = req.body as { token?: string; payment_intent_id?: string; testMode?: boolean };
+  const { token, payment_intent_id, testMode, couponCode } = req.body as { token?: string; payment_intent_id?: string; testMode?: boolean; couponCode?: string };
 
   res.json({ ok: true, testMode: !!testMode });
 
@@ -124,6 +150,18 @@ router.post("/confirm-payment", async (req, res) => {
   if (testMode) {
     console.log(`[TEST MODE] Payment confirmed for ${clientName} (${clientEmail}) A$${totalAud} — no DB insert, no emails sent.`);
     return;
+  }
+
+  // Increment coupon usesCount if a coupon was applied
+  if (couponCode) {
+    try {
+      const codeUpper = couponCode.trim().toUpperCase();
+      const rows = await db.select().from(coupons).where(eq(coupons.code, codeUpper)).limit(1);
+      if (rows.length) {
+        const current = Number(rows[0].usesCount) || 0;
+        await db.update(coupons).set({ usesCount: String(current + 1) }).where(eq(coupons.code, codeUpper));
+      }
+    } catch (e) { console.error("Coupon usesCount increment error:", e); }
   }
 
   // Save to DB

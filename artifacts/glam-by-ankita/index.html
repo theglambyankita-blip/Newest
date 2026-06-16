@@ -1632,6 +1632,28 @@
         <p style="margin:0;font-size:0.77rem;color:#9e7c4a;">Secures your appointment · Non-refundable</p>
       </div>
 
+      <!-- Promo code input -->
+      <div id="sp-promo-wrap" class="sp-fade-up" style="margin-bottom:16px;text-align:center;">
+        <button type="button" onclick="_togglePromo()" style="background:none;border:none;cursor:pointer;font-size:0.82rem;color:#9e7c4a;font-family:'Nunito',sans-serif;font-weight:600;padding:4px 8px;display:inline-flex;align-items:center;gap:5px;">
+          <span id="sp-promo-chevron" style="font-size:0.65rem;display:inline-block;transition:transform 0.25s;">▶</span>
+          Have a promo code?
+        </button>
+        <div id="sp-promo-input-wrap" style="display:none;margin-top:6px;text-align:left;">
+          <div style="display:flex;gap:8px;">
+            <input id="sp-promo-input" type="text" placeholder="Enter code"
+              style="flex:1;padding:10px 14px;border:1.5px solid #e8c4bc;border-radius:7px;font-size:0.9rem;font-family:'Nunito',sans-serif;color:#2c1810;background:#fff;outline:none;text-transform:uppercase;letter-spacing:0.05em;box-sizing:border-box;"
+              oninput="this.value=this.value.toUpperCase()"
+              onkeydown="if(event.key==='Enter'){event.preventDefault();applyPromoCode();}"
+            />
+            <button type="button" onclick="applyPromoCode()" id="sp-promo-btn"
+              style="padding:10px 18px;background:linear-gradient(135deg,#c9a96e,#9e7c4a);color:#fff;border:none;border-radius:7px;font-size:0.85rem;font-weight:700;cursor:pointer;font-family:'Nunito',sans-serif;white-space:nowrap;">
+              Apply
+            </button>
+          </div>
+          <div id="sp-promo-result" style="margin-top:8px;font-size:0.83rem;min-height:18px;"></div>
+        </div>
+      </div>
+
       <!-- ① Payment method choice screen -->
       <div id="pay-method-screen" class="sp-screen-enter">
         <p style="text-align:center;font-family:'Playfair Display',serif;font-size:0.97rem;color:#6b3d2e;margin-bottom:14px;">How would you like to pay?</p>
@@ -2340,7 +2362,10 @@
 
       renderBookingDetails(data);
       const depositEl = document.getElementById('deposit-display');
-      if (depositEl) depositEl.textContent = 'AUD $' + parseFloat(data.total_aud).toFixed(2);
+      if (depositEl) {
+        depositEl.textContent = 'AUD $' + parseFloat(data.total_aud).toFixed(2);
+        depositEl.dataset.originalAmount = parseFloat(data.total_aud).toFixed(2);
+      }
       // Show discount breakdown if coupon was applied
       const existingBreakdown = document.getElementById('deposit-discount-breakdown');
       if (existingBreakdown) existingBreakdown.remove();
@@ -2412,6 +2437,68 @@
 
   let _stripeInitStarted = false;
 
+  function _togglePromo() {
+    const wrap = document.getElementById('sp-promo-input-wrap');
+    const chevron = document.getElementById('sp-promo-chevron');
+    if (!wrap) return;
+    const open = wrap.style.display !== 'none';
+    wrap.style.display = open ? 'none' : 'block';
+    if (chevron) chevron.style.transform = open ? '' : 'rotate(90deg)';
+  }
+
+  async function applyPromoCode() {
+    const input = document.getElementById('sp-promo-input');
+    const result = document.getElementById('sp-promo-result');
+    const btn = document.getElementById('sp-promo-btn');
+    const code = (input ? input.value : '').trim().toUpperCase();
+    if (!code) { if (result) result.innerHTML = '<span style="color:#c0392b;">Please enter a code.</span>'; return; }
+    if (btn) { btn.disabled = true; btn.textContent = 'Checking…'; }
+    if (result) result.innerHTML = '';
+    try {
+      const r = await fetch('/api/validate-coupon?code=' + encodeURIComponent(code));
+      const data = await r.json();
+      if (!data.valid) {
+        if (result) result.innerHTML = '<span style="color:#c0392b;">❌ ' + (data.error || 'Invalid code') + '</span>';
+        if (btn) { btn.disabled = false; btn.textContent = 'Apply'; }
+        return;
+      }
+      const depositEl = document.getElementById('deposit-display');
+      const originalAud = parseFloat(depositEl ? (depositEl.dataset.originalAmount || '0') : '0') || 0;
+      let discountAmount = data.discountType === 'percent'
+        ? originalAud * data.discountValue / 100
+        : Math.min(data.discountValue, originalAud);
+      const newAmount = Math.max(0, originalAud - discountAmount);
+      _appliedCoupon = { code: data.code, discountType: data.discountType, discountValue: data.discountValue, discountAmount, newAmount, originalAud };
+      if (depositEl) {
+        depositEl.innerHTML = '<span style="text-decoration:line-through;color:#aaa;font-size:1.5rem;">AUD $' + originalAud.toFixed(2) + '</span><br>'
+          + '<span style="color:#2c6e3f;font-size:2.2rem;">AUD $' + newAmount.toFixed(2) + '</span>';
+      }
+      const discLabel = data.discountType === 'percent' ? data.discountValue + '% off' : 'A$' + data.discountValue + ' off';
+      if (result) result.innerHTML = '<span style="color:#2c6e3f;">✅ ' + discLabel + ' applied!'
+        + (data.description ? ' · <em>' + data.description + '</em>' : '') + '</span>'
+        + ' <button type="button" onclick="removePromoCode()" style="background:none;border:none;color:#c0392b;font-size:0.8rem;cursor:pointer;text-decoration:underline;font-family:\'Nunito\',sans-serif;padding:0 4px;">Remove</button>';
+      if (btn) { btn.textContent = '✓ Applied'; btn.style.background = '#2c6e3f'; }
+      if (input) input.disabled = true;
+    } catch (e) {
+      if (result) result.innerHTML = '<span style="color:#c0392b;">Could not check code. Please try again.</span>';
+      if (btn) { btn.disabled = false; btn.textContent = 'Apply'; }
+    }
+  }
+
+  function removePromoCode() {
+    _appliedCoupon = null;
+    const depositEl = document.getElementById('deposit-display');
+    if (depositEl && depositEl.dataset.originalAmount) {
+      depositEl.textContent = 'AUD $' + parseFloat(depositEl.dataset.originalAmount).toFixed(2);
+    }
+    const input = document.getElementById('sp-promo-input');
+    const result = document.getElementById('sp-promo-result');
+    const btn = document.getElementById('sp-promo-btn');
+    if (input) { input.value = ''; input.disabled = false; }
+    if (result) result.innerHTML = '';
+    if (btn) { btn.disabled = false; btn.textContent = 'Apply'; btn.style.background = ''; }
+  }
+
   async function initStripe(pubKey, token) {
     try {
       const Stripe = window.Stripe;
@@ -2420,7 +2507,7 @@
       const res = await fetch('/api/create-payment-intent', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ token, testMode: _testMode })
+        body: JSON.stringify({ token, testMode: _testMode, couponCode: _appliedCoupon ? _appliedCoupon.code : null })
       });
       const json = await res.json();
       if (json.error || !json.client_secret) {
@@ -2461,7 +2548,8 @@
         let body = { token: _bookingToken };
         try {
           const d = _decodeBookingToken(_bookingToken);
-          body = { client_name: d.client_name, client_email: d.client_email, total_aud: d.total_aud, confirmed_data: d.confirmed_data };
+          const actualAud = _appliedCoupon ? _appliedCoupon.newAmount : parseFloat(d.total_aud);
+          body = { client_name: d.client_name, client_email: d.client_email, total_aud: actualAud, confirmed_data: d.confirmed_data };
         } catch (_) {}
         await fetch('/api/select-cash', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
       } catch (e) { /* best effort */ }
@@ -2470,7 +2558,9 @@
     try {
       const d = _decodeBookingToken(_bookingToken);
       const note = document.getElementById('cash-deposit-note');
-      if (note && d.total_aud) note.textContent = 'Cash deposit of A$' + parseFloat(d.total_aud).toFixed(2) + ' to be paid at appointment.';
+      const cashAud = _appliedCoupon ? _appliedCoupon.newAmount : parseFloat(d.total_aud);
+      if (note && cashAud) note.textContent = 'Cash deposit of A$' + cashAud.toFixed(2) + ' to be paid at appointment.'
+        + (_appliedCoupon ? ' (Promo code ' + _appliedCoupon.code + ' applied)' : '');
     } catch (_) {}
     document.getElementById('pay-method-screen').style.display = 'none';
     document.getElementById('payment-success-cash').style.display = 'block';
@@ -2500,7 +2590,7 @@
       err.style.animation = 'none'; void err.offsetWidth;
       err.style.animation = '';
     } else {
-      try { await fetch('/api/confirm-payment', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ token: _bookingToken, payment_intent_id: paymentIntent?.id || null, testMode: _testMode }) }); } catch {}
+      try { await fetch('/api/confirm-payment', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ token: _bookingToken, payment_intent_id: paymentIntent?.id || null, testMode: _testMode, couponCode: _appliedCoupon ? _appliedCoupon.code : null }) }); } catch {}
       document.getElementById('pay-card-screen').style.display = 'none';
       _showSuccessCard({});
     }

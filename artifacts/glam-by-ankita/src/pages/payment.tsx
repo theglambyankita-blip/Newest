@@ -146,7 +146,34 @@ export default function PaymentPage() {
   const [paying, setPaying] = useState(false);
   const [cashLoading, setCashLoading] = useState(false);
   const [isTestMode, setIsTestMode] = useState(false);
+  const [showCoupon, setShowCoupon] = useState(false);
+  const [couponInput, setCouponInput] = useState("");
+  const [couponLoading, setCouponLoading] = useState(false);
+  const [couponError, setCouponError] = useState("");
+  const [appliedCoupon, setAppliedCoupon] = useState<{ code: string; discountType: string; discountValue: number; discountAmount: number; newAmount: number; originalAud: number } | null>(null);
   const stripeLoaded = useRef(false);
+
+  async function handleApplyCoupon() {
+    const code = couponInput.trim().toUpperCase();
+    if (!code) { setCouponError("Please enter a code."); return; }
+    setCouponLoading(true); setCouponError("");
+    try {
+      const r = await fetch(`${BASE}/api/validate-coupon?code=${encodeURIComponent(code)}`);
+      const data = await r.json();
+      if (!data.valid) { setCouponError(data.error || "Invalid code."); setCouponLoading(false); return; }
+      const originalAud = booking?.totalAud ?? 0;
+      const discountAmount = data.discountType === "percent"
+        ? originalAud * data.discountValue / 100
+        : Math.min(data.discountValue, originalAud);
+      const newAmount = Math.max(0, originalAud - discountAmount);
+      setAppliedCoupon({ code: data.code, discountType: data.discountType, discountValue: data.discountValue, discountAmount, newAmount, originalAud });
+    } catch { setCouponError("Could not check code. Please try again."); }
+    setCouponLoading(false);
+  }
+
+  function handleRemoveCoupon() {
+    setAppliedCoupon(null); setCouponInput(""); setCouponError("");
+  }
 
   useEffect(() => {
     try {
@@ -176,7 +203,7 @@ export default function PaymentPage() {
       if (!cfg.stripePublishableKey) throw new Error(isTestMode ? "Test Stripe keys not configured. Please add STRIPE_TEST_SECRET_KEY and STRIPE_TEST_PUBLISHABLE_KEY as Replit secrets." : "Stripe not configured.");
       const stripe = await loadStripe(cfg.stripePublishableKey);
       if (!stripe) throw new Error("Failed to load Stripe.");
-      const piRes = await fetch(`${BASE}/api/create-payment-intent`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ token: rawToken, testMode: isTestMode }) });
+      const piRes = await fetch(`${BASE}/api/create-payment-intent`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ token: rawToken, testMode: isTestMode, couponCode: appliedCoupon?.code || null }) });
       const piJson = await piRes.json();
       if (!piRes.ok) throw new Error(piJson.error || "Could not create payment.");
       const els = stripe.elements({
@@ -195,7 +222,7 @@ export default function PaymentPage() {
     const { error } = await stripeObj.confirmPayment({ elements, confirmParams: { return_url: window.location.href, receipt_email: booking.clientEmail || undefined }, redirect: "if_required" });
     if (error) { setPayError(error.message || "Payment failed. Please try again."); setPaying(false); setScreen("card-ready"); }
     else {
-      try { await fetch(`${BASE}/api/confirm-payment`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ token: rawToken, testMode: isTestMode }) }); } catch {}
+      try { await fetch(`${BASE}/api/confirm-payment`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ token: rawToken, testMode: isTestMode, couponCode: appliedCoupon?.code || null }) }); } catch {}
       setPaying(false); setScreen("success-card");
     }
   }
@@ -204,7 +231,8 @@ export default function PaymentPage() {
     if (!booking) return;
     if (isTestMode) { setScreen("success-cash"); return; }
     setCashLoading(true);
-    try { await fetch(`${BASE}/api/select-cash`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ token: rawToken }) }); } catch {}
+    const cashAud = appliedCoupon ? appliedCoupon.newAmount : booking.totalAud;
+    try { await fetch(`${BASE}/api/select-cash`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ token: rawToken, total_aud: cashAud }) }); } catch {}
     setCashLoading(false); setScreen("success-cash");
   }
 
@@ -355,14 +383,55 @@ export default function PaymentPage() {
               )}
 
               <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} transition={{ delay: 0.25, type: "spring", stiffness: 200 }}
-                style={{ background: "linear-gradient(135deg,#fff9f0,#fdf5e8)", border: "2px solid #c9a96e", borderRadius: 10, padding: "20px 24px", marginBottom: 24, textAlign: "center", animation: "pulse-glow 3s ease-in-out infinite" }}>
+                style={{ background: "linear-gradient(135deg,#fff9f0,#fdf5e8)", border: "2px solid #c9a96e", borderRadius: 10, padding: "20px 24px", marginBottom: 16, textAlign: "center", animation: "pulse-glow 3s ease-in-out infinite" }}>
                 <div style={{ fontSize: "0.82rem", color: "#9e7c4a", fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.06em" }}>Deposit Due</div>
                 <motion.div animate={{ scale: [1, 1.03, 1] }} transition={{ repeat: Infinity, duration: 2.5, ease: "easeInOut" }}
-                  style={{ fontFamily: "Georgia,serif", fontSize: "2rem", color: "#6b3d2e", margin: "6px 0 2px" }}>
-                  A${booking.totalAud.toFixed(2)}
+                  style={{ fontFamily: "Georgia,serif", fontSize: "2rem", color: appliedCoupon ? "#2c6e3f" : "#6b3d2e", margin: "6px 0 2px" }}>
+                  {appliedCoupon ? (
+                    <>
+                      <span style={{ textDecoration: "line-through", color: "#aaa", fontSize: "1.4rem", marginRight: 8 }}>A${booking.totalAud.toFixed(2)}</span>
+                      A${appliedCoupon.newAmount.toFixed(2)}
+                    </>
+                  ) : `A$${booking.totalAud.toFixed(2)}`}
                 </motion.div>
+                {appliedCoupon && (
+                  <div style={{ fontSize: "0.8rem", color: "#2c6e3f", fontWeight: 600, marginBottom: 2 }}>
+                    🏷️ Promo <strong>{appliedCoupon.code}</strong> — {appliedCoupon.discountType === "percent" ? `${appliedCoupon.discountValue}% off` : `A$${appliedCoupon.discountValue} off`}
+                    <button type="button" onClick={handleRemoveCoupon} style={{ marginLeft: 8, background: "none", border: "none", color: "#c0392b", fontSize: "0.78rem", cursor: "pointer", textDecoration: "underline", padding: 0 }}>Remove</button>
+                  </div>
+                )}
                 <div style={{ fontSize: "0.82rem", color: "#9e7c4a" }}>Secures your appointment · Non-refundable</div>
               </motion.div>
+
+              {/* Promo code toggle */}
+              {!appliedCoupon && (
+                <div style={{ marginBottom: 16, textAlign: "center" }}>
+                  <button type="button" onClick={() => setShowCoupon(v => !v)}
+                    style={{ background: "none", border: "none", cursor: "pointer", fontSize: "0.82rem", color: "#9e7c4a", fontWeight: 600, fontFamily: "inherit", display: "inline-flex", alignItems: "center", gap: 5, padding: "4px 8px" }}>
+                    <span style={{ fontSize: "0.65rem", display: "inline-block", transition: "transform 0.25s", transform: showCoupon ? "rotate(90deg)" : "none" }}>▶</span>
+                    Have a promo code?
+                  </button>
+                  {showCoupon && (
+                    <div style={{ marginTop: 8, textAlign: "left" }}>
+                      <div style={{ display: "flex", gap: 8 }}>
+                        <input
+                          type="text"
+                          placeholder="Enter code"
+                          value={couponInput}
+                          onChange={e => setCouponInput(e.target.value.toUpperCase())}
+                          onKeyDown={e => { if (e.key === "Enter") { e.preventDefault(); handleApplyCoupon(); } }}
+                          style={{ flex: 1, padding: "10px 14px", border: "1.5px solid #e8c4bc", borderRadius: 7, fontSize: "0.9rem", fontFamily: "inherit", color: "#2c1810", background: "#fff", outline: "none", textTransform: "uppercase", letterSpacing: "0.05em", boxSizing: "border-box" }}
+                        />
+                        <button type="button" onClick={handleApplyCoupon} disabled={couponLoading}
+                          style={{ padding: "10px 18px", background: "linear-gradient(135deg,#c9a96e,#9e7c4a)", color: "#fff", border: "none", borderRadius: 7, fontSize: "0.85rem", fontWeight: 700, cursor: "pointer", fontFamily: "inherit", whiteSpace: "nowrap", opacity: couponLoading ? 0.7 : 1 }}>
+                          {couponLoading ? "Checking…" : "Apply"}
+                        </button>
+                      </div>
+                      {couponError && <div style={{ marginTop: 6, fontSize: "0.83rem", color: "#c0392b" }}>❌ {couponError}</div>}
+                    </div>
+                  )}
+                </div>
+              )}
             </motion.div>
           )}
         </AnimatePresence>
