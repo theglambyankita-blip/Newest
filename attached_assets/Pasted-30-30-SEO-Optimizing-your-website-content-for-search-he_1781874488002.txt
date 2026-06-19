@@ -1,0 +1,57 @@
+30/30
+SEO
+Optimizing your website content for search helps you drive organic traffic to your website. You can do this by providing a great experience for people and web crawlers alike.
+Improve Your SEO Ranking with a free 15-minute Lesson.
+PASS
+PERMISSION TO INDEX
+Granted.
+In order for a page to appear in search results, search engines must have permission to store it in their index. If they can't store it, no other changes matter.
+PASS
+META DESCRIPTION
+Look at you go!
+Meta descriptions tell people what your page is about in search results.
+PASS
+CONTENT PLUGINS
+*Clap, clap, clap* Good job!
+Search engines can't always understand content that relies on browser plugins, such as Flash.
+PASS
+DESCRIPTIVE LINK TEXT
+Your links make sense.
+Descriptive link text helps visitors know what they'll see if they click the link. "Click here" doesn't cut it.
+
+30/30
+Mobile
+Traffic from mobile devices is growing fast. Optimize your website for mobile or you'll miss out on valuable traffic, leads, and revenue.
+Improve Your Mobile Performance with a free 15-minute Lesson
+
+PASS
+LEGIBLE FONT SIZE
+Easy on the eyes.
+Visitors may have difficulty reading small text, especially on mobile devices. We recommend at least 12px.
+PASS
+TAP TARGETS
+Clicking is so easy!
+Mobile-friendly pages perform better in search results. Make sure interactive elements like buttons and links are not too small or too close together.
+PASS
+RESPONSIVE
+Fantastic! You're ready to face the future.
+Responsive design gives you a bump in search rankings for searches on mobile devices.
+
+10/10
+Security
+A secure website equipped with an SSL certificate and free from vulnerabilities is now the standard online. People and search engines love secure websites.
+Improve Your Site Security with a free 15-minute Lesson
+HTTPS
+Secured.
+HTTPS protects websites from attacks and gives visitors confidence that your site is authentic and trustworthy.
+SECURE JAVASCRIPT LIBRARIES
+Protected!
+Intruders can exploit outdated JavaScript libraries. Using the latest version of each library and updating it regularly will help keep you safe.
+What should I do next?
+
+PERFORMANCE	CURRENT	RECOMMENDATION
+Page size	14.7MB	< 3MB	Lighten your pages by removing or compressing heavy content such as images and video.
+Page requests	71	< 30	Reduce the number of HTTP requests your site makes. Remove any unnecessary images, scripts, or files, and consider lazy loading your images.
+Page speed	7Sec	< 5.3Sec	Speed up your site by lightening up your site pages, compressing images and video where possible.
+Minified JavaScript	No	Yes	Use a minifier tool or contact your web host to ensure your JavaScript is minified.
+Minified CSS	No	Yes	Use a minifier tool or contact your web host to ensure your CSS is minified.

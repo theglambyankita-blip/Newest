@@ -210,9 +210,8 @@
   </script>
   <!-- Favicon & App Icons -->
   <link rel="icon" type="image/svg+xml" href="/favicon.svg">
-  <link rel="icon" type="image/png" href="/logo-original.png" sizes="any">
   <link rel="shortcut icon" href="/favicon.ico">
-  <link rel="apple-touch-icon" href="/logo-original.png">
+  <link rel="apple-touch-icon" href="/favicon.ico">
   <meta name="apple-mobile-web-app-title" content="Glam by Ankita">
   <meta name="application-name" content="The Glam by Ankita">
   <script src="https://js.stripe.com/v3/" async></script>
@@ -221,11 +220,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400&family=Nunito:wght@400;500;600;700&family=Dancing+Script:wght@600&display=swap">
   <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400&family=Nunito:wght@400;500;600;700&family=Dancing+Script:wght@600&display=swap" rel="stylesheet">
-  <link rel="preload" href="/ankita-photo.jpeg" as="image">
-  <link rel="preload" href="/gallery/glam-city.png" as="image">
-  <link rel="preload" href="/gallery/smokey-salon.jpeg" as="image">
-  <link rel="preload" href="/gallery/soft-smokey.jpeg" as="image">
-  <link rel="preload" href="/gallery/purple-glam.jpeg" as="image">
+  <link rel="preload" href="/ankita-photo.jpeg" as="image" fetchpriority="high">
   <style>
     :root {
       --blush: #f5ddd8;
@@ -991,7 +986,7 @@
 <!-- NAV -->
 <div class="sitenav" id="sitenav">
   <div class="sitenav-top">
-    <button class="sitenav-logo" onclick="showPage('home',null)" style="display:flex;align-items:center;gap:0.5rem;"><img src="/logo-original.png" alt="The Glam by Ankita" style="width:40px;height:40px;border-radius:50%;object-fit:cover;">The Glam by Ankita</button>
+    <button class="sitenav-logo" onclick="showPage('home',null)" style="display:flex;align-items:center;gap:0.5rem;"><img src="/logo-original.webp" alt="The Glam by Ankita" style="width:40px;height:40px;border-radius:50%;object-fit:cover;">The Glam by Ankita</button>
     <div style="display:flex;align-items:center;gap:0.5rem;">
       <button class="sitenav-book mag-btn" onclick="showPage('contact',null)">✨ Book Now</button>
       <button class="hamburger" id="hamburger" onclick="toggleMobileNav()" aria-label="Menu">
@@ -1041,7 +1036,7 @@
     </div>
     <div class="hero-right" id="heroRight" style="display:flex;align-items:center;justify-content:center;">
       <div class="hero-photo-wrap" data-anim="scale">
-        <img src="/logo-original.png" alt="The Glam by Ankita" style="width:100%;display:block;" fetchpriority="high">
+        <img src="/logo-original.webp" alt="The Glam by Ankita" style="width:100%;display:block;" fetchpriority="high">
       </div>
       <div class="hero-gold-bar"></div>
     </div>
@@ -1789,7 +1784,7 @@
         el.onclick = () => openLightbox(el);
         const imgStyle = p.objectPosition ? 'object-position:' + p.objectPosition + ';' : '';
         const descHtml = p.desc ? '<small>' + p.desc + '</small>' : '';
-        el.innerHTML = '<img src="' + (p.url || '/gallery/' + p.filename) + '" alt="' + (p.title||'') + '" loading="eager" decoding="async" style="' + imgStyle + '">' +
+        el.innerHTML = '<img src="' + (p.url || '/gallery/' + p.filename) + '" alt="' + (p.title||'') + '" loading="lazy" decoding="async" style="' + imgStyle + '">' +
           '<div class="photo-overlay"><div class="photo-overlay-txt">' + (p.title||'') + descHtml + '</div></div>';
         if (p.featured) {
           grid.insertBefore(el, grid.firstChild);
