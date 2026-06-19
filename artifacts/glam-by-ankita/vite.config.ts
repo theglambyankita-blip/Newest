@@ -28,5 +28,25 @@ export default defineConfig({
   build: {
     outDir: path.resolve(__dirname, "dist"),
     emptyOutDir: true,
-  }
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          clerk: ["@clerk/react"],
+          stripe: ["@stripe/react-stripe-js", "@stripe/stripe-js"],
+          motion: ["framer-motion"],
+        },
+      },
+    },
+  },
+  preview: {
+    port: parseInt(process.env.PORT || "4173"),
+    host: "0.0.0.0",
+    allowedHosts: true,
+    proxy: {
+      "/api": {
+        target: "http://localhost:8080",
+        changeOrigin: true,
+      },
+    },
+  },
 });
