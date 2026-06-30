@@ -1744,7 +1744,10 @@
   const validPages = ['home','about','services','gallery','contact'];
 
   let _galleryLoaded = false;
+  let _galleryLoading = false;
   async function loadDynamicGallery() {
+    if (_galleryLoading) return;
+    _galleryLoading = true;
     try {
       // Always fetch fresh from API so admin changes appear immediately
       let photos = null;
@@ -1851,6 +1854,7 @@
         grid.appendChild(el);
       }
     } catch(e) {}
+    finally { _galleryLoading = false; }
   }
 
   function showPage(pageId, btn, pushState) {
