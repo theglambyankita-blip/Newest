@@ -1175,7 +1175,7 @@ loadReels();
 
 // ── Gallery ───────────────────────────────────────────────────────
 const STATIC_GALLERY_SEED = [
-  { filename:'glam-city.png', url:'/gallery/glam-city.png', title:'Full Glam with a Statement Red Lip', category:'glam', description:'Bold red lip, warm neutral eyes & bronzed skin — polished, glamorous, and sophisticated', object_position:'center 30%', featured:true, sort_order:0 },
+  { filename:'glam-city.webp', url:'/gallery/glam-city.webp', title:'Full Glam with a Statement Red Lip', category:'glam', description:'Bold red lip, warm neutral eyes & bronzed skin — polished, glamorous, and sophisticated', object_position:'center 30%', featured:true, sort_order:0 },
   { filename:'smokey-salon.jpeg', url:'/gallery/smokey-salon.jpeg', title:'Soft Glam with Smokey Eyes', category:'glam', description:'Rich brown smokey eye, rosy mauve blush, nude pink lips — elegant, refined, and effortlessly glamorous', object_position:'center top', featured:false, sort_order:1 },
   { filename:'soft-smokey.jpeg', url:'/gallery/soft-smokey.jpeg', title:'Soft Smokey Glam', category:'glam', description:'Soft taupe and warm brown tones, diffused smoky corners, rosy nude lips — polished and timeless', object_position:'center top', featured:false, sort_order:2 },
   { filename:'purple-glam.jpeg', url:'/gallery/purple-glam.jpeg', title:'Soft Glam with a Pop of Blue Liner', category:'glam', description:'Soft pink/mauve shadow & a sharp blue-violet winged liner — clean, feminine, wearable', object_position:'center 30%', featured:false, sort_order:3 },
@@ -1244,11 +1244,13 @@ async function getGalleryItems() {
   const db = getPool();
   if (!_gallerySynced) {
     _gallerySynced = true;
+    // Remove stale png entry replaced by webp
+    await db.query(`DELETE FROM gallery_images WHERE filename='glam-city.png'`).catch(()=>{});
     for (const item of STATIC_GALLERY_SEED) {
       await db.query(
         `INSERT INTO gallery_images (filename,url,title,category,description,object_position,featured,sort_order)
          VALUES ($1,$2,$3,$4,$5,$6,$7,$8)
-         ON CONFLICT (filename) DO NOTHING`,
+         ON CONFLICT (filename) DO UPDATE SET url=$2,title=$3,category=$4,description=$5,object_position=$6,featured=$7`,
         [item.filename,item.url,item.title,item.category,item.description,item.object_position,item.featured,item.sort_order]
       );
     }
