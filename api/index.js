@@ -718,10 +718,54 @@ app.get('/admin', async (req, res) => {
   </div>
 </div>`;
 
+  const btsSectionHtml = `<div class="section"><div class="section-title">🌟 Behind the Scenes Photos</div>
+  <div class="card" style="padding:20px 24px;margin-bottom:16px;">
+    <h3 style="font-size:0.93rem;color:#2c1810;margin:0 0 14px;padding-bottom:8px;border-bottom:1px solid #f0ddd8;">Upload New BTS Photo</h3>
+    ${!cloudName?`<div style="background:#fff8e6;border:1px solid #f0c060;border-radius:6px;padding:12px 16px;margin-bottom:14px;font-size:0.83rem;color:#7a5a00;">⚠️ Cloudinary not configured.</div>`:''}
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;">
+      <div>
+        <div class="field"><label>Photo</label><input type="file" id="bts-file" accept="image/*" onchange="btsPreviewFile(event)" style="padding:8px;"></div>
+        <div id="bts-preview-wrap" style="display:none;margin-bottom:10px;"><img id="bts-preview-img" style="width:100%;border-radius:6px;border:1px solid #e8c4bc;" alt="Preview"></div>
+      </div>
+      <div>
+        <div class="field"><label>Caption</label><input type="text" id="bts-caption" placeholder="e.g. At Work ✨"></div>
+        <button class="btn" id="bts-upload-btn" onclick="btsUpload()" ${!cloudName?'disabled':''}>Upload Photo ✦</button>
+        <div id="bts-upload-status" style="margin-top:10px;font-size:0.84rem;"></div>
+      </div>
+    </div>
+  </div>
+  <div class="card" style="padding:20px 24px;">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;padding-bottom:8px;border-bottom:1px solid #f0ddd8;">
+      <h3 style="font-size:0.93rem;color:#2c1810;margin:0;">All BTS Photos</h3>
+      <span style="font-size:0.76rem;color:#9a7060;">Drag to reorder · Click ✕ to delete</span>
+    </div>
+    <div id="bts-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:10px;"></div>
+    <div id="bts-empty" style="color:#9e7c4a;font-size:0.85rem;padding:20px 0;display:none;">No BTS photos yet.</div>
+  </div>
+</div>`;
+
+  const reelsSectionHtml = `<div class="section"><div class="section-title">🎬 Featured Reels</div>
+  <div class="card" style="padding:20px 24px;margin-bottom:16px;">
+    <h3 style="font-size:0.93rem;color:#2c1810;margin:0 0 14px;padding-bottom:8px;border-bottom:1px solid #f0ddd8;">Add Instagram Reel</h3>
+    <div style="display:grid;grid-template-columns:2fr 1fr;gap:12px;align-items:end;">
+      <div class="field" style="margin:0;"><label>Instagram Post / Reel URL</label><input type="url" id="reel-url" placeholder="https://www.instagram.com/p/ABC123/"></div>
+      <div class="field" style="margin:0;"><label>Label (optional)</label><input type="text" id="reel-label" placeholder="View on Instagram"></div>
+    </div>
+    <div style="margin-top:12px;display:flex;align-items:center;gap:12px;">
+      <button class="btn" onclick="reelAdd()" id="reel-add-btn" style="padding:10px 22px;font-size:0.88rem;">Add Reel ✦</button>
+      <span id="reel-add-status" style="font-size:0.83rem;"></span>
+    </div>
+  </div>
+  <div class="card" style="padding:20px 24px;">
+    <h3 style="font-size:0.93rem;color:#2c1810;margin:0 0 14px;padding-bottom:8px;border-bottom:1px solid #f0ddd8;">All Featured Reels</h3>
+    <div id="reels-list"><p style="color:#9e7c4a;font-size:0.85rem;">Loading…</p></div>
+  </div>
+</div>`;
+
   res.setHeader('Content-Type','text/html; charset=utf-8');
   res.send(`<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Admin Dashboard · The Glam by Ankita</title><style>*{box-sizing:border-box;margin:0;padding:0}body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#fdf8f4;color:#2c1810;min-height:100vh;}.topbar{display:flex;align-items:center;justify-content:space-between;padding:16px 28px;background:#fff;border-bottom:1px solid #e8c4bc;}.logo-text{font-size:1rem;color:#6b3d2e;font-style:italic;}.header{background:linear-gradient(135deg,#c9a96e,#9e7c4a);padding:28px 32px;color:#fff;}.header h1{font-size:1.5rem;margin-bottom:4px;}.stats{display:flex;gap:16px;flex-wrap:wrap;margin-top:20px;}.stat{background:rgba(255,255,255,0.18);border-radius:8px;padding:12px 20px;text-align:center;min-width:100px;border:2px solid transparent;text-decoration:none;color:inherit;display:block;}.stat-val{font-size:1.6rem;font-weight:700;}.stat-lbl{font-size:0.75rem;opacity:0.88;margin-top:2px;}.content{max-width:1100px;margin:0 auto;padding:28px 20px 60px;}.section{margin-bottom:32px;}.section-title{font-size:1rem;color:#6b3d2e;margin-bottom:14px;padding-bottom:8px;border-bottom:2px solid #e8c4bc;}.toolbar{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px;align-items:center;}.card{background:#fff;border:1px solid #e8c4bc;border-radius:10px;overflow:hidden;}.table-wrap{overflow-x:auto;}table{width:100%;border-collapse:collapse;font-size:0.88rem;}th{padding:10px 12px;text-align:left;font-size:0.75rem;font-weight:700;color:#6b3d2e;text-transform:uppercase;letter-spacing:0.05em;background:#fdf5f0;border-bottom:1px solid #e8c4bc;white-space:nowrap;}tr:hover td{background:#fdf5f0;}.email-form{padding:24px;}.field{margin-bottom:16px;}label{display:block;font-size:0.75rem;font-weight:700;color:#6b3d2e;text-transform:uppercase;letter-spacing:0.06em;margin-bottom:6px;}input,textarea{width:100%;padding:10px 13px;border:1.5px solid #e0c8c0;border-radius:6px;font-size:0.92rem;color:#2c1810;background:#fff;font-family:inherit;outline:none;transition:border-color .2s;}input:focus,textarea:focus{border-color:#c9a96e;}textarea{resize:vertical;min-height:140px;}.btn{display:inline-block;padding:13px 28px;background:linear-gradient(135deg,#c9a96e,#9e7c4a);color:#fff;border:none;border-radius:8px;font-size:0.95rem;font-weight:700;cursor:pointer;}.btn:disabled{opacity:0.5;cursor:not-allowed;}.alert{padding:12px 16px;border-radius:6px;font-size:0.88rem;margin-bottom:16px;display:none;}.alert-success{background:#f0fff4;border:1px solid #a8e6b8;color:#2c6e3f;}.alert-error{background:#fff0f0;border:1px solid #f5c0c0;color:#c0392b;}</style></head><body>
 <div class="topbar"><span class="logo-text">The Glam by Ankita</span><span style="background:#fdf0ee;color:#6b3d2e;font-size:0.75rem;font-weight:700;padding:4px 10px;border-radius:20px;border:1px solid #e8c4bc;">Admin Dashboard</span></div>
-<div class="header"><h1>✦ Admin Dashboard</h1><p>View and manage all bookings, send emails to clients.</p>
+<div class="header"><h1>✦ Admin Dashboard</h1><p>Manage bookings, gallery, reels and promo codes.</p>
 <div class="stats">
   <a class="stat" href="${baseUrl}"><div class="stat-val">${allBookings.length}</div><div class="stat-lbl">Total Bookings</div></a>
   <a class="stat" href="${baseUrl}&view=upcoming"><div class="stat-val">${upcoming.length}</div><div class="stat-lbl">Upcoming</div></a>
@@ -744,6 +788,8 @@ app.get('/admin', async (req, res) => {
     </div></div>
   </div>
   ${gallerySectionHtml}
+  ${btsSectionHtml}
+  ${reelsSectionHtml}
   ${couponSectionHtml}
   <div class="section"><div class="section-title">🔗 Admin Link</div>
     <div class="card" style="padding:20px 24px;">
@@ -1010,8 +1056,120 @@ async function cpEditDelete(){
   }catch(e){alert('Delete failed.');}
 }
 
+// ── BTS ──────────────────────────────────────────────────────────
+var _btsPhotos=[];
+var _btsDragSrc='';
+function btsPreviewFile(e){var file=e.target.files[0];if(!file)return;var reader=new FileReader();reader.onload=function(ev){document.getElementById('bts-preview-img').src=ev.target.result;document.getElementById('bts-preview-wrap').style.display='block';};reader.readAsDataURL(file);}
+async function btsUpload(){
+  if(!CLOUD_NAME||!UPLOAD_PRESET){alert('Cloudinary not configured.');return;}
+  var fileInput=document.getElementById('bts-file');
+  var file=fileInput.files[0];if(!file){alert('Please select a photo first.');return;}
+  var caption=document.getElementById('bts-caption').value.trim()||'Behind the Scenes';
+  var btn=document.getElementById('bts-upload-btn');var status=document.getElementById('bts-upload-status');
+  btn.disabled=true;btn.textContent='Uploading...';status.textContent='Uploading to cloud...';
+  try{
+    var fd=new FormData();fd.append('file',file);fd.append('upload_preset',UPLOAD_PRESET);fd.append('folder','glam-by-ankita/bts');
+    var cr=await fetch('https://api.cloudinary.com/v1_1/'+CLOUD_NAME+'/image/upload',{method:'POST',body:fd});
+    if(!cr.ok){var ce=await cr.json().catch(function(){return{};});throw new Error(ce.error&&ce.error.message||'Cloudinary upload failed');}
+    var cd=await cr.json();
+    status.textContent='Saving...';
+    var r=await fetch('/api/admin/bts?token='+encodeURIComponent(TOKEN),{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({url:cd.secure_url,public_id:cd.public_id,caption:caption})});
+    if(!r.ok){var se=await r.json().catch(function(){return{};});throw new Error(se.error||'Save failed');}
+    status.innerHTML='<span style="color:#2e7d32;">Photo uploaded!</span>';
+    fileInput.value='';document.getElementById('bts-preview-wrap').style.display='none';document.getElementById('bts-caption').value='';
+    await loadBts();
+  }catch(e){status.innerHTML='<span style="color:#c0392b;">'+String(e.message||e)+'</span>';}
+  btn.disabled=false;btn.textContent='Upload Photo ✦';
+}
+async function loadBts(){
+  try{var r=await fetch('/api/bts/list');if(!r.ok)throw new Error('Error');_btsPhotos=await r.json();renderBts();}
+  catch(e){var g=document.getElementById('bts-grid');if(g)g.innerHTML='<p style="color:#c0392b;font-size:0.85rem;">Failed to load. Refresh the page.</p>';}
+}
+function renderBts(){
+  var grid=document.getElementById('bts-grid');var empty=document.getElementById('bts-empty');
+  if(!_btsPhotos.length){grid.innerHTML='';empty.style.display='block';return;}
+  empty.style.display='none';
+  grid.innerHTML='';
+  _btsPhotos.forEach(function(p){
+    var wrap=document.createElement('div');
+    wrap.draggable=true;wrap.dataset.fn=p.filename;
+    wrap.ondragstart=function(e){_btsDragSrc=p.filename;e.dataTransfer.effectAllowed='move';};
+    wrap.ondragover=function(e){e.preventDefault();e.dataTransfer.dropEffect='move';};
+    wrap.ondrop=function(e){e.preventDefault();btsDrop(p.filename);};
+    wrap.style.cssText='position:relative;aspect-ratio:3/4;overflow:hidden;border-radius:8px;border:1.5px solid #e8c4bc;background:#f5e8e0;';
+    var img=document.createElement('img');img.src=p.url||('/'+p.filename);img.alt=p.caption||'';img.style.cssText='width:100%;height:100%;object-fit:cover;display:block;';
+    var cap=document.createElement('div');cap.style.cssText='position:absolute;bottom:0;left:0;right:0;padding:6px 8px;color:#fff;font-size:0.72rem;font-weight:600;text-shadow:0 1px 3px rgba(0,0,0,0.7);background:linear-gradient(transparent,rgba(44,24,16,0.65));';cap.textContent=p.caption||'';
+    var del=document.createElement('button');del.textContent='✕';del.style.cssText='position:absolute;top:5px;right:5px;background:rgba(192,57,43,0.88);color:#fff;border:none;border-radius:50%;width:22px;height:22px;font-size:0.75rem;cursor:pointer;line-height:1;';
+    del.onclick=function(){btsDelete(p.filename);};
+    wrap.appendChild(img);wrap.appendChild(cap);wrap.appendChild(del);grid.appendChild(wrap);
+  });
+}
+async function btsDrop(targetFn){
+  if(_btsDragSrc===targetFn)return;
+  var si=_btsPhotos.findIndex(function(p){return p.filename===_btsDragSrc;});
+  var ti=_btsPhotos.findIndex(function(p){return p.filename===targetFn;});
+  if(si===-1||ti===-1)return;
+  var moved=_btsPhotos.splice(si,1)[0];_btsPhotos.splice(ti,0,moved);
+  renderBts();
+  try{await fetch('/api/admin/bts/reorder?token='+encodeURIComponent(TOKEN),{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify({filenames:_btsPhotos.map(function(p){return p.filename;})})});}catch(err){console.error('BTS reorder failed',err);}
+}
+async function btsDelete(filename){
+  if(!confirm('Delete this BTS photo permanently?'))return;
+  var r=await fetch('/api/admin/bts/'+encodeURIComponent(filename)+'?token='+encodeURIComponent(TOKEN),{method:'DELETE'});
+  if(r.ok){await loadBts();}else alert('Delete failed. Please try again.');
+}
+// ── REELS ─────────────────────────────────────────────────────────
+var _reels=[];
+async function loadReels(){
+  try{var r=await fetch('/api/reels/list');if(!r.ok)throw new Error('Error');_reels=await r.json();renderReels();}
+  catch(e){var el=document.getElementById('reels-list');if(el)el.innerHTML='<p style="color:#c0392b;font-size:0.85rem;">Failed to load. Refresh the page.</p>';}
+}
+function renderReels(){
+  var el=document.getElementById('reels-list');
+  if(!_reels||!_reels.length){el.innerHTML='<p style="color:#9e7c4a;font-size:0.85rem;">No reels yet. Add your first reel above!</p>';return;}
+  el.innerHTML='';
+  var table=document.createElement('table');table.style.cssText='width:100%;border-collapse:collapse;font-size:0.88rem;';
+  var thead=document.createElement('thead');
+  thead.innerHTML='<tr><th style="padding:8px 12px;text-align:left;font-size:0.75rem;font-weight:700;color:#6b3d2e;text-transform:uppercase;background:#fdf5f0;border-bottom:1px solid #e8c4bc;">Instagram URL</th><th style="padding:8px 12px;text-align:left;font-size:0.75rem;font-weight:700;color:#6b3d2e;text-transform:uppercase;background:#fdf5f0;border-bottom:1px solid #e8c4bc;">Label</th><th style="padding:8px 12px;background:#fdf5f0;border-bottom:1px solid #e8c4bc;"></th></tr>';
+  var tbody=document.createElement('tbody');
+  _reels.forEach(function(reel){
+    var tr=document.createElement('tr');tr.style.borderBottom='1px solid #f0ddd6;';
+    var td1=document.createElement('td');td1.style.padding='10px 12px;';
+    var a=document.createElement('a');a.href=reel.url;a.target='_blank';a.rel='noopener';a.textContent=reel.url;a.style.cssText='color:#c9a96e;font-size:0.83rem;word-break:break-all;';
+    td1.appendChild(a);
+    var td2=document.createElement('td');td2.style.cssText='padding:10px 12px;color:#6b3d2e;font-size:0.85rem;';td2.textContent=reel.label||'View on Instagram';
+    var td3=document.createElement('td');td3.style.padding='10px 12px;';
+    var btn=document.createElement('button');btn.textContent='Delete';btn.style.cssText='padding:5px 12px;border:1.5px solid #f5c0c0;border-radius:6px;background:#fff;color:#c0392b;font-weight:700;font-size:0.8rem;cursor:pointer;font-family:inherit;';
+    btn.onclick=function(){reelDelete(reel.id);};
+    td3.appendChild(btn);tr.appendChild(td1);tr.appendChild(td2);tr.appendChild(td3);tbody.appendChild(tr);
+  });
+  table.appendChild(thead);table.appendChild(tbody);el.appendChild(table);
+}
+async function reelAdd(){
+  var url=document.getElementById('reel-url').value.trim();
+  var label=document.getElementById('reel-label').value.trim();
+  var status=document.getElementById('reel-add-status');var btn=document.getElementById('reel-add-btn');
+  if(!url){status.innerHTML='<span style="color:#c0392b;">Please enter an Instagram URL.</span>';return;}
+  btn.disabled=true;btn.textContent='Adding...';status.textContent='';
+  try{
+    var r=await fetch('/api/admin/reels?token='+encodeURIComponent(TOKEN),{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({url:url,label:label||'View on Instagram'})});
+    var j=await r.json();if(!r.ok)throw new Error(j.error||'Failed');
+    status.innerHTML='<span style="color:#2c6e3f;">Reel added!</span>';
+    document.getElementById('reel-url').value='';document.getElementById('reel-label').value='';
+    await loadReels();
+  }catch(e){status.innerHTML='<span style="color:#c0392b;">'+String(e.message||e)+'</span>';}
+  btn.disabled=false;btn.textContent='Add Reel ✦';
+}
+async function reelDelete(id){
+  if(!confirm('Remove this reel from the website?'))return;
+  var r=await fetch('/api/admin/reels/'+encodeURIComponent(id)+'?token='+encodeURIComponent(TOKEN),{method:'DELETE'});
+  if(r.ok){await loadReels();}else alert('Delete failed. Please try again.');
+}
+
 loadGallery();
 loadCoupons();
+loadBts();
+loadReels();
 </script></body></html>`);
 });
 
@@ -1032,6 +1190,35 @@ async function ensureGalleryTable() {
     featured BOOLEAN DEFAULT false, sort_order INTEGER DEFAULT 0,
     uploaded_at TIMESTAMPTZ DEFAULT NOW()
   )`);
+}
+
+async function ensureBtsTable() {
+  const db = getPool();
+  await db.query(`CREATE TABLE IF NOT EXISTS bts_photos (
+    id SERIAL PRIMARY KEY, filename TEXT NOT NULL UNIQUE, url TEXT NOT NULL,
+    public_id TEXT, caption TEXT DEFAULT '', sort_order INTEGER DEFAULT 0,
+    uploaded_at TIMESTAMPTZ DEFAULT NOW()
+  )`);
+  const seeds = [
+    { filename:'bts-1.jpeg', url:'/bts-1.jpeg', caption:'At Work ✨' },
+    { filename:'bts-2.jpeg', url:'/bts-2.jpeg', caption:'Precision & Care 💄' },
+    { filename:'bts-3.jpeg', url:'/bts-3.jpeg', caption:'The Process 🎨' },
+    { filename:'bts-4.jpeg', url:'/bts-4.jpeg', caption:'IMFWM Melbourne 🌟' },
+  ];
+  for (let i = 0; i < seeds.length; i++) {
+    await db.query(`INSERT INTO bts_photos (filename,url,caption,sort_order) VALUES ($1,$2,$3,$4) ON CONFLICT (filename) DO NOTHING`, [seeds[i].filename, seeds[i].url, seeds[i].caption, i]);
+  }
+}
+
+async function ensureReelsTable() {
+  const db = getPool();
+  await db.query(`CREATE TABLE IF NOT EXISTS reels (
+    id SERIAL PRIMARY KEY, reel_id TEXT NOT NULL UNIQUE, url TEXT NOT NULL,
+    label TEXT DEFAULT 'View on Instagram', sort_order INTEGER DEFAULT 0,
+    added_at TIMESTAMPTZ DEFAULT NOW()
+  )`);
+  await db.query(`INSERT INTO reels (reel_id,url,label,sort_order) VALUES ($1,$2,$3,0) ON CONFLICT (reel_id) DO NOTHING`,
+    ['reel-1748000000000','https://www.instagram.com/p/DYpbXqRTkGn/','View on Instagram']);
 }
 
 async function ensureCouponsTable() {
@@ -1218,6 +1405,112 @@ app.delete('/admin/coupons/:id', async (req, res) => {
     await getPool().query('DELETE FROM coupons WHERE id=$1', [req.params.id]);
     res.json({ ok: true });
   } catch(e) { res.status(500).json({ error: 'Failed to delete coupon' }); }
+});
+
+// ── GET /bts/list (public) ────────────────────────────────────────
+app.get('/bts/list', async (req, res) => {
+  try {
+    await ensureBtsTable();
+    const { rows } = await getPool().query('SELECT * FROM bts_photos ORDER BY sort_order ASC, uploaded_at ASC');
+    res.json(rows.map(r => ({ filename: r.filename, url: r.url, caption: r.caption || '', publicId: r.public_id })));
+  } catch(e) { console.error('bts/list error:', e); res.json([]); }
+});
+
+// ── GET /reels/list (public) ──────────────────────────────────────
+app.get('/reels/list', async (req, res) => {
+  try {
+    await ensureReelsTable();
+    const { rows } = await getPool().query('SELECT * FROM reels ORDER BY sort_order ASC, added_at ASC');
+    res.json(rows.map(r => ({ id: r.reel_id, url: r.url, label: r.label || 'View on Instagram' })));
+  } catch(e) { console.error('reels/list error:', e); res.json([]); }
+});
+
+// ── Admin BTS ─────────────────────────────────────────────────────
+app.post('/admin/bts', async (req, res) => {
+  const valid = await validateAdminToken(req.query.token);
+  if (!valid) return res.status(403).json({ error: 'Unauthorized' });
+  const { url, public_id, caption } = req.body;
+  if (!url) return res.status(400).json({ error: 'URL required' });
+  const safeCaption = (caption || '').replace(/[<>"&]/g, '').slice(0, 200);
+  const filename = public_id ? public_id.replace(/\//g, '-') : `bts-${Date.now()}.jpg`;
+  try {
+    await ensureBtsTable();
+    const db = getPool();
+    const { rows: mx } = await db.query('SELECT MAX(sort_order) as m FROM bts_photos');
+    const sortOrder = (Number(mx[0]?.m) || 0) + 1;
+    await db.query(`INSERT INTO bts_photos (filename,url,public_id,caption,sort_order) VALUES ($1,$2,$3,$4,$5) ON CONFLICT (filename) DO UPDATE SET url=$2,caption=$4`,
+      [filename, url, public_id || null, safeCaption, sortOrder]);
+    res.json({ ok: true, filename });
+  } catch(e) { console.error('admin/bts POST error:', e); res.status(500).json({ error: 'Failed to save' }); }
+});
+
+app.put('/admin/bts/reorder', async (req, res) => {
+  const valid = await validateAdminToken(req.query.token);
+  if (!valid) return res.status(403).json({ error: 'Unauthorized' });
+  const { filenames } = req.body;
+  if (!Array.isArray(filenames)) return res.status(400).json({ error: 'filenames array required' });
+  try {
+    await ensureBtsTable();
+    const db = getPool();
+    for (let i = 0; i < filenames.length; i++) await db.query('UPDATE bts_photos SET sort_order=$1 WHERE filename=$2', [i, filenames[i]]);
+    res.json({ ok: true });
+  } catch(e) { res.status(500).json({ error: 'Failed to reorder' }); }
+});
+
+app.delete('/admin/bts/:filename', async (req, res) => {
+  const valid = await validateAdminToken(req.query.token);
+  if (!valid) return res.status(403).json({ error: 'Unauthorized' });
+  try {
+    await ensureBtsTable();
+    await getPool().query('DELETE FROM bts_photos WHERE filename=$1', [req.params.filename]);
+    res.json({ ok: true });
+  } catch(e) { res.status(500).json({ error: 'Failed to delete' }); }
+});
+
+// ── Admin Reels ───────────────────────────────────────────────────
+app.post('/admin/reels', async (req, res) => {
+  const valid = await validateAdminToken(req.query.token);
+  if (!valid) return res.status(403).json({ error: 'Unauthorized' });
+  const { url, label } = req.body;
+  if (!url) return res.status(400).json({ error: 'Instagram URL is required' });
+  let parsed;
+  try { parsed = new URL(url.trim()); } catch { return res.status(400).json({ error: 'Invalid URL' }); }
+  const allowedHosts = ['instagram.com', 'www.instagram.com'];
+  if (parsed.protocol !== 'https:' || !allowedHosts.includes(parsed.hostname)) return res.status(400).json({ error: 'Only https://instagram.com URLs are allowed' });
+  const safeUrl = parsed.href;
+  const safeLabel = (label || 'View on Instagram').trim().replace(/[<>"&]/g, '').slice(0, 120);
+  const reelId = `reel-${Date.now()}`;
+  try {
+    await ensureReelsTable();
+    const db = getPool();
+    const { rows: mx } = await db.query('SELECT MAX(sort_order) as m FROM reels');
+    const sortOrder = (Number(mx[0]?.m) || 0) + 1;
+    await db.query(`INSERT INTO reels (reel_id,url,label,sort_order) VALUES ($1,$2,$3,$4)`, [reelId, safeUrl, safeLabel, sortOrder]);
+    res.json({ ok: true, id: reelId });
+  } catch(e) { console.error('admin/reels POST error:', e); res.status(500).json({ error: 'Failed to save' }); }
+});
+
+app.delete('/admin/reels/:id', async (req, res) => {
+  const valid = await validateAdminToken(req.query.token);
+  if (!valid) return res.status(403).json({ error: 'Unauthorized' });
+  try {
+    await ensureReelsTable();
+    await getPool().query('DELETE FROM reels WHERE reel_id=$1', [req.params.id]);
+    res.json({ ok: true });
+  } catch(e) { res.status(500).json({ error: 'Failed to delete' }); }
+});
+
+app.put('/admin/reels/reorder', async (req, res) => {
+  const valid = await validateAdminToken(req.query.token);
+  if (!valid) return res.status(403).json({ error: 'Unauthorized' });
+  const { ids } = req.body;
+  if (!Array.isArray(ids)) return res.status(400).json({ error: 'ids array required' });
+  try {
+    await ensureReelsTable();
+    const db = getPool();
+    for (let i = 0; i < ids.length; i++) await db.query('UPDATE reels SET sort_order=$1 WHERE reel_id=$2', [i, ids[i]]);
+    res.json({ ok: true });
+  } catch(e) { res.status(500).json({ error: 'Failed to reorder' }); }
 });
 
 // ── Export for Vercel serverless ──────────────────────────────────
