@@ -1745,12 +1745,16 @@
 
   let _galleryLoaded = false;
   async function loadDynamicGallery() {
-    if (_galleryLoaded) return;
     try {
-      // Load static gallery.json immediately (fast, no cold start)
+      // Always fetch fresh from API so admin changes appear immediately
       let photos = null;
-      const fb = await fetch('/gallery/gallery.json');
+      const fb = await fetch('/api/gallery/list?_=' + Date.now());
       if (fb.ok) photos = await fb.json();
+      if (!photos || !photos.length) {
+        // fallback to static json
+        const fb2 = await fetch('/gallery/gallery.json');
+        if (fb2.ok) photos = await fb2.json();
+      }
       if (!photos || !photos.length) return;
       _galleryLoaded = true;
       const grid = document.getElementById('photoGrid');
@@ -1861,7 +1865,7 @@
       const btns = document.querySelectorAll('.sitenav-tabs button');
       if (btns[map[pageId]]) btns[map[pageId]].classList.add('active');
     }
-    if (pageId === 'gallery') loadDynamicGallery();
+    if (pageId === 'gallery') { _galleryLoaded = false; loadDynamicGallery(); }
     window.scrollTo({top:0, behavior:'smooth'});
     setTimeout(() => triggerAnims(), 100);
     if (pushState !== false) {
@@ -2729,6 +2733,7 @@
   // LIGHTBOX
   let _lbItems = [];
   let _lbIndex = 0;
+  let _lbMode = 'gallery'; // 'gallery' or 'bts'
 
   function _lbRender(el) {
     const emojis = {'bridal':'👰','glam':'💄','editorial':'🎨','festival':'✨'};
@@ -2764,6 +2769,7 @@
   }
 
   function openLightbox(el) {
+    _lbMode = 'gallery';
     _lbItems = Array.from(document.querySelectorAll('#photoGrid .photo-item:not([style*="display: none"]):not([style*="display:none"])')).filter(i => i.querySelector('img'));
     _lbIndex = _lbItems.indexOf(el);
     if (_lbIndex === -1) { _lbItems = [el]; _lbIndex = 0; }
@@ -2772,6 +2778,19 @@
   }
 
   function lbNavigate(dir) {
+    if (_lbMode === 'bts') {
+      const next = btsIndex + dir;
+      if (next < 0 || next >= _btsPhotos.length) return;
+      btsIndex = next;
+      const lbPh = document.getElementById('lbEmoji');
+      const slideClass = dir > 0 ? 'lb-slide-fwd' : 'lb-slide-back';
+      lbPh.classList.remove('lb-slide-fwd', 'lb-slide-back');
+      void lbPh.offsetWidth;
+      lbPh.classList.add(slideClass);
+      _btsRender(btsIndex);
+      setTimeout(() => lbPh.classList.remove(slideClass), 320);
+      return;
+    }
     const next = _lbIndex + dir;
     if (next < 0 || next >= _lbItems.length) return;
     _lbIndex = next;
@@ -2836,12 +2855,10 @@
     });
   }
 
-  function openBts(i) {
-    btsIndex = i;
-    const lb = document.getElementById('lightbox');
-    const lbPh = document.getElementById('lbEmoji');
+  function _btsRender(i) {
     const p = _btsPhotos[i];
     if (!p) return;
+    const lbPh = document.getElementById('lbEmoji');
     lbPh.innerHTML = '';
     lbPh.style.padding = '0';
     lbPh.classList.add('has-image');
@@ -2852,7 +2869,22 @@
     lbPh.appendChild(imgEl);
     document.getElementById('lbTitle').textContent = p.caption || '';
     document.getElementById('lbDesc').textContent = 'Behind the scenes with Ankita';
-    lb.classList.add('open');
+    const counter = document.getElementById('lbCounter');
+    if (_btsPhotos.length > 1) {
+      counter.textContent = (i + 1) + ' / ' + _btsPhotos.length;
+      counter.style.display = '';
+    } else {
+      counter.style.display = 'none';
+    }
+    document.getElementById('lbPrev').disabled = i === 0;
+    document.getElementById('lbNext').disabled = i === _btsPhotos.length - 1;
+  }
+
+  function openBts(i) {
+    _lbMode = 'bts';
+    btsIndex = i;
+    _btsRender(i);
+    document.getElementById('lightbox').classList.add('open');
   }
 
   async function loadReels() {
