@@ -1246,23 +1246,8 @@
         <h2 class="section-h2">In <em class="draw-underline">Action</em></h2>
         <p style="font-size:0.95rem;color:var(--text-mid);margin-top:0.8rem;">A peek into the chair — where the magic actually happens.</p>
       </div>
-      <div class="bts-grid">
-        <div class="bts-item" onclick="openBts(0)">
-          <img src="/bts-1.jpeg" alt="Ankita doing makeup" loading="lazy">
-          <div class="photo-overlay"><div class="photo-overlay-txt">At Work ✨</div></div>
-        </div>
-        <div class="bts-item" onclick="openBts(1)">
-          <img src="/bts-2.jpeg" alt="Ankita applying makeup" style="object-position: center 20%;" loading="lazy">
-          <div class="photo-overlay"><div class="photo-overlay-txt">Precision & Care 💄</div></div>
-        </div>
-        <div class="bts-item" onclick="openBts(2)">
-          <img src="/bts-3.jpeg" alt="Ankita creating a look" loading="lazy">
-          <div class="photo-overlay"><div class="photo-overlay-txt">The Process 🎨</div></div>
-        </div>
-        <div class="bts-item" onclick="openBts(3)">
-          <img src="/bts-4.jpeg" alt="Ankita at Indonesian Modest Fashion Week Melbourne" loading="lazy">
-          <div class="photo-overlay"><div class="photo-overlay-txt">IMFWM Melbourne 🌟</div></div>
-        </div>
+      <div class="bts-grid" id="btsGrid">
+        <!-- dynamically loaded from /api/bts/list -->
       </div>
     </div>
 
@@ -1273,12 +1258,7 @@
       </div>
       <p style="font-size:0.88rem;color:var(--text-mid);margin-bottom:0.3rem;">Behind-the-scenes and finished looks straight from Instagram.</p>
       <div class="reels-grid" id="reelsGrid">
-        <div class="reel-item">
-          <div class="reel-embed">
-            <blockquote class="instagram-media" data-instgrm-permalink="https://www.instagram.com/p/DYpbXqRTkGn/" data-instgrm-version="14" style="background:#FFF;border:0;margin:0;max-width:100%;min-width:220px;padding:0;width:100%;"></blockquote>
-          </div>
-          <div class="reel-label">📸 <a href="https://www.instagram.com/p/DYpbXqRTkGn/" target="_blank" rel="noopener">View on Instagram</a></div>
-        </div>
+        <!-- dynamically loaded from /api/reels/list -->
       </div>
     </div>
 
@@ -2636,6 +2616,9 @@
     // Pre-fetch gallery data + preload images in background so Gallery tab is instant
     setTimeout(loadDynamicGallery, 300);
     setTimeout(triggerAnims, 100);
+    // Load BTS photos and reels dynamically
+    loadBtsPhotos();
+    loadReels();
     // Set minimum date to today for the booking date picker
     const dateInput = document.getElementById('book-date');
     if (dateInput) {
@@ -2800,30 +2783,126 @@
     _lbRender(_lbItems[_lbIndex]);
     setTimeout(() => lbPh.classList.remove(slideClass), 320);
   }
-  // BTS LIGHTBOX
-  const btsImages = [
-    { src: '/bts-1.jpeg', caption: 'At Work ✨' },
-    { src: '/bts-2.jpeg', caption: 'Precision & Care 💄' },
-    { src: '/bts-3.jpeg', caption: 'The Process 🎨' },
-    { src: '/bts-4.jpeg', caption: 'Indonesian Modest Fashion Week Melbourne 🌟' }
-  ];
+  // BTS LIGHTBOX (dynamic)
+  let _btsPhotos = [];
   let btsIndex = 0;
+
+  function _btsSrc(p) {
+    if (p.url) return p.url;
+    // existing files bts-1.jpeg etc are at public root
+    if (/^bts-\d+\./.test(p.filename)) return '/' + p.filename;
+    return '/bts/' + p.filename;
+  }
+
+  function _htmlEsc(str) {
+    return String(str || '').replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  }
+
+  async function loadBtsPhotos() {
+    try {
+      const r = await fetch('/api/bts/list');
+      if (!r.ok) throw new Error('Failed');
+      _btsPhotos = await r.json();
+    } catch (e) {
+      // fall back to static images if API unavailable
+      _btsPhotos = [
+        { filename: 'bts-1.jpeg', caption: 'At Work ✨' },
+        { filename: 'bts-2.jpeg', caption: 'Precision & Care 💄' },
+        { filename: 'bts-3.jpeg', caption: 'The Process 🎨' },
+        { filename: 'bts-4.jpeg', caption: 'IMFWM Melbourne 🌟' }
+      ];
+    }
+    const grid = document.getElementById('btsGrid');
+    if (!grid) return;
+    // Build DOM nodes to avoid XSS — never use innerHTML with user content
+    grid.innerHTML = '';
+    _btsPhotos.forEach((p, i) => {
+      const div = document.createElement('div');
+      div.className = 'bts-item';
+      div.onclick = () => openBts(i);
+      const img = document.createElement('img');
+      img.src = _btsSrc(p);
+      img.alt = p.caption || '';
+      img.loading = 'lazy';
+      const overlay = document.createElement('div');
+      overlay.className = 'photo-overlay';
+      const txt = document.createElement('div');
+      txt.className = 'photo-overlay-txt';
+      txt.textContent = p.caption || '';
+      overlay.appendChild(txt);
+      div.appendChild(img);
+      div.appendChild(overlay);
+      grid.appendChild(div);
+    });
+  }
+
   function openBts(i) {
     btsIndex = i;
     const lb = document.getElementById('lightbox');
     const lbPh = document.getElementById('lbEmoji');
-    const img = btsImages[i];
+    const p = _btsPhotos[i];
+    if (!p) return;
     lbPh.innerHTML = '';
     lbPh.style.padding = '0';
     lbPh.classList.add('has-image');
     const imgEl = document.createElement('img');
-    imgEl.src = img.src;
-    imgEl.alt = img.caption;
+    imgEl.src = _btsSrc(p);
+    imgEl.alt = p.caption || '';
     imgEl.style.cssText = 'max-width:100%;max-height:62vh;width:auto;height:auto;display:block;margin:0 auto;';
     lbPh.appendChild(imgEl);
-    document.getElementById('lbTitle').textContent = img.caption;
+    document.getElementById('lbTitle').textContent = p.caption || '';
     document.getElementById('lbDesc').textContent = 'Behind the scenes with Ankita';
     lb.classList.add('open');
+  }
+
+  async function loadReels() {
+    try {
+      const r = await fetch('/api/reels/list');
+      if (!r.ok) throw new Error('Failed');
+      const reels = await r.json();
+      const grid = document.getElementById('reelsGrid');
+      if (!grid) return;
+      if (!reels.length) {
+        grid.textContent = '';
+        const p = document.createElement('p');
+        p.style.cssText = 'color:#9a7060;font-size:0.88rem;padding:1rem 0;';
+        p.textContent = 'No featured reels yet.';
+        grid.appendChild(p);
+        return;
+      }
+      // Build DOM to avoid XSS; only use trusted Cloudinary/Instagram URLs from our own API
+      grid.innerHTML = '';
+      reels.forEach(reel => {
+        const item = document.createElement('div');
+        item.className = 'reel-item';
+        const embedDiv = document.createElement('div');
+        embedDiv.className = 'reel-embed';
+        const bq = document.createElement('blockquote');
+        bq.className = 'instagram-media';
+        bq.setAttribute('data-instgrm-permalink', reel.url);
+        bq.setAttribute('data-instgrm-version', '14');
+        bq.style.cssText = 'background:#FFF;border:0;margin:0;max-width:100%;min-width:220px;padding:0;width:100%;';
+        embedDiv.appendChild(bq);
+        const label = document.createElement('div');
+        label.className = 'reel-label';
+        const anchor = document.createElement('a');
+        anchor.href = reel.url;
+        anchor.target = '_blank';
+        anchor.rel = 'noopener';
+        anchor.textContent = reel.label || 'View on Instagram';
+        label.appendChild(document.createTextNode('📸 '));
+        label.appendChild(anchor);
+        item.appendChild(embedDiv);
+        item.appendChild(label);
+        grid.appendChild(item);
+      });
+      // Trigger Instagram embed script to process new blockquotes
+      if (window.instgrm && window.instgrm.Embeds) {
+        window.instgrm.Embeds.process();
+      }
+    } catch (e) {
+      console.error('Failed to load reels', e);
+    }
   }
 
   function closeLightbox(e) {
