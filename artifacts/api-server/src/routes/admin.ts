@@ -1117,8 +1117,10 @@ router.post("/admin/send-client-email", async (req, res) => {
       ${paragraphs}
     </div>
     <div style="padding:20px 32px 28px;">
-      <p style="font-size:0.9rem;color:#6b3d2e;margin:0 0 14px;">With love,<br><strong>Ankita</strong></p>
-      <p style="margin:0;font-size:0.85rem;color:#9e7c4a;">The Glam by Ankita ✦ &nbsp;
+      <p style="font-size:0.9rem;color:#6b3d2e;margin:0;">With love,<br><strong>Ankita</strong><br>The Glam by Ankita ✦</p>
+    </div>
+    <div style="padding:14px 32px;background:#fdf0ee;border-top:1px solid #e8c4bc;text-align:center;">
+      <p style="margin:0;font-size:0.78rem;color:#9e7c4a;">
         <a href="https://instagram.com/theglambyankita" style="color:#c9a96e;text-decoration:none;">@theglambyankita</a>
         &nbsp;·&nbsp; theglambyankita@gmail.com
       </p>

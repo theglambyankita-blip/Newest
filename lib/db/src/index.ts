@@ -13,11 +13,9 @@ if (!DATABASE_URL && !PGHOST) {
   );
 }
 
-// Prefer Replit-native PG* environment variables whenever they're available.
-// DATABASE_URL has historically pointed to an external/deleted host (e.g. a
-// stale or corrupted Supabase connection string), so we only fall back to it
-// when the native vars aren't present at all.
-const useNativeVars = Boolean(PGHOST);
+// If DATABASE_URL points to an unreachable external host (e.g. deleted Supabase project),
+// fall back to Replit-native PG* environment variables automatically.
+const useNativeVars = !DATABASE_URL || DATABASE_URL.includes("supabase.co");
 
 export const pool = useNativeVars
   ? new Pool({
