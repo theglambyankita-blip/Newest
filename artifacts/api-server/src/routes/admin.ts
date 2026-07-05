@@ -413,12 +413,14 @@ textarea{resize:vertical;min-height:140px;}
       <div id="email-error" style="display:none;background:#fff0f0;border:1px solid #f5c0c0;color:#c0392b;padding:12px 16px;border-radius:6px;margin-bottom:16px;font-size:0.88rem;"></div>
       <div class="field"><label>Client Email</label><input type="email" id="e-to" placeholder="client@example.com"></div>
       <div class="field"><label>Subject</label><input type="text" id="e-subject" placeholder="e.g. Your upcoming appointment"></div>
-      <div class="field" style="display:flex;align-items:center;gap:8px;">
-        <input type="checkbox" id="e-is-reply" style="width:auto;" onchange="toggleReplySubject()">
-        <label style="margin:0;font-weight:500;">This is a reply to an email they sent me</label>
+      <div class="field">
+        <label>Message</label>
+        <textarea id="e-body" placeholder="Hi [Name],&#10;&#10;Write your message here..."></textarea>
       </div>
-      <div class="field"><label>Message</label><textarea id="e-body" placeholder="Hi [Name],&#10;&#10;Write your message here..."></textarea></div>
-      <button class="btn" onclick="sendEmail()">Send Email &#10022;</button>
+      <div style="display:flex;gap:10px;flex-wrap:wrap;">
+        <button class="btn" onclick="sendEmail()">Send Email &#10022;</button>
+        <button type="button" class="btn" style="background:#fff;color:#9e7c4a;border:1px solid #c9a96e;" onclick="copyEmailMessage()">Copy Message &#128203;</button>
+      </div>
     </div></div>
   </div>
   <div class="section">
@@ -647,33 +649,29 @@ async function saveClientMessage(){
   }catch(e){status.textContent='Error: '+e.message;status.style.color='#c0392b';}
   btn.disabled=false;btn.textContent='Save Message';
 }
-function toggleReplySubject(){
-  var isReply=document.getElementById('e-is-reply').checked;
-  var subjEl=document.getElementById('e-subject');
-  var subj=subjEl.value.trim();
-  var hasRe=/^re:\s*/i.test(subj);
-  if(isReply&&!hasRe){
-    subjEl.value=subj?('Re: '+subj):'Re: ';
-  }else if(!isReply&&hasRe){
-    subjEl.value=subj.replace(/^re:\s*/i,'');
-  }
-}
 async function sendEmail(){
   var to=document.getElementById('e-to').value.trim();
   var subject=document.getElementById('e-subject').value.trim();
   var body=document.getElementById('e-body').value.trim();
-  var isReply=document.getElementById('e-is-reply').checked;
   var succ=document.getElementById('email-success');var err=document.getElementById('email-error');
   succ.style.display='none';err.style.display='none';
   if(!to||!subject||!body){err.textContent='Please fill in all fields.';err.style.display='block';return;}
-  if(isReply&&!/^re:\s*/i.test(subject)){subject='Re: '+subject;}
   try{
     var r=await fetch('/api/admin/send-client-email?token='+encodeURIComponent(TOKEN),{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({to,subject,body})});
     var j=await r.json();if(!r.ok)throw new Error(j.error||'Failed');
     succ.textContent='Email sent to '+to+'!';succ.style.display='block';
     document.getElementById('e-to').value='';document.getElementById('e-subject').value='';document.getElementById('e-body').value='';
-    document.getElementById('e-is-reply').checked=false;
   }catch(e){err.textContent='Could not send email. Please try again.';err.style.display='block';}
+}
+async function copyEmailMessage(){
+  var body=document.getElementById('e-body').value;
+  var succ=document.getElementById('email-success');var err=document.getElementById('email-error');
+  succ.style.display='none';err.style.display='none';
+  if(!body.trim()){err.textContent='Nothing to copy — write a message first.';err.style.display='block';return;}
+  try{
+    await navigator.clipboard.writeText(body);
+    succ.textContent='Message copied! You can paste it into Gmail now.';succ.style.display='block';
+  }catch(e){err.textContent='Could not copy. Please select and copy the text manually.';err.style.display='block';}
 }
 async function regenToken(){
   var btn=document.getElementById('regen-btn'),status=document.getElementById('regen-status');
@@ -1102,10 +1100,18 @@ router.post("/admin/send-client-email", async (req, res) => {
   const html = `
   <div style="font-family:sans-serif;max-width:600px;margin:0 auto;background:#fdf8f4;border:1px solid #e8c4bc;border-radius:8px;overflow:hidden;">
     <div style="background:linear-gradient(135deg,#c9a96e,#9e7c4a);padding:24px 32px;">
-      <img src="${SITE_URL}/logo-original.png" width="40" height="40"
-        style="border-radius:50%;object-fit:cover;display:block;margin-bottom:12px;" alt="">
-      <h2 style="margin:0;color:#fff;font-family:Georgia,serif;font-size:1.3rem;">The Glam by Ankita</h2>
-      <p style="margin:4px 0 0;color:rgba(255,255,255,0.85);font-size:0.85rem;">✦ Beauty & Makeup Artist</p>
+      <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="border-collapse:collapse;">
+        <tr>
+          <td style="vertical-align:middle;text-align:left;">
+            <h2 style="margin:0;color:#fff;font-family:Georgia,serif;font-size:1.3rem;">The Glam by Ankita</h2>
+            <p style="margin:4px 0 0;color:rgba(255,255,255,0.85);font-size:0.85rem;">✦ Beauty & Makeup Artist</p>
+          </td>
+          <td style="vertical-align:middle;text-align:right;width:56px;">
+            <img src="${SITE_URL}/logo-original.png" width="48" height="48"
+              style="border-radius:50%;object-fit:cover;display:block;margin-left:auto;" alt="The Glam by Ankita logo">
+          </td>
+        </tr>
+      </table>
     </div>
     <div style="padding:28px 32px 8px;">
       ${paragraphs}
