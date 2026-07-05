@@ -413,6 +413,10 @@ textarea{resize:vertical;min-height:140px;}
       <div id="email-error" style="display:none;background:#fff0f0;border:1px solid #f5c0c0;color:#c0392b;padding:12px 16px;border-radius:6px;margin-bottom:16px;font-size:0.88rem;"></div>
       <div class="field"><label>Client Email</label><input type="email" id="e-to" placeholder="client@example.com"></div>
       <div class="field"><label>Subject</label><input type="text" id="e-subject" placeholder="e.g. Your upcoming appointment"></div>
+      <div class="field" style="display:flex;align-items:center;gap:8px;">
+        <input type="checkbox" id="e-is-reply" style="width:auto;" onchange="toggleReplySubject()">
+        <label style="margin:0;font-weight:500;">This is a reply to an email they sent me</label>
+      </div>
       <div class="field"><label>Message</label><textarea id="e-body" placeholder="Hi [Name],&#10;&#10;Write your message here..."></textarea></div>
       <button class="btn" onclick="sendEmail()">Send Email &#10022;</button>
     </div></div>
@@ -643,18 +647,32 @@ async function saveClientMessage(){
   }catch(e){status.textContent='Error: '+e.message;status.style.color='#c0392b';}
   btn.disabled=false;btn.textContent='Save Message';
 }
+function toggleReplySubject(){
+  var isReply=document.getElementById('e-is-reply').checked;
+  var subjEl=document.getElementById('e-subject');
+  var subj=subjEl.value.trim();
+  var hasRe=/^re:\s*/i.test(subj);
+  if(isReply&&!hasRe){
+    subjEl.value=subj?('Re: '+subj):'Re: ';
+  }else if(!isReply&&hasRe){
+    subjEl.value=subj.replace(/^re:\s*/i,'');
+  }
+}
 async function sendEmail(){
   var to=document.getElementById('e-to').value.trim();
   var subject=document.getElementById('e-subject').value.trim();
   var body=document.getElementById('e-body').value.trim();
+  var isReply=document.getElementById('e-is-reply').checked;
   var succ=document.getElementById('email-success');var err=document.getElementById('email-error');
   succ.style.display='none';err.style.display='none';
   if(!to||!subject||!body){err.textContent='Please fill in all fields.';err.style.display='block';return;}
+  if(isReply&&!/^re:\s*/i.test(subject)){subject='Re: '+subject;}
   try{
-    var r=await fetch('/api/admin-send-email?token='+encodeURIComponent(TOKEN),{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({to,subject,body})});
+    var r=await fetch('/api/admin/send-client-email?token='+encodeURIComponent(TOKEN),{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({to,subject,body})});
     var j=await r.json();if(!r.ok)throw new Error(j.error||'Failed');
     succ.textContent='Email sent to '+to+'!';succ.style.display='block';
     document.getElementById('e-to').value='';document.getElementById('e-subject').value='';document.getElementById('e-body').value='';
+    document.getElementById('e-is-reply').checked=false;
   }catch(e){err.textContent='Could not send email. Please try again.';err.style.display='block';}
 }
 async function regenToken(){
