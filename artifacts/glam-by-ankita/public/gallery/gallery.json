@@ -47,7 +47,7 @@
     "desc": "Classic 1950s-inspired glam — bold cherry red lip, defined brows, and a flawless satin base",
     "uploadedAt": "2026-07-20T00:00:00.000Z",
     "featured": false,
-    "objectPosition": "center top"
+    "objectPosition": "center 20%"
   },
   {
     "filename": "recreational-makeup.jpeg",
@@ -57,6 +57,6 @@
     "desc": "Fresh and polished — soft lashes, blush-toned lips, and a natural finish with subtle definition",
     "uploadedAt": "2026-07-20T00:00:00.000Z",
     "featured": false,
-    "objectPosition": "center top"
+    "objectPosition": "center 15%"
   }
 ]
