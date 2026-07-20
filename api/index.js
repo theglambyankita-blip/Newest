@@ -1179,6 +1179,8 @@ const STATIC_GALLERY_SEED = [
   { filename:'smokey-salon.jpeg', url:'/gallery/smokey-salon.jpeg', title:'Soft Glam with Smokey Eyes', category:'glam', description:'Rich brown smokey eye, rosy mauve blush, nude pink lips — elegant, refined, and effortlessly glamorous', object_position:'center top', featured:false, sort_order:1 },
   { filename:'soft-smokey.jpeg', url:'/gallery/soft-smokey.jpeg', title:'Soft Smokey Glam', category:'glam', description:'Soft taupe and warm brown tones, diffused smoky corners, rosy nude lips — polished and timeless', object_position:'center top', featured:false, sort_order:2 },
   { filename:'purple-glam.jpeg', url:'/gallery/purple-glam.jpeg', title:'Soft Glam with a Pop of Blue Liner', category:'glam', description:'Soft pink/mauve shadow & a sharp blue-violet winged liner — clean, feminine, wearable', object_position:'center 30%', featured:false, sort_order:3 },
+  { filename:'1950s-glam.jpeg', url:'/gallery/1950s-glam.jpeg', title:'1950s Glam', category:'glam', description:'Classic 1950s-inspired glam — bold cherry red lip, defined brows, and a flawless satin base', object_position:'center top', featured:false, sort_order:4 },
+  { filename:'recreational-makeup.jpeg', url:'/gallery/recreational-makeup.jpeg', title:'Recreational Makeup', category:'glam', description:'Fresh and polished — soft lashes, blush-toned lips, and a natural finish with subtle definition', object_position:'center top', featured:false, sort_order:5 },
 ];
 
 async function ensureGalleryTable() {
@@ -1199,10 +1201,11 @@ async function ensureBtsTable() {
     public_id TEXT, caption TEXT DEFAULT '', sort_order INTEGER DEFAULT 0,
     uploaded_at TIMESTAMPTZ DEFAULT NOW()
   )`);
+  // Remove the process photo permanently
+  await db.query(`DELETE FROM bts_photos WHERE filename='bts-3.jpeg'`).catch(()=>{});
   const seeds = [
     { filename:'bts-1.jpeg', url:'/bts-1.jpeg', caption:'At Work ✨' },
     { filename:'bts-2.jpeg', url:'/bts-2.jpeg', caption:'Precision & Care 💄' },
-    { filename:'bts-3.jpeg', url:'/bts-3.jpeg', caption:'The Process 🎨' },
     { filename:'bts-4.jpeg', url:'/bts-4.jpeg', caption:'IMFWM Melbourne 🌟' },
   ];
   for (let i = 0; i < seeds.length; i++) {
