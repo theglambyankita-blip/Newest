@@ -38,5 +38,25 @@
     "uploadedAt": "2026-06-15T00:00:00.000Z",
     "featured": false,
     "objectPosition": "center 30%"
+  },
+  {
+    "filename": "1950s-glam.jpeg",
+    "url": "/gallery/1950s-glam.jpeg",
+    "title": "1950s Glam",
+    "category": "glam",
+    "desc": "Classic 1950s-inspired glam — bold cherry red lip, defined brows, and a flawless satin base",
+    "uploadedAt": "2026-07-20T00:00:00.000Z",
+    "featured": false,
+    "objectPosition": "center top"
+  },
+  {
+    "filename": "recreational-makeup.jpeg",
+    "url": "/gallery/recreational-makeup.jpeg",
+    "title": "Recreational Makeup",
+    "category": "glam",
+    "desc": "Fresh and polished — soft lashes, blush-toned lips, and a natural finish with subtle definition",
+    "uploadedAt": "2026-07-20T00:00:00.000Z",
+    "featured": false,
+    "objectPosition": "center top"
   }
 ]
