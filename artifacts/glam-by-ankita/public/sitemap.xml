@@ -3,38 +3,83 @@
         xmlns:image="http://www.google.com/schemas/sitemap-image/1.1">
   <url>
     <loc>https://www.theglambyankita.com/</loc>
+    <lastmod>2026-07-23</lastmod>
     <changefreq>weekly</changefreq>
     <priority>1.0</priority>
     <image:image>
       <image:loc>https://www.theglambyankita.com/opengraph.jpg</image:loc>
       <image:title>The Glam by Ankita — Melbourne Makeup Artist</image:title>
+      <image:caption>Professional makeup artistry by Ankita Awasthi, Melbourne CBD</image:caption>
     </image:image>
     <image:image>
       <image:loc>https://www.theglambyankita.com/ankita-photo.jpeg</image:loc>
-      <image:title>Ankita — Professional Makeup Artist Melbourne</image:title>
+      <image:title>Ankita Awasthi — Professional Makeup Artist Melbourne</image:title>
+      <image:caption>Ankita Awasthi, certified makeup artist based in Melbourne CBD, Victoria</image:caption>
+    </image:image>
+    <image:image>
+      <image:loc>https://www.theglambyankita.com/logo-original.webp</image:loc>
+      <image:title>The Glam by Ankita Logo</image:title>
     </image:image>
   </url>
   <url>
     <loc>https://www.theglambyankita.com/services</loc>
+    <lastmod>2026-07-23</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.9</priority>
   </url>
   <url>
     <loc>https://www.theglambyankita.com/gallery</loc>
+    <lastmod>2026-07-23</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.85</priority>
     <image:image>
       <image:loc>https://www.theglambyankita.com/soft-glam-1.jpeg</image:loc>
       <image:title>Soft Glam Makeup — The Glam by Ankita Melbourne</image:title>
+      <image:caption>Soft glam makeup look by Ankita Awasthi, Melbourne makeup artist</image:caption>
+    </image:image>
+    <image:image>
+      <image:loc>https://www.theglambyankita.com/gallery/glam-city.webp</image:loc>
+      <image:title>Glam Makeup Melbourne — The Glam by Ankita</image:title>
+    </image:image>
+    <image:image>
+      <image:loc>https://www.theglambyankita.com/gallery/purple-glam.jpeg</image:loc>
+      <image:title>Purple Full Glam Makeup — The Glam by Ankita Melbourne</image:title>
+    </image:image>
+    <image:image>
+      <image:loc>https://www.theglambyankita.com/gallery/smokey-salon.jpeg</image:loc>
+      <image:title>Smokey Eye Salon Makeup — The Glam by Ankita Melbourne</image:title>
+    </image:image>
+    <image:image>
+      <image:loc>https://www.theglambyankita.com/gallery/soft-smokey.jpeg</image:loc>
+      <image:title>Soft Smokey Makeup Look — The Glam by Ankita Melbourne</image:title>
+    </image:image>
+    <image:image>
+      <image:loc>https://www.theglambyankita.com/gallery/recreational-makeup.jpeg</image:loc>
+      <image:title>Recreational Makeup Look — The Glam by Ankita Melbourne</image:title>
+    </image:image>
+    <image:image>
+      <image:loc>https://www.theglambyankita.com/gallery/1950s-glam.jpeg</image:loc>
+      <image:title>1950s Vintage Glam Makeup — The Glam by Ankita Melbourne</image:title>
+    </image:image>
+    <image:image>
+      <image:loc>https://www.theglambyankita.com/full-glam-city.webp</image:loc>
+      <image:title>Full Glam City Makeup — The Glam by Ankita Melbourne</image:title>
     </image:image>
   </url>
   <url>
     <loc>https://www.theglambyankita.com/about</loc>
+    <lastmod>2026-07-23</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
+    <image:image>
+      <image:loc>https://www.theglambyankita.com/ankita-photo.jpeg</image:loc>
+      <image:title>Ankita Awasthi — Melbourne Makeup Artist</image:title>
+      <image:caption>Ankita Awasthi, professional makeup artist and beauty creator based in Melbourne</image:caption>
+    </image:image>
   </url>
   <url>
     <loc>https://www.theglambyankita.com/contact</loc>
+    <lastmod>2026-07-23</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.9</priority>
   </url>

@@ -1,0 +1,547 @@
+I need you to take this AI SEO report for my website, theglambyankita.com, very seriously and make the necessary improvements to the website.
+
+I want you to fully audit the website first, identify the reasons behind these results, and then fix the issues properly. Do NOT make superficial changes, do NOT keyword-stuff the website, and do NOT just add generic SEO text. I want you to make meaningful, technically correct, high-quality improvements that can genuinely help the website become more visible in Google Search and AI-powered search engines.
+
+Important context: This report is based on the website’s visibility across six AI/search platforms: ChatGPT, Google Gemini, Google AI Mode, Perplexity, Microsoft Copilot and Grok. The text below is the combined report from that analysis. The word “Grok” at the very top was accidentally included and should be ignored/removed.
+
+Here is the AI SEO report I received:
+
+⸻
+
+Visibility 12 · Sentiment 61 · Topics 0/5
+
+INVISIBLE
+
+PRO SECTION
+
+What people are asking AI about your market?
+
+Live questions from the AI engines, ranked by how often they’re asked. Here’s a taste:
+
+“Party Makeup Services”
+Asked ~2,400×/mo
+YOU’RE NOT IN THE ANSWER
+
+“Photoshoot Makeup Artist”
+Asked ~890×/mo
+PARTIAL MENTION
+
+“best value [service] packages compared”
+740×/mo
+
+”[service] near me open now with good reviews”
+680×/mo
+
+“should I avoid cheap [service] providers”
+510×/mo
+
+“who do locals recommend for [service]”
+470×/mo
+
+”[service] cost guide 2026 australia”
+390×/mo
+
+27 more questions your customers are asking AI
+
+The full list shows every question, how often it’s asked, which competitor AI answers with — and the exact content that would put you in the answer instead.
+
+Start fixing — 25% off month 1 → (https://searchresults.com.au/dashboard/?upgrade=1&voucher=START25)
+
+Book a 15-min help call (https://searchresults.com.au/book)
+
+SECTION 02
+
+The four pillars behind your score?
+
+AI engines decide who to recommend using signals in four areas: Content (do you answer the questions people ask?), Authority (do trusted sites mention and link to you?), Technical (can AI read your site without errors?) and Reputation (what do your reviews say?). A low pillar drags the whole score down — and is usually the fastest thing to fix.
+
+AI engines recommend businesses that are strong across all four. Your weakest pillar is your fastest win.
+
+0
+0
+
+Content?
+
+The pages on your site that answer real customer questions. AI reads your content to decide whether you’re an expert worth recommending — thin or generic pages score low.
+
+Pages that answer buying questions
+
+0
+
+Authority?
+
+Mentions, links and citations AI trusts
+
+0
+
+Technical?
+
+Can AI crawlers read your site cleanly
+
+0
+
+Reputation?
+
+Reviews and sentiment signals
+
+Your top 3 fixes, prioritised?
+
+Do these first. Each one moves the pillar that’s holding your score down.
+
+1. Fix technical crawl issues — 0/100
+
+If AI’s crawlers can’t read your site cleanly, nothing else counts. Crawl fixes are quick wins.
+
+HIGH IMPACT
+
+2. Lift the Content pillar — 0/100
+
+Publish pages that answer the exact questions AI gets asked in your market — content is what AI quotes.
+
+HIGH IMPACT
+
+3. Build authority citations AI can find — 0/100
+
+Trusted mentions and links are AI’s references. PR placements and indexed citations move this fastest.
+
+MEDIUM IMPACT
+
+⸻
+
+WHAT I WANT YOU TO DO
+
+I want you to treat this as a full AI SEO + traditional SEO + local SEO + technical SEO improvement project for The Glam by Ankita — theglambyankita.com.
+
+The goal is to improve the website’s visibility across ChatGPT, Google Gemini, Google AI Mode, Perplexity, Microsoft Copilot and Grok, as well as traditional Google Search and other relevant search engines.
+
+1. FIRST: AUDIT THE ENTIRE WEBSITE
+
+Before changing anything, inspect the entire website and understand how it is currently structured.
+
+Check:
+
+* Every page
+* Page titles
+* Meta titles
+* Meta descriptions
+* H1, H2 and H3 headings
+* Page content
+* Internal linking
+* Navigation
+* URLs and slugs
+* Images
+* Image alt text
+* Image file names where relevant
+* Structured data / schema markup
+* Canonical tags
+* Robots.txt
+* Sitemap.xml
+* Open Graph metadata
+* Social sharing metadata
+* Mobile responsiveness
+* Page speed and performance
+* JavaScript rendering
+* Any technical errors
+* Whether search engine crawlers can properly access the website
+* Whether AI crawlers can properly understand the website
+* Whether important content is hidden behind JavaScript or otherwise difficult for crawlers to access
+* Whether there are broken links
+* Whether there are duplicate pages or duplicate content
+* Whether there are indexing problems
+* Whether the website has a clear location/service structure
+* Whether Google and AI systems can clearly understand who Ankita is, what services she provides, where she operates, and who her services are for
+
+Do not assume that the website is technically fine. Actually investigate it.
+
+⸻
+
+2. FIX ALL TECHNICAL SEO AND AI CRAWLABILITY ISSUES
+
+The report specifically gave Technical a score of 0/100, so I want you to investigate this extremely carefully.
+
+Make sure:
+
+* Search engines can crawl the website
+* Important pages can be indexed
+* AI crawlers can access and understand the content
+* The website has a correct sitemap
+* Robots.txt is configured correctly
+* There are no accidental noindex tags
+* Canonical URLs are correct
+* There are no major rendering problems
+* Important information is available in crawlable HTML where possible
+* The site has a clean and logical URL structure
+* There are no broken internal links
+* Pages return correct HTTP status codes
+* Redirects are working correctly
+* The site is mobile-friendly
+* Performance is optimised
+* Core Web Vitals are addressed where possible
+* Schema/structured data is correctly implemented where appropriate
+* There is no technical issue preventing search engines or AI systems from understanding the website
+
+Do not make changes blindly. Diagnose the actual problem first, then fix it.
+
+⸻
+
+3. IMPROVE THE CONTENT PILLAR
+
+The report gave Content a score of 0/100, which is a major priority.
+
+I want you to identify the exact questions potential customers are asking about makeup and beauty services and make sure the website has genuinely useful answers to those questions.
+
+The website should have strong, natural content around relevant topics such as:
+
+* Party makeup services
+* Photoshoot makeup artists
+* Makeup artist services in Melbourne
+* Makeup for special occasions
+* Makeup packages
+* What different makeup packages include
+* Makeup artist pricing and costs in Australia in 2026
+* How to choose a makeup artist
+* How to prepare for a makeup appointment
+* How long makeup appointments take
+* What to bring to an appointment
+* Frequently asked questions
+* Booking information
+* Service areas
+* Customer reviews and testimonials
+* Why customers should choose The Glam by Ankita
+* Other high-intent questions potential customers are likely to ask AI
+
+Do NOT add fake or irrelevant content just for SEO.
+
+Do NOT keyword-stuff.
+
+Do NOT create dozens of low-quality pages with repetitive text.
+
+The content needs to be genuinely useful to customers, while also being structured clearly enough for search engines and AI systems to understand and potentially reference.
+
+⸻
+
+4. PRIORITY KEYWORDS AND SEARCH TOPICS
+
+I want the website to have a strong chance of appearing in Google Search and relevant AI-generated answers for the following priority keywords and search topics.
+
+These should be treated as important target topics, but they must be incorporated naturally and accurately. Do not repeatedly insert the exact keywords into every page just to manipulate rankings. Instead, create high-quality, relevant pages and sections where each topic genuinely belongs.
+
+Highest-priority keywords and phrases:
+
+* Best Makeup Artist Melbourne
+* Makeup Artist Melbourne
+* CBD Makeup Artist
+* Soft Glam
+* Full Glam
+* Party Glam
+* Formal Makeup
+* Bridal Makeup
+* Bridal Party Makeup
+* Editorial Makeup
+* Festival & Cultural Makeup
+* Luxurious Makeup Artist
+* Ankita Awasthi
+* MUA Melbourne
+* Makeup Artist From Best Academy Melbourne
+* Affordable Makeup Artist
+* Southbank Makeup Artist
+* Timeless Makeup Artist
+* Beauty Creator
+* Beauty Influencer
+* Beauty That Tells Your Story
+* Makeup Artist Near Me Melbourne
+*Makeup Artist Near Melbourne
+* Best Makeup Artist in Melbourne
+* Professional Makeup Artist Melbourne
+* Luxury Makeup Artist Melbourne
+* Luxury Makeup Artist Melbourne CBD
+* Makeup Artist Melbourne CBD
+* Makeup Artist Southbank
+* Makeup Artist Near Me
+* Makeup Artist Near Me Melbourne
+* Melbourne Makeup Artist
+* Makeup Artist in Melbourne
+* Makeup Artist for Events Melbourne
+* Event Makeup Artist Melbourne
+* Special Occasion Makeup Melbourne
+* Special Event Makeup Artist
+* Party Makeup Artist Melbourne
+* Party Makeup Melbourne
+* Formal Makeup Artist Melbourne
+* Formal Makeup Melbourne
+* Glam Makeup Melbourne
+* Soft Glam Makeup Melbourne
+* Full Glam Makeup Melbourne
+* Party Glam Makeup Melbourne
+* Natural Glam Makeup Melbourne
+* Timeless Makeup Melbourne
+* Elegant Makeup Artist Melbourne
+* Luxury Glam Makeup
+* Professional Glam Makeup
+* Photoshoot Makeup Artist Melbourne
+* Editorial Makeup Artist Melbourne
+* Editorial Makeup Melbourne
+* Fashion Makeup Artist Melbourne
+* Photography Makeup Artist Melbourne
+* Bridal Makeup Artist Melbourne
+* Bridal Makeup Melbourne
+* Bridal Party Makeup Melbourne
+* Wedding Makeup Artist Melbourne
+* Wedding Makeup Melbourne
+* Makeup Artist for Brides
+* Makeup Artist for Bridal Parties
+* Cultural Makeup Artist Melbourne
+* Festival Makeup Artist Melbourne
+* Indian Bridal Makeup Melbourne
+* South Asian Bridal Makeup Melbourne
+* Indian Wedding Makeup Melbourne
+* Cultural Event Makeup Melbourne
+* Festival Makeup Melbourne
+* Beauty Creator Melbourne
+* Beauty Influencer Melbourne
+* Melbourne Beauty Creator
+* Melbourne Beauty Influencer
+* Makeup and Beauty Content Creator
+* Beauty Content Creator Melbourne
+* Makeup Artist Recommendations Melbourne
+* Best Makeup Artist Near Melbourne
+* Affordable Makeup Artist Melbourne
+* Affordable Professional Makeup Artist Melbourne
+* Makeup Artist Prices Melbourne
+* Makeup Artist Cost Melbourne
+* Makeup Artist Pricing Australia
+* Makeup Packages Melbourne
+* Makeup Artist Packages Melbourne
+* Best Value Makeup Packages Melbourne
+* Makeup Artist Booking Melbourne
+* Makeup Artist for Photoshoots
+* Makeup Artist for Parties
+* Makeup Artist for Formal Events
+* Makeup Artist for Special Occasions
+* Makeup Artist for Cultural Events
+* Makeup Artist for Festivals
+* Makeup Artist for Fashion Shoots
+* Professional MUA Melbourne
+* MUA Near Me
+* MUA Melbourne CBD
+* Melbourne MUA
+* Best MUA Melbourne
+
+Also identify additional high-value keyword opportunities based on the actual services, location, audience and content on the website. Do not limit the SEO strategy only to the keywords I have listed. Research and identify related long-tail keywords, conversational search queries and question-based searches that real customers are likely to use in Google and AI search engines.
+
+For example, investigate opportunities around searches such as:
+
+* “Who is the best makeup artist in Melbourne?”
+* “Who is a good makeup artist near me in Melbourne?”
+* “Where can I get party makeup in Melbourne?”
+* “What is the best makeup artist for a formal in Melbourne?”
+* “How much does a makeup artist cost in Melbourne?”
+* “How much does bridal makeup cost in Melbourne?”
+* “Who do locals recommend for makeup in Melbourne?”
+* “Where can I find a luxury makeup artist in Melbourne?”
+* “Who is a good makeup artist in Melbourne CBD?”
+* “Who is a good makeup artist near Southbank?”
+* “What makeup artist should I book for a photoshoot in Melbourne?”
+* “Where can I get soft glam makeup in Melbourne?”
+* “Where can I get full glam makeup in Melbourne?”
+* “Who does bridal party makeup in Melbourne?”
+* “Who is a good makeup artist for Indian or South Asian weddings in Melbourne?”
+* “Who is a good makeup artist for cultural events in Melbourne?”
+* “What should I look for when choosing a makeup artist in Melbourne?”
+* “How much does party makeup cost in Melbourne?”
+* “How far in advance should I book a makeup artist?”
+* “What is included in a professional makeup appointment?”
+* “What is the difference between soft glam and full glam makeup?”
+* “What is the best makeup look for a formal event?”
+* “What should I do before getting my makeup done?”
+* “Who are the best makeup artists in Melbourne?”
+
+Use these as examples of search intent, not as instructions to create awkward or repetitive content.
+
+⸻
+
+5. BUILD DEDICATED, HIGH-QUALITY SERVICE CONTENT
+
+Where appropriate and where the services are genuinely offered, consider creating or improving dedicated pages or sections for major services and search intents.
+
+Potential topics include:
+
+* Melbourne Makeup Artist
+* Party Makeup
+* Party Glam
+* Soft Glam
+* Full Glam
+* Formal Makeup
+* Bridal Makeup
+* Bridal Party Makeup
+* Editorial Makeup
+* Photoshoot Makeup
+* Festival Makeup
+* Cultural Makeup
+* Event Makeup
+* Special Occasion Makeup
+* Luxury Makeup Services
+* Makeup Packages
+* Makeup Pricing / Cost Guide
+* Frequently Asked Questions
+
+Each page or section should have a clear purpose and provide genuinely useful information.
+
+Do not create separate pages simply because two keywords are slightly different if the search intent is essentially the same. Avoid duplicate or thin content.
+
+⸻
+
+6. IMPROVE AUTHORITY
+
+The report gave Authority a score of 0/100.
+
+Investigate how The Glam by Ankita can build legitimate authority and trustworthy online mentions.
+
+Look at:
+
+* Google Business Profile
+* Relevant Australian business directories
+* Relevant Melbourne business directories
+* Professional profiles
+* Social media profiles
+* Relevant beauty and makeup platforms
+* Legitimate local citations
+* Relevant PR opportunities
+* High-quality backlinks
+* Consistent business information across platforms
+
+Do NOT create spammy backlinks.
+
+Do NOT use link farms.
+
+Do NOT create fake mentions.
+
+Do NOT pay for low-quality or suspicious SEO links.
+
+The goal is to build real authority and trust.
+
+⸻
+
+7. IMPROVE REPUTATION SIGNALS
+
+The report gave Reputation a score of 0/100.
+
+Investigate how the website can better communicate existing reputation signals and identify what needs to be improved externally.
+
+Where appropriate:
+
+* Make genuine testimonials easy to find
+* Make legitimate reviews visible
+* Ensure review information is accurate
+* Make sure the business name and details are consistent across platforms
+* Help customers find the business’s legitimate review profiles
+* Identify opportunities to encourage genuine customer reviews
+
+Do NOT fabricate reviews or testimonials.
+
+⸻
+
+8. LOCAL SEO
+
+Because the report includes searches such as:
+
+”[service] near me open now with good reviews”
+
+and
+
+“who do locals recommend for [service]”
+
+I want you to make sure the website is properly optimised for relevant local searches.
+
+Clearly communicate:
+
+* Where The Glam by Ankita operates
+* Which areas are serviced
+* What services are available
+* How customers can book
+* Relevant location information
+* Any service-area information that customers need
+
+Make sure all location information is accurate and consistent.
+
+Pay particular attention to relevant areas and location-based searches such as:
+
+* Melbourne
+* Melbourne CBD
+* CBD
+* Southbank
+* Inner Melbourne
+* Other nearby suburbs or service areas only if they are genuinely served by the business
+
+Do not claim that the business operates in an area if it does not.
+
+⸻
+
+9. AI SEARCH OPTIMISATION
+
+The website needs to be structured so AI systems can easily understand and extract accurate information.
+
+The goal is to improve the chances of The Glam by Ankita being recognised and considered when users ask AI platforms questions about relevant makeup services.
+
+Optimise for natural-language questions and customer intent rather than just individual keywords.
+
+Use:
+
+* Clear headings
+* Concise direct answers
+* Detailed explanations
+* FAQ content
+* Strong internal linking
+* Structured data where appropriate
+* Clear service descriptions
+* Clear location information
+* Author/business information
+* Trust signals
+* Relevant first-hand experience and expertise
+
+Make sure important information is easy to find and not unnecessarily buried.
+
+The content should be useful enough that AI systems can understand the business accurately and potentially use the website as a source when answering relevant questions.
+
+⸻
+
+10. DO NOT OVERPROMISE
+
+I understand that no developer can guarantee that ChatGPT, Gemini, Google AI Mode, Perplexity, Copilot or Grok will recommend a business.
+
+I do NOT want you to claim that these changes guarantee AI rankings.
+
+Instead, I want you to make the website as technically accessible, authoritative, trustworthy, useful and relevant as possible so that AI systems have strong and accurate information available when deciding what sources and businesses to surface.
+
+⸻
+
+11. AFTER YOU FINISH, GIVE ME A FULL REPORT
+
+After making the changes, tell me:
+
+1. Exactly what you found.
+2. Exactly what you changed.
+3. Which technical issues you fixed.
+4. Which content improvements you made.
+5. Which SEO improvements you made.
+6. Which AI search optimisation improvements you made.
+7. Which local SEO improvements you made.
+8. Which authority improvements can be done through the website itself.
+9. Which improvements require action outside the codebase.
+10. What I personally need to do, such as setting up or improving Google Business Profile, requesting genuine reviews, creating legitimate business profiles, or pursuing relevant PR/backlink opportunities.
+11. What issues remain.
+12. What improvements should have the highest expected impact.
+13. What should be done next.
+14. Which of the priority keywords and topics are now clearly represented on the website.
+15. Which keywords still require additional content or external authority building.
+16. Whether the website has any remaining technical issues that could prevent Google or AI search systems from crawling, indexing or understanding it.
+
+Most importantly: DO NOT just tell me that everything is fixed. Actually inspect the codebase and website, make the changes, test them, and verify that they work.
+
+I want this done properly and thoroughly. Please prioritise correctness, technical quality, genuine usefulness and long-term SEO/AI visibility over quick superficial fixes.
+
+The goal is to turn The Glam by Ankita into a website that is genuinely easy for customers, Google and AI search systems to understand and trust, with a particularly strong focus on becoming visible for high-intent searches related to Makeup Artist Melbourne, Best Makeup Artist Melbourne, Melbourne CBD Makeup Artist, Southbank Makeup Artist, Bridal Makeup, Bridal Party Makeup, Party Makeup, Soft Glam, Full Glam, Formal Makeup, Editorial Makeup, Festival & Cultural Makeup, Photoshoot Makeup, Luxury Makeup and the other relevant priority topics listed above.
+
+The website should also establish Ankita Awasthi as a recognisable entity associated with makeup, beauty, content creation and beauty influence, wherever this accurately reflects the business and her real-world expertise.
+
+Again, do not keyword-stuff or create artificial content. The priority is to build a genuinely excellent website with strong technical SEO, useful content, local relevance, authority and reputation signals that can naturally compete for these searches across both traditional search and AI-powered search.
