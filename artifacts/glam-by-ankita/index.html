@@ -3,15 +3,15 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Best Makeup Artist in Melbourne | The Glam by Ankita</title>
+  <title>The Glam By Ankita</title>
   <meta name="description" content="Book Ankita, Melbourne makeup artist for bridal, soft glam, full glam, party, formal, editorial and cultural looks. Studio or mobile service in inner Melbourne.">
   <meta name="keywords" content="Best Makeup Artist Melbourne, Makeup Artist Melbourne, Mobile Makeup Artist Melbourne, Bridal Makeup Melbourne, Soft Glam Melbourne, Full Glam Melbourne, Party Glam Melbourne, Formal Makeup Melbourne, Editorial Makeup Melbourne, Festival and Cultural Makeup Melbourne, CBD Makeup Artist, Southbank Makeup Artist, MUA Melbourne, Timeless Makeup Artist, Makeup Artist Near Me Melbourne">
   <!-- Open Graph (Facebook, Instagram, LinkedIn, WhatsApp previews) -->
-  <meta property="og:title" content="Best Makeup Artist in Melbourne | The Glam by Ankita">
+  <meta property="og:title" content="The Glam By Ankita">
   <meta property="og:description" content="Book Ankita, Melbourne makeup artist for bridal, soft glam, full glam, party, formal, editorial and cultural looks. Studio or mobile service in inner Melbourne.">
   <meta property="og:type" content="website">
   <meta property="og:url" content="https://www.theglambyankita.com">
-  <meta property="og:site_name" content="The Glam by Ankita">
+  <meta property="og:site_name" content="The Glam By Ankita">
   <meta property="og:image" content="https://www.theglambyankita.com/opengraph.jpg">
   <meta property="og:image:secure_url" content="https://www.theglambyankita.com/opengraph.jpg">
   <meta property="og:image:type" content="image/jpeg">
@@ -22,7 +22,7 @@
   <!-- Twitter / X Card -->
   <meta name="twitter:card" content="summary_large_image">
   <meta name="twitter:site" content="@theglambyankita">
-  <meta name="twitter:title" content="Best Makeup Artist in Melbourne | The Glam by Ankita">
+  <meta name="twitter:title" content="The Glam By Ankita">
   <meta name="twitter:description" content="Book Ankita, Melbourne makeup artist for bridal, soft glam, full glam, party, formal, editorial and cultural looks. Studio or mobile service in inner Melbourne.">
   <meta name="twitter:image" content="https://www.theglambyankita.com/opengraph.jpg">
   <meta name="twitter:image:alt" content="The Glam by Ankita — Melbourne Makeup Artist">
@@ -1646,13 +1646,17 @@
             </div>
             <div class="frow">
               <div class="fgroup"><label>What do you prefer? *</label>
-                <select id="book-location">
+                <select id="book-location" onchange="toggleMobileLocation(this)">
                   <option value="">Select...</option>
                   <option>Mobile Makeup</option>
                   <option>Come to the studio located in Southbank</option>
                 </select>
               </div>
               <div class="fgroup"><label>Postcode</label><input id="book-postcode" type="text" inputmode="numeric" maxlength="4" placeholder="3000"></div>
+            </div>
+            <div class="fgroup" id="mobile-location-group" style="display:none;">
+              <label>Mobile Makeup Location / Suburb *</label>
+              <input id="book-mobile-location" type="text" placeholder="Where would you like me to travel?">
             </div>
             <div class="fgroup"><label>How Did You Find Me?</label>
               <select id="book-referral">
@@ -1797,6 +1801,7 @@
         <div class="sp-row">
           <div class="sp-field"><label>Number of People</label><input type="number" id="rv-num-people" min="1"></div>
           <div class="sp-field"><label>Appointment Preference</label><select id="rv-location"><option value="">Select...</option><option>Mobile Makeup</option><option>Come to the studio located in Southbank</option></select></div>
+          <div class="sp-field"><label>Mobile Makeup Location / Suburb</label><input type="text" id="rv-mobile-location" placeholder="Only needed for mobile makeup"></div>
         </div>
       </div>
       <div class="sp-card" style="border:2px solid var(--gold);background:linear-gradient(135deg,#fdf8f4,#fdf0ee);">
@@ -2020,7 +2025,7 @@
   const validPages = ['home','about','services','gallery','contact'];
   const pageSeo = {
     home: {
-      title: 'Best Makeup Artist in Melbourne | The Glam by Ankita',
+      title: 'The Glam By Ankita',
       description: 'Book Ankita, Melbourne makeup artist for bridal, soft glam, full glam, party, formal, editorial and cultural looks. Studio or mobile service in inner Melbourne.'
     },
     about: {
@@ -2273,6 +2278,7 @@
       first_name:'First Name', last_name:'Last Name', client_email:'Email',
       phone:'Phone', contact_method:'Preferred Contact', preferred_date:'Requested Date',
       num_people:'Number of People', services:'Services Requested', location:'Appointment Preference',
+      mobile_location:'Mobile Makeup Location / Suburb',
       postcode:'Postcode', referral:'How They Found You', vision:'Look / Vision / Inspo'
     };
     const rawEl = document.getElementById('rv-raw-data');
@@ -2289,7 +2295,8 @@
     set('rv-phone', d.phone);
     set('rv-service', d.services || d.service);
     set('rv-num-people', d.num_people);
-    set('rv-location', d.location);
+      set('rv-location', d.location);
+      set('rv-mobile-location', d.mobile_location);
     set('rv-date', d.preferred_date);
     set('rv-time', d.time);
     const existingCouponPreview = document.getElementById('rv-coupon-preview');
@@ -2376,7 +2383,8 @@
       'Time': document.getElementById('rv-time').value,
       'Service': document.getElementById('rv-service').value,
       'Number of People': document.getElementById('rv-num-people').value,
-      'Location': document.getElementById('rv-location').value,
+    'Location': document.getElementById('rv-location').value,
+    'Mobile Makeup Location': document.getElementById('rv-mobile-location').value,
     };
     Object.keys(confirmed_data).forEach(k => { if (!confirmed_data[k]) delete confirmed_data[k]; });
 
@@ -2577,11 +2585,14 @@
     const time = confirmedData['Time'] || '09:00';
     const service = confirmedData['Service'] || 'Makeup Appointment';
     const location = confirmedData['Location'] || '';
+    const mobileLocation = confirmedData['Mobile Makeup Location'] || '';
+    const calendarLocation = mobileLocation || location;
     const numPeople = confirmedData['Number of People'] || confirmedData['People'] || '';
     const title = service + ' — The Glam by Ankita';
     const descParts = ['Appointment with Ankita from The Glam by Ankita.', 'Service: ' + service];
     if (numPeople) descParts.push('Number of people: ' + numPeople);
-    if (location) descParts.push('Location: ' + location);
+    if (location) descParts.push('Appointment preference: ' + location);
+    if (mobileLocation) descParts.push('Mobile makeup location: ' + mobileLocation);
     const desc = descParts.join('\n');
     const [year, month, day] = date.split('-').map(Number);
     const [hour, min] = (time || '09:00').split(':').map(Number);
@@ -2589,9 +2600,9 @@
     const startDT = year + '' + pad(month) + pad(day) + 'T' + pad(hour) + pad(min) + '00';
     const endH = (hour + 2) % 24;
     const endDT = year + '' + pad(month) + pad(day) + 'T' + pad(endH) + pad(min) + '00';
-    const gCal = 'https://calendar.google.com/calendar/render?action=TEMPLATE&text=' + encodeURIComponent(title) + '&dates=' + startDT + '/' + endDT + '&details=' + encodeURIComponent(desc) + '&location=' + encodeURIComponent(location);
-    const outlook = 'https://outlook.live.com/calendar/0/deeplink/compose?subject=' + encodeURIComponent(title) + '&startdt=' + date + 'T' + pad(hour) + ':' + pad(min) + ':00&enddt=' + date + 'T' + pad(endH) + ':' + pad(min) + ':00&body=' + encodeURIComponent(desc) + '&location=' + encodeURIComponent(location);
-    const icsParams = new URLSearchParams({ title, date, time: time || '09:00', location, description: desc, uid: 'booking-' + date + '@theglambyankita.com' });
+    const gCal = 'https://calendar.google.com/calendar/render?action=TEMPLATE&text=' + encodeURIComponent(title) + '&dates=' + startDT + '/' + endDT + '&details=' + encodeURIComponent(desc) + '&location=' + encodeURIComponent(calendarLocation);
+    const outlook = 'https://outlook.live.com/calendar/0/deeplink/compose?subject=' + encodeURIComponent(title) + '&startdt=' + date + 'T' + pad(hour) + ':' + pad(min) + ':00&enddt=' + date + 'T' + pad(endH) + ':' + pad(min) + ':00&body=' + encodeURIComponent(desc) + '&location=' + encodeURIComponent(calendarLocation);
+    const icsParams = new URLSearchParams({ title, date, time: time || '09:00', location: calendarLocation, description: desc, uid: 'booking-' + date + '@theglambyankita.com' });
     const container = document.getElementById(containerId);
     const section = document.getElementById(sectionId);
     if (container && section) {
@@ -3326,6 +3337,7 @@
       num_people:       document.getElementById('book-people').value,
       services:         services || 'Not specified',
       location:         document.getElementById('book-location').value.trim(),
+      mobile_location:  document.getElementById('book-mobile-location').value.trim(),
       postcode:         document.getElementById('book-postcode').value.trim(),
       referral:         document.getElementById('book-referral').value,
       vision:           document.getElementById('book-vision').value.trim(),
@@ -3436,6 +3448,14 @@
     if (!cb.checked) txt.value = '';
   }
 
+  function toggleMobileLocation(sel) {
+    const group = document.getElementById('mobile-location-group');
+    const input = document.getElementById('book-mobile-location');
+    const isMobile = sel.value === 'Mobile Makeup';
+    if (group) group.style.display = isMobile ? 'block' : 'none';
+    if (input && !isMobile) input.value = '';
+  }
+
   function toggleOtherCollab(sel) {
     const txt = document.getElementById('collab-type-other');
     txt.style.display = sel.value === 'Other' ? 'block' : 'none';
@@ -3485,6 +3505,7 @@
     const data      = isBooking ? getBookingData() : getCollabData();
     const required  = isBooking
       ? ['first_name', 'last_name', 'client_email', 'phone', 'preferred_date', 'location']
+        .concat(data.location === 'Mobile Makeup' ? ['mobile_location'] : [])
       : ['name', 'client_email', 'collab_type'];
 
     const emailErrorId = isBooking ? 'book-email-error' : 'collab-email-error';

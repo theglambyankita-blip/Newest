@@ -18,6 +18,7 @@ const LABEL_MAP: Record<string, string> = {
   services: "Services Requested",
   service: "Services Requested",
   location: "Appointment Preference",
+  mobile_location: "Mobile Makeup Location / Suburb",
   postcode: "Postcode",
   referral: "How They Found You",
   vision: "Look / Vision / Inspo",
@@ -44,6 +45,7 @@ export default function ReviewPage() {
   const serviceRef = useRef<HTMLInputElement>(null);
   const peopleRef = useRef<HTMLInputElement>(null);
   const locationRef = useRef<HTMLSelectElement>(null);
+  const mobileLocationRef = useRef<HTMLInputElement>(null);
   const totalRef = useRef<HTMLInputElement>(null);
   const notesRef = useRef<HTMLTextAreaElement>(null);
 
@@ -87,6 +89,7 @@ export default function ReviewPage() {
       "Time": timeRef.current?.value || "",
       "People": peopleRef.current?.value || "",
       "Location": locationRef.current?.value || "",
+      "Mobile Makeup Location": mobileLocationRef.current?.value || "",
       "Client Name": clientName,
       "Phone": phoneRef.current?.value || "",
     };
@@ -231,6 +234,7 @@ export default function ReviewPage() {
                 <div style={fieldStyle}><label style={labelStyle}>Number of People</label><input ref={peopleRef} type="text" style={inputStyle} defaultValue={data.num_people || ""} /></div>
                 <div style={fieldStyle}><label style={labelStyle}>Appointment Preference</label><select ref={locationRef} style={inputStyle} defaultValue={data.location || ""}><option value="">Select...</option><option>Mobile Makeup</option><option>Come to the studio located in Southbank</option></select></div>
               </div>
+              <div style={fieldStyle}><label style={labelStyle}>Mobile Makeup Location / Suburb <span style={{ fontWeight: 400, textTransform: "none", letterSpacing: 0 }}>(if applicable)</span></label><input ref={mobileLocationRef} style={inputStyle} defaultValue={data.mobile_location || ""} placeholder="Where should Ankita travel?" /></div>
           </div>
         </div>
 

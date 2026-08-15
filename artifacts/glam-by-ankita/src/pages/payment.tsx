@@ -23,12 +23,15 @@ function buildCalendarUrls(confirmedData: Record<string, string>, uid?: string) 
   const time = confirmedData["Time"] || "09:00";
   const service = confirmedData["Service"] || "Makeup Appointment";
   const location = confirmedData["Location"] || "";
+  const mobileLocation = confirmedData["Mobile Makeup Location"] || "";
+  const calendarLocation = mobileLocation || location;
   const numPeople = confirmedData["Number of People"] || confirmedData["People"] || "";
   if (!date) return null;
   const title = `${service} — The Glam by Ankita`;
   const descParts = [`Appointment with Ankita from The Glam by Ankita.`, `Service: ${service}`];
   if (numPeople) descParts.push(`Number of people: ${numPeople}`);
-  if (location) descParts.push(`Location: ${location}`);
+  if (location) descParts.push(`Appointment preference: ${location}`);
+  if (mobileLocation) descParts.push(`Mobile makeup location: ${mobileLocation}`);
   const desc = descParts.join("\n");
   const [year, month, day] = date.split("-").map(Number);
   const [hour, min] = (time || "09:00").split(":").map(Number);
@@ -39,12 +42,12 @@ function buildCalendarUrls(confirmedData: Record<string, string>, uid?: string) 
   const gCal =
     `https://calendar.google.com/calendar/render?action=TEMPLATE` +
     `&text=${encodeURIComponent(title)}&dates=${startDT}/${endDT}` +
-    `&details=${encodeURIComponent(desc)}&location=${encodeURIComponent(location)}`;
+    `&details=${encodeURIComponent(desc)}&location=${encodeURIComponent(calendarLocation)}`;
   const outlook =
     `https://outlook.live.com/calendar/0/deeplink/compose?subject=${encodeURIComponent(title)}` +
     `&startdt=${date}T${pad(hour)}:${pad(min)}:00&enddt=${date}T${pad(endH)}:${pad(min)}:00` +
-    `&body=${encodeURIComponent(desc)}&location=${encodeURIComponent(location)}`;
-  const icsParams = new URLSearchParams({ title, date, time: time || "09:00", location, description: desc, uid: uid || `booking-${date}@theglambyankita.com` });
+    `&body=${encodeURIComponent(desc)}&location=${encodeURIComponent(calendarLocation)}`;
+  const icsParams = new URLSearchParams({ title, date, time: time || "09:00", location: calendarLocation, description: desc, uid: uid || `booking-${date}@theglambyankita.com` });
   return { gCal, outlook, ics: `/api/calendar?${icsParams}` };
 }
 

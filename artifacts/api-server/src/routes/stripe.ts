@@ -116,6 +116,7 @@ router.post("/create-payment-intent", async (req, res) => {
         booking_time:     cd["Time"]             || "",
         booking_service:  cd["Service"]          || "",
         booking_location: cd["Location"]         || "",
+        booking_mobile_location: cd["Mobile Makeup Location"] || "",
         booking_people:   cd["Number of People"] || "",
         booking_token:    token.length <= 450 ? token : "",
         coupon_code:      appliedCouponCode || "",
@@ -171,7 +172,9 @@ router.post("/confirm-payment", async (req, res) => {
     service:       cd["Service"]          || null,
     bookingDate:   cd["Date"]             || null,
     bookingTime:   cd["Time"]             || null,
-    location:      cd["Location"]         || null,
+    location:      cd["Mobile Makeup Location"]
+      ? `${cd["Location"] || "Mobile Makeup"} — ${cd["Mobile Makeup Location"]}`
+      : (cd["Location"] || null),
     numPeople:     cd["Number of People"] || null,
     totalAud:      totalAud ? String(totalAud) : null,
     paymentMethod: "card",
@@ -209,7 +212,9 @@ router.post("/confirm-payment", async (req, res) => {
   const bkDate     = cd["Date"]     || "";
   const bkTime     = cd["Time"]     || "";
   const bkService  = cd["Service"]  || "";
-  const bkLocation = cd["Location"] || "";
+  const bkPreference = cd["Location"] || "";
+  const bkMobileLocation = cd["Mobile Makeup Location"] || "";
+  const bkLocation = bkMobileLocation || bkPreference;
   const icsBuffer  = bkDate ? buildIcs({
     uid:           `card-${Date.now()}-${clientEmail}@theglambyankita.com`,
     summary:       `The Glam by Ankita — ${bkService || "Appointment"}`,
@@ -219,7 +224,8 @@ router.post("/confirm-payment", async (req, res) => {
     description:   [
       "The Glam by Ankita — Your Appointment",
       bkService  ? `Service: ${bkService}`   : "",
-      bkLocation ? `Location: ${bkLocation}` : "",
+      bkPreference ? `Appointment preference: ${bkPreference}` : "",
+      bkMobileLocation ? `Mobile makeup location: ${bkMobileLocation}` : "",
       `Deposit paid: A$${totalAud.toFixed(2)} by card`,
       "Contact: theglambyankita@gmail.com",
     ].filter(Boolean).join("\\n"),

@@ -49,6 +49,7 @@ router.get("/review", (req, res) => {
     first_name: "First Name", last_name: "Last Name", client_email: "Email",
     phone: "Phone", contact_method: "Preferred Contact", preferred_date: "Requested Date",
     num_people: "Number of People", services: "Services Requested", location: "Appointment Preference",
+    mobile_location: "Mobile Makeup Location / Suburb",
     postcode: "Postcode", referral: "How They Found You", vision: "Look / Vision / Inspo",
   };
   const skip = new Set(["owner_email", "from_email", "_client_email", "_client_name", "type"]);
@@ -145,6 +146,7 @@ router.get("/review", (req, res) => {
           <option${d.location === "Mobile Makeup" ? " selected" : ""}>Mobile Makeup</option>
           <option${d.location === "Come to the studio located in Southbank" ? " selected" : ""}>Come to the studio located in Southbank</option>
         </select></div>
+        <div class="field"><label>Mobile Makeup Location / Suburb</label><input type="text" id="f-mobile-location" value="${esc(d.mobile_location || "")}" placeholder="Only needed for mobile makeup"></div>
       </div>
     </div>
   </div>
@@ -208,6 +210,7 @@ async function sendIt() {
     'Time': document.getElementById('f-time').value,
     'Number of People': document.getElementById('f-people').value,
     'Location': document.getElementById('f-location').value,
+    'Mobile Makeup Location': document.getElementById('f-mobile-location').value,
     'Client Name': clientName,
     'Phone': document.getElementById('f-phone').value,
   };
@@ -323,7 +326,9 @@ router.post("/select-cash", async (req, res) => {
       const csDate     = (confirmed_data as Record<string,string>)?.["Date"]     || "";
       const csTime     = (confirmed_data as Record<string,string>)?.["Time"]     || "";
       const csService  = (confirmed_data as Record<string,string>)?.["Service"]  || "";
-      const csLocation = (confirmed_data as Record<string,string>)?.["Location"] || "";
+      const csPreference = (confirmed_data as Record<string,string>)?.["Location"] || "";
+      const csMobileLocation = (confirmed_data as Record<string,string>)?.["Mobile Makeup Location"] || "";
+      const csLocation = csMobileLocation || csPreference;
 
       const csViewToken = toUrlSafeBase64({
         confirmed_data,
@@ -343,7 +348,8 @@ router.post("/select-cash", async (req, res) => {
         description:   [
           "The Glam by Ankita — Your Appointment",
           csService  ? `Service: ${csService}`   : "",
-          csLocation ? `Location: ${csLocation}` : "",
+          csPreference ? `Appointment preference: ${csPreference}` : "",
+          csMobileLocation ? `Mobile makeup location: ${csMobileLocation}` : "",
           total_aud  ? `Amount: A$${Number(total_aud).toFixed(2)} (cash)` : "",
           "Contact: theglambyankita@gmail.com",
         ].filter(Boolean).join("\\n"),
@@ -421,6 +427,7 @@ router.post("/send-email", upload.array("files", 5), async (req, res) => {
     num_people:     "Number of People",
     services:       "Services",
     location:       "Appointment Preference",
+    mobile_location: "Mobile Makeup Location / Suburb",
     postcode:       "Postcode",
     referral:       "How They Found You",
     vision:         "Look / Vision",
@@ -598,18 +605,21 @@ router.post("/send-confirmation", async (req, res) => {
   const bkDate     = (confirmed_data?.["Date"]     || "") as string;
   const bkTime     = (confirmed_data?.["Time"]     || "") as string;
   const bkService  = (confirmed_data?.["Service"]  || "") as string;
-  const bkLocation = (confirmed_data?.["Location"] || "") as string;
+  const bkPreference = (confirmed_data?.["Location"] || "") as string;
+  const bkMobileLocation = (confirmed_data?.["Mobile Makeup Location"] || "") as string;
+  const bkLocation = bkMobileLocation || bkPreference;
 
   const icsBuffer = bkDate ? buildIcs({
     uid:           `booking-${Date.now()}-${client_email}@theglambyankita.com`,
     summary:       `The Glam by Ankita — ${bkService || "Appointment"}`,
     date:          bkDate,
     time:          bkTime     || undefined,
-    location:      bkLocation || undefined,
+     location:      bkLocation || undefined,
     description:   [
       "The Glam by Ankita — Your Appointment",
       bkService  ? `Service: ${bkService}`   : "",
-      bkLocation ? `Location: ${bkLocation}` : "",
+       bkPreference ? `Appointment preference: ${bkPreference}` : "",
+       bkMobileLocation ? `Mobile makeup location: ${bkMobileLocation}` : "",
       `Amount: A$${finalAmount.toFixed(2)}`,
       "Contact: theglambyankita@gmail.com",
     ].filter(Boolean).join("\\n"),

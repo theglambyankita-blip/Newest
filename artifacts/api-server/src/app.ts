@@ -63,6 +63,7 @@ app.post("/api/webhook", express.raw({ type: "application/json" }), async (req, 
     const bookingTime     = pi.metadata?.booking_time     || "";
     const bookingService  = pi.metadata?.booking_service  || "";
     const bookingLocation = pi.metadata?.booking_location || "";
+    const bookingMobileLocation = pi.metadata?.booking_mobile_location || "";
     const bookingPeople   = pi.metadata?.booking_people   || "";
     const bookingToken    = pi.metadata?.booking_token    || "";
 
@@ -72,7 +73,9 @@ app.post("/api/webhook", express.raw({ type: "application/json" }), async (req, 
       service:              bookingService  || null,
       bookingDate:          bookingDate     || null,
       bookingTime:          bookingTime     || null,
-      location:             bookingLocation || null,
+      location:             bookingMobileLocation
+        ? `${bookingLocation || "Mobile Makeup"} — ${bookingMobileLocation}`
+        : (bookingLocation || null),
       numPeople:            bookingPeople   || null,
       totalAud:             String(pi.amount / 100),
       paymentMethod:        "card",
@@ -92,6 +95,7 @@ app.post("/api/webhook", express.raw({ type: "application/json" }), async (req, 
           ...(bookingTime     ? { Time:               bookingTime     } : {}),
           ...(bookingService  ? { Service:            bookingService  } : {}),
           ...(bookingLocation ? { Location:           bookingLocation } : {}),
+          ...(bookingMobileLocation ? { "Mobile Makeup Location": bookingMobileLocation } : {}),
           ...(bookingPeople   ? { "Number of People": bookingPeople   } : {}),
         },
         total_aud:    pi.amount / 100,
@@ -107,7 +111,8 @@ app.post("/api/webhook", express.raw({ type: "application/json" }), async (req, 
       if (bookingTime)     rowEntries.push(["Time",              bookingTime]);
       if (bookingService)  rowEntries.push(["Service",           bookingService]);
       if (bookingPeople)   rowEntries.push(["Number of People",  bookingPeople]);
-      if (bookingLocation) rowEntries.push(["Location",          bookingLocation]);
+      if (bookingLocation) rowEntries.push(["Appointment Preference", bookingLocation]);
+      if (bookingMobileLocation) rowEntries.push(["Mobile Makeup Location", bookingMobileLocation]);
       const detailRows = rowEntries
         .map(([k, v]) => `<tr><td style="padding:6px 14px;font-weight:600;color:#6b3d2e;background:#fdf0ee;white-space:nowrap;">${k}</td><td style="padding:6px 14px;color:#2c1810;">${v}</td></tr>`)
         .join("");
@@ -120,11 +125,12 @@ app.post("/api/webhook", express.raw({ type: "application/json" }), async (req, 
           summary:       `The Glam by Ankita — ${bookingService || "Appointment"}`,
           date:          bookingDate,
           time:          bookingTime  || undefined,
-          location:      bookingLocation || undefined,
+           location:      bookingMobileLocation || bookingLocation || undefined,
           description:   [
             "The Glam by Ankita — Your Appointment",
             bookingService  ? `Service: ${bookingService}`   : "",
-            bookingLocation ? `Location: ${bookingLocation}` : "",
+            bookingLocation ? `Appointment preference: ${bookingLocation}` : "",
+            bookingMobileLocation ? `Mobile makeup location: ${bookingMobileLocation}` : "",
             `Amount Paid: A$${amountAud}`,
             "Contact: theglambyankita@gmail.com",
           ].filter(Boolean).join("\\n"),
