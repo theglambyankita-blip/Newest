@@ -48,7 +48,7 @@ router.get("/review", (req, res) => {
   const labelMap: Record<string, string> = {
     first_name: "First Name", last_name: "Last Name", client_email: "Email",
     phone: "Phone", contact_method: "Preferred Contact", preferred_date: "Requested Date",
-    num_people: "Number of People", services: "Services Requested", location: "Location / Suburb",
+    num_people: "Number of People", services: "Services Requested", location: "Appointment Preference",
     postcode: "Postcode", referral: "How They Found You", vision: "Look / Vision / Inspo",
   };
   const skip = new Set(["owner_email", "from_email", "_client_email", "_client_name", "type"]);
@@ -140,7 +140,11 @@ router.get("/review", (req, res) => {
       <div class="field"><label>Service</label><input type="text" id="f-service" value="${esc(d.services || d.service || "")}"></div>
       <div class="row">
         <div class="field"><label>Number of People</label><input type="number" id="f-people" value="${esc(d.num_people || "")}" min="1"></div>
-        <div class="field"><label>Location / Address</label><input type="text" id="f-location" value="${esc(d.location || "")}"></div>
+        <div class="field"><label>Appointment Preference</label><select id="f-location">
+          <option value="">Select...</option>
+          <option${d.location === "Mobile Makeup" ? " selected" : ""}>Mobile Makeup</option>
+          <option${d.location === "Come to the studio located in Southbank" ? " selected" : ""}>Come to the studio located in Southbank</option>
+        </select></div>
       </div>
     </div>
   </div>
@@ -416,7 +420,7 @@ router.post("/send-email", upload.array("files", 5), async (req, res) => {
     preferred_date: "Preferred Date",
     num_people:     "Number of People",
     services:       "Services",
-    location:       "Suburb / Location",
+    location:       "Appointment Preference",
     postcode:       "Postcode",
     referral:       "How They Found You",
     vision:         "Look / Vision",

@@ -17,7 +17,7 @@ const LABEL_MAP: Record<string, string> = {
   num_people: "Number of People",
   services: "Services Requested",
   service: "Services Requested",
-  location: "Location / Suburb",
+  location: "Appointment Preference",
   postcode: "Postcode",
   referral: "How They Found You",
   vision: "Look / Vision / Inspo",
@@ -43,7 +43,7 @@ export default function ReviewPage() {
   const timeRef = useRef<HTMLInputElement>(null);
   const serviceRef = useRef<HTMLInputElement>(null);
   const peopleRef = useRef<HTMLInputElement>(null);
-  const locationRef = useRef<HTMLInputElement>(null);
+  const locationRef = useRef<HTMLSelectElement>(null);
   const totalRef = useRef<HTMLInputElement>(null);
   const notesRef = useRef<HTMLTextAreaElement>(null);
 
@@ -227,10 +227,10 @@ export default function ReviewPage() {
               <div style={fieldStyle}><label style={labelStyle}>Time</label><input ref={timeRef} type="time" style={inputStyle} defaultValue={data.time || ""} /></div>
             </div>
             <div style={fieldStyle}><label style={labelStyle}>Service</label><input ref={serviceRef} style={inputStyle} defaultValue={data.services || data.service || ""} /></div>
-            <div style={rowStyle}>
-              <div style={fieldStyle}><label style={labelStyle}>Number of People</label><input ref={peopleRef} type="text" style={inputStyle} defaultValue={data.num_people || ""} /></div>
-              <div style={fieldStyle}><label style={labelStyle}>Location / Address</label><input ref={locationRef} style={inputStyle} defaultValue={data.location || ""} /></div>
-            </div>
+              <div style={rowStyle}>
+                <div style={fieldStyle}><label style={labelStyle}>Number of People</label><input ref={peopleRef} type="text" style={inputStyle} defaultValue={data.num_people || ""} /></div>
+                <div style={fieldStyle}><label style={labelStyle}>Appointment Preference</label><select ref={locationRef} style={inputStyle} defaultValue={data.location || ""}><option value="">Select...</option><option>Mobile Makeup</option><option>Come to the studio located in Southbank</option></select></div>
+              </div>
           </div>
         </div>
 

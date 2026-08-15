@@ -1578,7 +1578,7 @@
           <span>Melbourne, Victoria, Australia</span>
         </div>
         <div style="margin-top:1.5rem;">
-          <a href="https://share.google/AUSrQuBkkzwzI6xgz" target="_blank" rel="noopener noreferrer" style="display:inline-flex;align-items:center;gap:0.5rem;background:var(--champagne);color:var(--gold-dark);border:1.5px solid var(--gold-light);border-radius:4px;padding:0.65rem 1.4rem;font-family:'Nunito',sans-serif;font-weight:700;font-size:0.85rem;text-decoration:none;transition:background 0.2s,transform 0.2s;" onmouseover="this.style.background='var(--gold)';this.style.color='white';this.style.transform='translateY(-2px)'" onmouseout="this.style.background='var(--champagne)';this.style.color='var(--gold-dark)';this.style.transform=''">⭐ Leave a Review</a>
+          <a href="https://g.page/r/CZ19B0KP9nb7EAE/review" target="_blank" rel="noopener noreferrer" style="display:inline-flex;align-items:center;gap:0.5rem;background:var(--champagne);color:var(--gold-dark);border:1.5px solid var(--gold-light);border-radius:4px;padding:0.65rem 1.4rem;font-family:'Nunito',sans-serif;font-weight:700;font-size:0.85rem;text-decoration:none;transition:background 0.2s,transform 0.2s;" onmouseover="this.style.background='var(--gold)';this.style.color='white';this.style.transform='translateY(-2px)'" onmouseout="this.style.background='var(--champagne)';this.style.color='var(--gold-dark)';this.style.transform=''">⭐ Leave a Review</a>
         </div>
         <div class="quote-box">
           <p>"Every face tells a story — I'm here to help yours shine."</p>
@@ -1645,7 +1645,13 @@
               <input type="text" id="svc-other-text" placeholder="Please specify your service..." style="display:none;margin-top:0.6rem;width:100%;padding:0.7rem 1rem;border:1.5px solid var(--blush-deep);border-radius:6px;font-size:0.95rem;font-family:inherit;">
             </div>
             <div class="frow">
-              <div class="fgroup"><label>Appointment Location / Suburb</label><input id="book-location" type="text" placeholder="Studio or mobile suburb, e.g. Southbank..."></div>
+              <div class="fgroup"><label>What do you prefer? *</label>
+                <select id="book-location">
+                  <option value="">Select...</option>
+                  <option>Mobile Makeup</option>
+                  <option>Come to the studio located in Southbank</option>
+                </select>
+              </div>
               <div class="fgroup"><label>Postcode</label><input id="book-postcode" type="text" inputmode="numeric" maxlength="4" placeholder="3000"></div>
             </div>
             <div class="fgroup"><label>How Did You Find Me?</label>
@@ -1790,7 +1796,7 @@
         <div class="sp-field"><label>Service</label><input type="text" id="rv-service"></div>
         <div class="sp-row">
           <div class="sp-field"><label>Number of People</label><input type="number" id="rv-num-people" min="1"></div>
-          <div class="sp-field"><label>Location / Address</label><input type="text" id="rv-location"></div>
+          <div class="sp-field"><label>Appointment Preference</label><select id="rv-location"><option value="">Select...</option><option>Mobile Makeup</option><option>Come to the studio located in Southbank</option></select></div>
         </div>
       </div>
       <div class="sp-card" style="border:2px solid var(--gold);background:linear-gradient(135deg,#fdf8f4,#fdf0ee);">
@@ -1998,7 +2004,7 @@
         <li><a href="https://www.instagram.com/theglambyankita" target="_blank" rel="noopener noreferrer">Instagram</a></li>
         <li><a href="https://www.threads.net/@theglambyankita" target="_blank" rel="noopener noreferrer">Threads</a></li>
         <li><a href="mailto:theglambyankita@gmail.com">Email Me</a></li>
-        <li><a href="https://share.google/AUSrQuBkkzwzI6xgz" target="_blank" rel="noopener noreferrer">Leave a Review</a></li>
+        <li><a href="https://g.page/r/CZ19B0KP9nb7EAE/review" target="_blank" rel="noopener noreferrer">Leave a Review</a></li>
       </ul>
     </div>
   </div>
@@ -2266,7 +2272,7 @@
     const labels = {
       first_name:'First Name', last_name:'Last Name', client_email:'Email',
       phone:'Phone', contact_method:'Preferred Contact', preferred_date:'Requested Date',
-      num_people:'Number of People', services:'Services Requested', location:'Location / Suburb',
+      num_people:'Number of People', services:'Services Requested', location:'Appointment Preference',
       postcode:'Postcode', referral:'How They Found You', vision:'Look / Vision / Inspo'
     };
     const rawEl = document.getElementById('rv-raw-data');
@@ -3319,7 +3325,6 @@
       preferred_date:   document.getElementById('book-date').value,
       num_people:       document.getElementById('book-people').value,
       services:         services || 'Not specified',
-      appt_location:    'At Ankita\'s studio',
       location:         document.getElementById('book-location').value.trim(),
       postcode:         document.getElementById('book-postcode').value.trim(),
       referral:         document.getElementById('book-referral').value,
@@ -3479,7 +3484,7 @@
     const successId = isBooking ? 'success-book' : 'success-collab';
     const data      = isBooking ? getBookingData() : getCollabData();
     const required  = isBooking
-      ? ['first_name', 'last_name', 'client_email', 'phone', 'preferred_date']
+      ? ['first_name', 'last_name', 'client_email', 'phone', 'preferred_date', 'location']
       : ['name', 'client_email', 'collab_type'];
 
     const emailErrorId = isBooking ? 'book-email-error' : 'collab-email-error';
