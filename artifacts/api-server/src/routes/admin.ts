@@ -2,7 +2,7 @@ import { Router } from "express";
 import nodemailer from "nodemailer";
 import { randomUUID } from "crypto";
 import { fileURLToPath } from "url";
-import { db, adminTokens, bookings, coupons } from "@workspace/db";
+import { db, adminTokens, bookings, coupons, type Booking } from "@workspace/db";
 import { eq, desc } from "drizzle-orm";
 import multer from "multer";
 import path from "path";
@@ -62,6 +62,7 @@ interface GalleryMeta {
   uploadedAt: string;
   featured?: boolean;
   homepageFeatured?: boolean;
+  homepageFeaturedOrder?: number;
   objectPosition?: string;
   url?: string;
   cloudinaryPublicId?: string;
@@ -228,7 +229,7 @@ router.get("/admin", async (req, res) => {
     return;
   }
 
-  const allBookings = await db
+  const allBookings: Booking[] = await db
     .select()
     .from(bookings)
     .orderBy(desc(bookings.createdAt))
@@ -458,6 +459,17 @@ textarea{resize:vertical;min-height:140px;}
       <div id="gal-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:10px;"></div>
       <div id="gal-empty" style="color:#9e7c4a;font-size:0.85rem;padding:20px 0;display:none;">No photos yet. Upload your first photo above!</div>
     </div>
+    <div class="card" style="padding:20px 24px;margin-top:16px;">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;padding-bottom:8px;border-bottom:1px solid #f0ddd8;">
+        <h3 style="font-size:0.93rem;color:#2c1810;margin:0;">Homepage Featured Work</h3>
+        <span style="font-size:0.76rem;color:#9a7060;">Choose 3 · drag to rearrange</span>
+      </div>
+      <p style="font-size:0.82rem;color:#6b3d2e;line-height:1.55;margin:0 0 14px;">These are the three photos shown in the “Featured Work” section on the homepage. Add or remove photos below, then drag the selected photos to set their order.</p>
+      <div id="homepage-featured-grid" style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;"></div>
+      <div id="homepage-featured-status" style="font-size:0.82rem;margin:10px 0;"></div>
+      <div style="font-size:0.75rem;font-weight:700;color:#6b3d2e;text-transform:uppercase;letter-spacing:0.06em;margin:14px 0 8px;">Available gallery photos</div>
+      <div id="homepage-featured-available" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:10px;"></div>
+    </div>
   </div>
   <div id="gal-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.55);z-index:9999;align-items:center;justify-content:center;padding:16px;">
     <div style="background:#fff;border-radius:12px;max-width:640px;width:100%;max-height:92vh;overflow-y:auto;box-shadow:0 20px 60px rgba(0,0,0,0.22);">
@@ -606,6 +618,8 @@ var _galPhotos=[];
 var _galEditFilename='';
 var _galEditPos='center center';
 var _galUploadPos='center center';
+var _homepageFeaturedFilenames=[];
+var _homepageDragSrc='';
 var _cpCoupons=[];
 var _modalBookingId=null;
 var _modalBookingIdx=null;
@@ -722,6 +736,11 @@ async function loadGallery(){
     var r=await fetch('/api/gallery/list');
     if(!r.ok)throw new Error('Server error '+r.status);
     _galPhotos=await r.json();
+    _homepageFeaturedFilenames=_galPhotos
+      .filter(function(p){return p.homepageFeatured;})
+      .sort(function(a,b){return (a.homepageFeaturedOrder==null?999:a.homepageFeaturedOrder)-(b.homepageFeaturedOrder==null?999:b.homepageFeaturedOrder);})
+      .slice(0,3)
+      .map(function(p){return p.filename;});
     renderGallery();
   }catch(e){
     console.error('Gallery load error',e);
@@ -734,6 +753,7 @@ async function loadGallery(){
 function renderGallery(){
   var grid=document.getElementById('gal-grid');
   var empty=document.getElementById('gal-empty');
+  renderHomepageFeaturedManager();
   if(!_galPhotos||!_galPhotos.length){grid.innerHTML='';empty.style.display='block';return;}
   empty.style.display='none';
   grid.innerHTML=_galPhotos.map(function(p){
@@ -746,6 +766,101 @@ function renderGallery(){
       '<div style="position:absolute;bottom:0;left:0;right:0;padding:7px 8px;color:#fff;font-size:0.7rem;font-weight:600;text-shadow:0 1px 3px rgba(0,0,0,0.7);pointer-events:none;background:linear-gradient(transparent,rgba(0,0,0,0.55));">'+(p.title||'')+'</div>'+
       '</div>';
   }).join('');
+}
+function homepagePhoto(filename){
+  return _galPhotos.find(function(p){return p.filename===filename;});
+}
+function renderHomepageFeaturedManager(){
+  var selectedGrid=document.getElementById('homepage-featured-grid');
+  var availableGrid=document.getElementById('homepage-featured-available');
+  var status=document.getElementById('homepage-featured-status');
+  if(!selectedGrid||!availableGrid)return;
+  var selected=_homepageFeaturedFilenames.map(homepagePhoto).filter(Boolean);
+  selectedGrid.innerHTML=selected.map(function(p,idx){
+    var fn=escHtml(p.filename);
+    var imgUrl=escHtml(p.url||('/gallery/'+p.filename));
+    var pos=escHtml(p.objectPosition||p.object_position||'center center');
+    return '<div draggable="true" ondragstart="homepageDragStart(event,\''+fn+'\')" ondragover="homepageDragOver(event)" ondrop="homepageDrop(event,\''+fn+'\')" style="position:relative;min-width:0;border:1.5px solid #c9a96e;border-radius:8px;overflow:hidden;background:#f5e8e0;cursor:grab;">'+
+      '<div style="position:absolute;top:5px;left:5px;z-index:2;background:rgba(158,124,74,0.95);border-radius:4px;padding:2px 7px;font-size:0.66rem;color:#fff;font-weight:700;pointer-events:none;">'+(idx+1)+'</div>'+
+      '<img src="'+imgUrl+'" style="width:100%;aspect-ratio:4/3;object-fit:cover;object-position:'+pos+';display:block;pointer-events:none;" alt="'+escHtml(p.title||'Homepage featured photo')+'">'+
+      '<div style="padding:7px 8px;font-size:0.72rem;color:#6b3d2e;font-weight:700;min-height:34px;">'+escHtml(p.title||'Untitled photo')+'</div>'+
+      '<button type="button" onclick="homepageRemove(\''+fn+'\')" style="width:100%;padding:6px;border:0;border-top:1px solid #f0ddd8;background:#fff;color:#c0392b;font-size:0.75rem;font-weight:700;cursor:pointer;font-family:inherit;">Remove</button>'+
+      '</div>';
+  }).join('');
+  if(!_homepageFeaturedFilenames.length){
+    selectedGrid.innerHTML='<p style="grid-column:1/-1;color:#9e7c4a;font-size:0.82rem;padding:8px 0;">No homepage photos selected yet.</p>';
+  }
+  var selectedSet={};
+  _homepageFeaturedFilenames.forEach(function(fn){selectedSet[fn]=true;});
+  var available=_galPhotos.filter(function(p){return !selectedSet[p.filename];});
+  availableGrid.innerHTML=available.length?available.map(function(p){
+    var fn=escHtml(p.filename);
+    var imgUrl=escHtml(p.url||('/gallery/'+p.filename));
+    var pos=escHtml(p.objectPosition||p.object_position||'center center');
+    var disabled=_homepageFeaturedFilenames.length>=3?' disabled':'';
+    return '<div style="border:1px solid #e8c4bc;border-radius:8px;overflow:hidden;background:#fff;">'+
+      '<img src="'+imgUrl+'" style="width:100%;aspect-ratio:1;object-fit:cover;object-position:'+pos+';display:block;" alt="'+escHtml(p.title||'Gallery photo')+'">'+
+      '<div style="padding:6px 7px;font-size:0.7rem;color:#6b3d2e;font-weight:600;min-height:30px;">'+escHtml(p.title||'Untitled photo')+'</div>'+
+      '<button type="button" onclick="homepageAdd(\''+fn+'\')"'+disabled+' style="width:100%;padding:6px;border:0;border-top:1px solid #f0ddd8;background:#fff9f5;color:#9e7c4a;font-size:0.72rem;font-weight:700;cursor:pointer;font-family:inherit;">Add to homepage</button>'+
+      '</div>';
+  }).join(''):'<p style="grid-column:1/-1;color:#9e7c4a;font-size:0.82rem;padding:8px 0;">All gallery photos are selected.</p>';
+  if(_homepageFeaturedFilenames.length===3){
+    status.textContent='Saved homepage order: '+selected.map(function(p){return p.title||'Untitled photo';}).join(' · ');
+    status.style.color='#2c6e3f';
+  }else{
+    status.textContent='Select exactly 3 photos to update the homepage.';
+    status.style.color='#9e7c4a';
+  }
+}
+function homepageDragStart(e,filename){_homepageDragSrc=filename;e.dataTransfer.effectAllowed='move';}
+function homepageDragOver(e){e.preventDefault();e.dataTransfer.dropEffect='move';}
+async function homepageDrop(e,targetFilename){
+  e.preventDefault();
+  if(!_homepageDragSrc||_homepageDragSrc===targetFilename)return;
+  var si=_homepageFeaturedFilenames.indexOf(_homepageDragSrc);
+  var ti=_homepageFeaturedFilenames.indexOf(targetFilename);
+  if(si===-1||ti===-1)return;
+  var moved=_homepageFeaturedFilenames.splice(si,1)[0];
+  _homepageFeaturedFilenames.splice(ti,0,moved);
+  renderHomepageFeaturedManager();
+  await saveHomepageFeatured();
+}
+async function homepageAdd(filename){
+  if(_homepageFeaturedFilenames.length>=3||!homepagePhoto(filename))return;
+  _homepageFeaturedFilenames.push(filename);
+  renderHomepageFeaturedManager();
+  if(_homepageFeaturedFilenames.length===3)await saveHomepageFeatured();
+}
+async function homepageRemove(filename){
+  _homepageFeaturedFilenames=_homepageFeaturedFilenames.filter(function(fn){return fn!==filename;});
+  renderHomepageFeaturedManager();
+}
+async function saveHomepageFeatured(){
+  var status=document.getElementById('homepage-featured-status');
+  if(_homepageFeaturedFilenames.length!==3){
+    status.textContent='Select exactly 3 photos to update the homepage.';
+    status.style.color='#9e7c4a';
+    return;
+  }
+  status.textContent='Saving homepage order...';
+  status.style.color='#9e7c4a';
+  try{
+    var r=await fetch('/api/admin/gallery/homepage-featured?token='+encodeURIComponent(TOKEN),{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify({filenames:_homepageFeaturedFilenames})});
+    var j=await r.json().catch(function(){return{};});
+    if(!r.ok)throw new Error(j.error||'Failed to save homepage photos');
+    _galPhotos.forEach(function(p){
+      var idx=_homepageFeaturedFilenames.indexOf(p.filename);
+      p.homepageFeatured=idx!==-1;
+      if(idx!==-1)p.homepageFeaturedOrder=idx;
+      else delete p.homepageFeaturedOrder;
+    });
+    renderHomepageFeaturedManager();
+    status.textContent='Homepage featured photos saved.';
+    status.style.color='#2c6e3f';
+  }catch(e){
+    status.textContent='Could not save homepage photos. Please try again.';
+    status.style.color='#c0392b';
+  }
 }
 var _galDragSrc='';
 function galDragStart(e,fn){_galDragSrc=fn;e.dataTransfer.effectAllowed='move';}
@@ -1361,6 +1476,46 @@ router.put("/admin/gallery/:filename/featured", async (req, res) => {
   meta[idx].featured = !meta[idx].featured;
   writeGalleryMeta(meta);
   res.json({ ok: true, featured: meta[idx].featured });
+});
+
+// ── PUT /api/admin/gallery/homepage-featured — set the 3 homepage photos ──
+router.put("/admin/gallery/homepage-featured", async (req, res) => {
+  const token = req.query.token as string;
+  const valid = await validateToken(token).catch(() => false);
+  if (!valid) { res.status(403).json({ error: "Unauthorized" }); return; }
+
+  const { filenames } = req.body as { filenames?: unknown };
+  if (
+    !Array.isArray(filenames) ||
+    filenames.length !== 3 ||
+    filenames.some((filename) => typeof filename !== "string") ||
+    new Set(filenames).size !== 3
+  ) {
+    res.status(400).json({ error: "Choose exactly 3 different gallery photos." });
+    return;
+  }
+
+  const meta = readGalleryMeta();
+  const requested = filenames as string[];
+  if (requested.some((filename) => !meta.some((photo) => photo.filename === filename))) {
+    res.status(400).json({ error: "One or more selected photos could not be found." });
+    return;
+  }
+
+  meta.forEach((photo) => {
+    photo.homepageFeatured = false;
+    delete photo.homepageFeaturedOrder;
+  });
+  requested.forEach((filename, index) => {
+    const photo = meta.find((item) => item.filename === filename);
+    if (photo) {
+      photo.homepageFeatured = true;
+      photo.homepageFeaturedOrder = index;
+    }
+  });
+
+  writeGalleryMeta(meta);
+  res.json({ ok: true, filenames: requested });
 });
 
 // ── POST /api/admin/upload-gallery ───────────────────────────────

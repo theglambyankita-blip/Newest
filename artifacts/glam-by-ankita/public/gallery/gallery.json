@@ -28,7 +28,8 @@
     "uploadedAt": "2026-06-15T00:00:00.000Z",
     "featured": false,
     "objectPosition": "center top",
-    "homepageFeatured": true
+    "homepageFeatured": true,
+    "homepageFeaturedOrder": 1
   },
   {
     "filename": "purple-glam.jpeg",
@@ -59,17 +60,19 @@
     "uploadedAt": "2026-07-20T00:00:00.000Z",
     "featured": false,
     "objectPosition": "center 15%",
-    "homepageFeatured": true
+    "homepageFeatured": true,
+    "homepageFeaturedOrder": 2
   },
   {
     "filename": "bridal-editorial-tfp.jpeg",
     "url": "/gallery/bridal-editorial-tfp.jpeg",
-    "title": "Bridal Editorial TFP — Soft Gold Shimmer",
+    "title": "Bridal Glam with Soft Golden Eyes",
     "category": "bridal",
     "desc": "Bridal makeup and hair by Ankita for a collaborative TFP shoot with a photographer, model and jewellery team",
     "uploadedAt": "2026-08-16T00:00:00.000Z",
     "featured": false,
     "objectPosition": "center 30%",
-    "homepageFeatured": true
+    "homepageFeatured": true,
+    "homepageFeaturedOrder": 0
   }
 ]

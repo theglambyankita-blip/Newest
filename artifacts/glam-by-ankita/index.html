@@ -2082,7 +2082,10 @@
     const section = document.getElementById('homepage-featured');
     const grid = document.getElementById('homepage-featured-grid');
     if (!section || !grid) return;
-    const selected = photos.filter(p => p.homepageFeatured).slice(0, 3);
+    const selected = photos
+      .filter(p => p.homepageFeatured)
+      .sort((a, b) => (a.homepageFeaturedOrder ?? 999) - (b.homepageFeaturedOrder ?? 999))
+      .slice(0, 3);
     if (!selected.length) {
       section.style.display = 'none';
       return;
