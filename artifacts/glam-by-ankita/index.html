@@ -559,6 +559,19 @@
     .svc-price { font-family: 'Playfair Display', serif; font-size: 1.1rem; font-weight: 700; color: var(--text-dark); margin-top: 0.9rem; margin-bottom: 0; }
 
 
+    /* FEATURED WORK */
+    .featured-work-section { background: var(--blush-light); }
+    .featured-work-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1.25rem; max-width: 1100px; margin: 0 auto; }
+    .featured-work-card { display: block; position: relative; overflow: hidden; background: var(--white); border-radius: 10px; color: inherit; text-decoration: none; box-shadow: 0 8px 28px rgba(44,24,16,0.08); transition: transform 0.35s cubic-bezier(0.16,1,0.3,1), box-shadow 0.35s ease; }
+    .featured-work-card:hover { transform: translateY(-7px); box-shadow: 0 18px 42px rgba(44,24,16,0.16); }
+    .featured-work-card img { display: block; width: 100%; aspect-ratio: 4 / 5; object-fit: cover; object-position: center center; transition: transform 0.55s cubic-bezier(0.16,1,0.3,1); }
+    .featured-work-card:hover img { transform: scale(1.04); }
+    .featured-work-card-info { padding: 1.15rem 1.25rem 1.3rem; }
+    .featured-work-card-info h3 { font-family: 'Playfair Display', serif; font-size: 1.1rem; font-weight: 600; color: var(--text-dark); margin: 0 0 0.35rem; }
+    .featured-work-card-info p { font-size: 0.8rem; color: var(--text-light); line-height: 1.65; margin: 0; }
+    .featured-work-card-link { display: inline-block; margin-top: 0.75rem; color: var(--gold-dark); font-size: 0.75rem; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; }
+    @media (max-width: 720px) { .featured-work-grid { grid-template-columns: 1fr; max-width: 460px; } }
+
     /* GALLERY */
     #page-gallery .section { padding-top: 2.2rem; }
     .gallery-controls { display: flex; align-items: flex-end; justify-content: space-between; flex-wrap: wrap; gap: 1.2rem; margin-bottom: 2.5rem; }
@@ -1206,6 +1219,19 @@
       <span>Festival Looks</span><span class="sep">✦</span>
       <span>Content Creation</span><span class="sep">✦</span>
     </div>
+  </div>
+
+  <!-- FEATURED WORK SECTION -->
+  <div class="section featured-work-section" id="homepage-featured" style="display:none;">
+    <div style="text-align:center;max-width:640px;margin:0 auto 2.5rem;">
+      <p class="eyebrow" data-anim="up">Selected Work</p>
+      <h2 class="section-h2" data-anim="up" data-delay="100">Featured <em class="draw-underline">Work</em></h2>
+      <p class="body-text" data-anim="up" data-delay="200">A few favourite looks from recent creative collaborations and makeup sessions.</p>
+    </div>
+    <div class="featured-work-grid" id="homepage-featured-grid" data-stagger></div>
+    <p style="text-align:center;margin:2rem 0 0;">
+      <button class="btn-secondary" onclick="showPage('gallery',null)">View all work</button>
+    </p>
   </div>
 
   <div class="section" style="background:var(--cream);">
@@ -2052,6 +2078,50 @@
 
   let _galleryLoaded = false;
   let _galleryLoading = false;
+  function renderHomepageFeatured(photos) {
+    const section = document.getElementById('homepage-featured');
+    const grid = document.getElementById('homepage-featured-grid');
+    if (!section || !grid) return;
+    const selected = photos.filter(p => p.homepageFeatured).slice(0, 3);
+    if (!selected.length) {
+      section.style.display = 'none';
+      return;
+    }
+
+    grid.innerHTML = '';
+    selected.forEach(p => {
+      const card = document.createElement('a');
+      card.className = 'featured-work-card';
+      card.href = '/gallery';
+      card.setAttribute('aria-label', `View ${p.title || 'featured work'} in the gallery`);
+      card.onclick = (event) => {
+        event.preventDefault();
+        showPage('gallery', null);
+      };
+
+      const img = document.createElement('img');
+      img.src = p.url || '/gallery/' + p.filename;
+      img.alt = p.title ? `${p.title} — makeup by Ankita` : 'Featured makeup work by Ankita';
+      img.loading = 'lazy';
+      img.decoding = 'async';
+      if (p.objectPosition) img.style.objectPosition = p.objectPosition;
+
+      const info = document.createElement('div');
+      info.className = 'featured-work-card-info';
+      const title = document.createElement('h3');
+      title.textContent = p.title || 'Featured Work';
+      const desc = document.createElement('p');
+      desc.textContent = p.desc || '';
+      const link = document.createElement('span');
+      link.className = 'featured-work-card-link';
+      link.textContent = 'View in gallery →';
+      info.append(title, desc, link);
+      card.append(img, info);
+      grid.appendChild(card);
+    });
+    section.style.display = '';
+  }
+
   async function loadDynamicGallery() {
     if (_galleryLoading) return;
     _galleryLoading = true;
@@ -2067,6 +2137,7 @@
       }
       if (!photos || !photos.length) return;
       _galleryLoaded = true;
+      renderHomepageFeatured(photos);
       const grid = document.getElementById('photoGrid');
       grid.innerHTML = '';
       photos.forEach(p => {

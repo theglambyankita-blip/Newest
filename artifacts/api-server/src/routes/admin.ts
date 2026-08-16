@@ -61,6 +61,7 @@ interface GalleryMeta {
   desc: string;
   uploadedAt: string;
   featured?: boolean;
+  homepageFeatured?: boolean;
   objectPosition?: string;
   url?: string;
   cloudinaryPublicId?: string;
