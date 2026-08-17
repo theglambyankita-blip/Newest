@@ -731,11 +731,41 @@ function galPreviewFile(e){
   document.getElementById('gal-focus-dot').style.top='50%';
   document.getElementById('gal-pos-val').textContent='Focus: center center';
 }
+async function mergeBundledGalleryMetadata(apiPhotos){
+  var needsFallback=!apiPhotos.some(function(p){return p.filename==='bridal-editorial-tfp.jpeg';}) ||
+    !apiPhotos.some(function(p){return p.homepageFeatured;});
+  if(!needsFallback)return apiPhotos;
+  try{
+    var bundledResponse=await fetch('/gallery/gallery.json?_='+Date.now());
+    if(!bundledResponse.ok)return apiPhotos;
+    var bundledPhotos=await bundledResponse.json();
+    if(!Array.isArray(bundledPhotos)||!bundledPhotos.length)return apiPhotos;
+    var apiByFilename={};
+    apiPhotos.forEach(function(p){apiByFilename[p.filename]=p;});
+    var bundledFilenames={};
+    var merged=bundledPhotos.map(function(p){
+      bundledFilenames[p.filename]=true;
+      var apiPhoto=apiByFilename[p.filename];
+      if(!apiPhoto)return p;
+      return Object.assign({},p,apiPhoto,{
+        title:apiPhoto.title||p.title,
+        desc:apiPhoto.desc||p.desc,
+        homepageFeatured:apiPhoto.homepageFeatured==null?p.homepageFeatured:apiPhoto.homepageFeatured,
+        homepageFeaturedOrder:apiPhoto.homepageFeaturedOrder==null?p.homepageFeaturedOrder:apiPhoto.homepageFeaturedOrder
+      });
+    });
+    return merged.concat(apiPhotos.filter(function(p){return !bundledFilenames[p.filename];}));
+  }catch(e){
+    console.warn('Bundled gallery metadata fallback unavailable',e);
+    return apiPhotos;
+  }
+}
 async function loadGallery(){
   try{
     var r=await fetch('/api/gallery/list');
     if(!r.ok)throw new Error('Server error '+r.status);
     _galPhotos=await r.json();
+    _galPhotos=await mergeBundledGalleryMetadata(_galPhotos);
     _homepageFeaturedFilenames=_galPhotos
       .filter(function(p){return p.homepageFeatured;})
       .sort(function(a,b){return (a.homepageFeaturedOrder==null?999:a.homepageFeaturedOrder)-(b.homepageFeaturedOrder==null?999:b.homepageFeaturedOrder);})

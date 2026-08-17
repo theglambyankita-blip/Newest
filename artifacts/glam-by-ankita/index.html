@@ -601,7 +601,6 @@
     .featured-work-card-info { padding: 1.15rem 1.25rem 1.3rem; }
     .featured-work-card-info h3 { font-family: 'Playfair Display', serif; font-size: 1.1rem; font-weight: 600; color: var(--text-dark); margin: 0 0 0.35rem; }
     .featured-work-card-info p { font-size: 0.8rem; color: var(--text-light); line-height: 1.65; margin: 0; }
-    .featured-work-card-link { display: inline-block; margin-top: 0.75rem; color: var(--gold-dark); font-size: 0.75rem; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; }
     @media (max-width: 720px) { .featured-work-grid { grid-template-columns: 1fr; max-width: 460px; } }
 
     /* GALLERY */
@@ -2153,10 +2152,7 @@
       title.textContent = p.title || 'Featured Work';
       const desc = document.createElement('p');
       desc.textContent = p.desc || '';
-      const link = document.createElement('span');
-      link.className = 'featured-work-card-link';
-      link.textContent = 'View in gallery →';
-      info.append(title, desc, link);
+      info.append(title, desc);
       card.append(img, info);
       grid.appendChild(card);
     });
