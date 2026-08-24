@@ -688,6 +688,10 @@
     .ftab.active { background: #e8c4cc; color: #8b2a3a; border-bottom: 3px solid #8b2a3a; }
     .ftab:not(.active):hover { background: var(--blush-deep); color: var(--text-mid); }
     .form-panel { background: var(--white); padding: 2rem; border: 1px solid var(--blush-deep); border-top: none; }
+    .booking-intro { display:flex; gap:0.8rem; align-items:flex-start; padding:1rem 1.1rem; margin-bottom:1.25rem; background:linear-gradient(135deg,#fff9f4,#fdf0ee); border:1px solid var(--gold-light); border-radius:8px; }
+    .booking-intro-mark { color:var(--gold-dark); font-family:'Playfair Display',serif; font-size:1.35rem; line-height:1; }
+    .booking-intro strong { display:block; color:var(--text-dark); font-family:'Playfair Display',serif; font-size:1rem; margin-bottom:0.25rem; }
+    .booking-intro span { display:block; color:var(--text-mid); font-size:0.82rem; line-height:1.55; }
     .form-panel > div { display: none; }
     .form-panel > div.active { display: block; }
     .frow { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1rem; }
@@ -1253,13 +1257,17 @@
   </div>
 
   <!-- FEATURED WORK SECTION -->
-  <div class="section featured-work-section" id="homepage-featured" style="display:none;">
+  <div class="section featured-work-section" id="homepage-featured">
     <div style="text-align:center;max-width:640px;margin:0 auto 2.5rem;">
       <p class="eyebrow" data-anim="up">Selected Work</p>
       <h2 class="section-h2" data-anim="up" data-delay="100">Featured <em class="draw-underline">Work</em></h2>
       <p class="body-text" data-anim="up" data-delay="200">A few favourite looks from recent creative collaborations and makeup sessions.</p>
     </div>
-    <div class="featured-work-grid" id="homepage-featured-grid" data-stagger></div>
+    <div class="featured-work-grid" id="homepage-featured-grid" data-stagger>
+      <div class="featured-work-card featured-skeleton" aria-hidden="true"><div style="aspect-ratio:4/5;background:linear-gradient(110deg,#f5e8e0 8%,#fff5f0 18%,#f5e8e0 33%);background-size:200% 100%;animation:shimmer 1.2s linear infinite;"></div><div class="featured-work-card-info"><h3>Loading selected work…</h3><p>Preparing Ankita’s latest looks</p></div></div>
+      <div class="featured-work-card featured-skeleton" aria-hidden="true"><div style="aspect-ratio:4/5;background:linear-gradient(110deg,#f5e8e0 8%,#fff5f0 18%,#f5e8e0 33%);background-size:200% 100%;animation:shimmer 1.2s linear infinite;"></div><div class="featured-work-card-info"><h3>Loading selected work…</h3><p>Preparing Ankita’s latest looks</p></div></div>
+      <div class="featured-work-card featured-skeleton" aria-hidden="true"><div style="aspect-ratio:4/5;background:linear-gradient(110deg,#f5e8e0 8%,#fff5f0 18%,#f5e8e0 33%);background-size:200% 100%;animation:shimmer 1.2s linear infinite;"></div><div class="featured-work-card-info"><h3>Loading selected work…</h3><p>Preparing Ankita’s latest looks</p></div></div>
+    </div>
     <p style="text-align:center;margin:2rem 0 0;">
       <button class="btn-secondary" onclick="showPage('gallery',null)">View all work</button>
     </p>
@@ -1650,6 +1658,10 @@
         </div>
         <div class="form-panel">
           <div id="tab-book" class="active">
+             <div class="booking-intro">
+               <div class="booking-intro-mark">✦</div>
+               <div><strong>Let’s plan your perfect look</strong><span>Share a few details about your occasion, style and vision. Bridal enquiries are warmly welcomed, and every look is tailored with your features, outfit and photography in mind.</span></div>
+             </div>
             <div class="frow">
               <div class="fgroup"><label>First Name *</label><input id="book-first" type="text" placeholder="Your first name"></div>
               <div class="fgroup"><label>Last Name *</label><input id="book-last" type="text" placeholder="Your last name"></div>
@@ -2165,15 +2177,17 @@
     try {
       // Always fetch fresh from API so admin changes appear immediately
       let photos = null;
-      const fb = await fetch('/api/gallery/list?_=' + Date.now());
-      if (fb.ok) photos = await fb.json();
+      const [apiResponse, staticResponse] = await Promise.all([
+        fetch('/api/gallery/list?_=' + Date.now()),
+        fetch('/gallery/gallery.json?_=' + Date.now())
+      ]);
+      if (apiResponse.ok) photos = await apiResponse.json();
       const apiPhotos = photos;
       if (!apiPhotos || !apiPhotos.length || !apiPhotos.some(p => p.homepageFeatured)) {
         // Use the bundled metadata when an older API build does not include
         // homepage selections or the latest gallery upload yet.
-        const fb2 = await fetch('/gallery/gallery.json');
-        if (fb2.ok) {
-          const staticPhotos = await fb2.json();
+        if (staticResponse.ok) {
+          const staticPhotos = await staticResponse.json();
           if (!apiPhotos || !apiPhotos.length) {
             photos = staticPhotos;
           } else if (staticPhotos.some(p => p.homepageFeatured)) {
@@ -2190,7 +2204,7 @@
           }
         }
       }
-      if (!photos || !photos.length) return;
+      if (!photos || !photos.length) { document.getElementById('homepage-featured').style.display = 'none'; return; }
       _galleryLoaded = true;
       renderHomepageFeatured(photos);
       const grid = document.getElementById('photoGrid');
@@ -2198,7 +2212,7 @@
       photos.forEach(p => {
         const el = document.createElement('div');
         el.className = 'photo-item' + (p.featured ? ' featured' : '');
-        el.dataset.cat = p.category || 'glam';
+        el.dataset.cat = (p.categories || [p.category || 'glam']).join(' ');
         el.dataset.title = p.title || '';
         el.dataset.desc = p.desc || '';
         el.onclick = () => openLightbox(el);
@@ -3123,7 +3137,7 @@
   }
   document.addEventListener('DOMContentLoaded', () => {
     // Pre-fetch gallery data + preload images in background so Gallery tab is instant
-    setTimeout(loadDynamicGallery, 300);
+    loadDynamicGallery();
     setTimeout(triggerAnims, 100);
     // Load BTS photos and reels dynamically
     loadBtsPhotos();
@@ -3221,7 +3235,7 @@
       } else {
         // Category: show matching real photos + matching category placeholders; hide fills
         if (isFill) { item.style.display = 'none'; return; }
-        item.style.display = (item.dataset.cat === cat) ? '' : 'none';
+        item.style.display = (item.dataset.cat || '').split(/\s+/).includes(cat) ? '' : 'none';
       }
     });
   }

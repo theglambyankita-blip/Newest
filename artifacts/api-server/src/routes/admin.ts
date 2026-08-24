@@ -57,7 +57,8 @@ function uploadToCloudinary(buffer: Buffer, folder: string): Promise<{ secure_ur
 interface GalleryMeta {
   filename: string;
   title: string;
-  category: string;
+  category?: string;
+  categories?: string[];
   desc: string;
   uploadedAt: string;
   featured?: boolean;
@@ -71,7 +72,16 @@ interface GalleryMeta {
 function readGalleryMeta(): GalleryMeta[] {
   const metaPath = path.join(GALLERY_DIR, "gallery.json");
   if (!fs.existsSync(metaPath)) return [];
-  try { return JSON.parse(fs.readFileSync(metaPath, "utf8")); }
+  try {
+    const items = JSON.parse(fs.readFileSync(metaPath, "utf8")) as GalleryMeta[];
+    return items.map((item) => ({
+      ...item,
+      categories: Array.isArray(item.categories) && item.categories.length
+        ? item.categories
+        : [item.category || "glam"],
+      category: item.category || (Array.isArray(item.categories) ? item.categories[0] : "glam"),
+    }));
+  }
   catch { return []; }
 }
 
@@ -444,7 +454,7 @@ textarea{resize:vertical;min-height:140px;}
           <div class="field"><label>Title</label><input type="text" id="gal-title" placeholder="e.g. Bridal Glam"></div>
         </div>
         <div>
-          <div class="field"><label>Category</label><select id="gal-category" style="width:100%;padding:10px 13px;border:1.5px solid #e0c8c0;border-radius:6px;font-size:0.92rem;color:#2c1810;background:#fff;font-family:inherit;"><option value="glam">Glam</option><option value="bridal">Bridal</option><option value="editorial">Editorial</option><option value="festival">Festival</option><option value="creative">Creative</option><option value="collab">Collab</option></select></div>
+          <div class="field"><label>Labels <span style="font-size:.72rem;color:#9a7060;">(choose all that apply)</span></label><div id="gal-category" class="label-checks">${["glam","bridal","editorial","festival","creative","collab"].map((cat) => `<label style="display:inline-flex;align-items:center;gap:5px;margin:0 10px 8px 0;font-size:.82rem;"><input type="checkbox" value="${cat}"> ${cat[0].toUpperCase()+cat.slice(1)}</label>`).join("")}</div></div>
           <div class="field"><label>Description</label><textarea id="gal-desc" rows="3" placeholder="Short description..." style="min-height:75px;"></textarea></div>
           <button class="btn" id="gal-upload-btn" onclick="galUpload()">Upload Photo &#10022;</button>
           <div id="gal-upload-status" style="margin-top:10px;font-size:0.84rem;"></div>
@@ -487,7 +497,7 @@ textarea{resize:vertical;min-height:140px;}
           </div>
           <div>
             <div class="field"><label>Title</label><input type="text" id="gal-edit-title"></div>
-            <div class="field"><label>Category</label><select id="gal-edit-cat" style="width:100%;padding:10px 13px;border:1.5px solid #e0c8c0;border-radius:6px;font-size:0.92rem;color:#2c1810;background:#fff;font-family:inherit;"><option value="glam">Glam</option><option value="bridal">Bridal</option><option value="editorial">Editorial</option><option value="festival">Festival</option><option value="creative">Creative</option><option value="collab">Collab</option></select></div>
+            <div class="field"><label>Labels <span style="font-size:.72rem;color:#9a7060;">(choose all that apply)</span></label><div id="gal-edit-cat" class="label-checks">${["glam","bridal","editorial","festival","creative","collab"].map((cat) => `<label style="display:inline-flex;align-items:center;gap:5px;margin:0 10px 8px 0;font-size:.82rem;"><input type="checkbox" value="${cat}"> ${cat[0].toUpperCase()+cat.slice(1)}</label>`).join("")}</div></div>
             <div class="field"><label>Description</label><textarea id="gal-edit-desc" rows="3" style="min-height:70px;"></textarea></div>
           </div>
         </div>
@@ -731,6 +741,13 @@ function galPreviewFile(e){
   document.getElementById('gal-focus-dot').style.top='50%';
   document.getElementById('gal-pos-val').textContent='Focus: center center';
 }
+function galCheckedLabels(id){
+  return Array.from(document.querySelectorAll('#'+id+' input[type="checkbox"]:checked')).map(function(input){return input.value;});
+}
+function galSetLabels(id, values){
+  var wanted=Array.isArray(values)?values:[values];
+  document.querySelectorAll('#'+id+' input[type="checkbox"]').forEach(function(input){input.checked=wanted.indexOf(input.value)!==-1;});
+}
 async function mergeBundledGalleryMetadata(apiPhotos){
   var needsFallback=!apiPhotos.some(function(p){return p.filename==='bridal-editorial-tfp.jpeg';}) ||
     !apiPhotos.some(function(p){return p.homepageFeatured;});
@@ -908,7 +925,8 @@ async function galUpload(){
   var fileInput=document.getElementById('gal-file');
   var file=fileInput.files[0];if(!file){alert('Please select a photo first.');return;}
   var title=document.getElementById('gal-title').value.trim();
-  var category=document.getElementById('gal-category').value;
+   var categories=galCheckedLabels('gal-category');
+   if(!categories.length){alert('Please choose at least one label.');return;}
   var desc=document.getElementById('gal-desc').value.trim();
   var btn=document.getElementById('gal-upload-btn');
   var status=document.getElementById('gal-upload-status');
@@ -917,7 +935,8 @@ async function galUpload(){
     var fd=new FormData();
     fd.append('photo',file);
     fd.append('title',title||file.name.replace(/\.[^.]+$/,''));
-    fd.append('category',category);
+    fd.append('category',categories[0]);
+    fd.append('categories',JSON.stringify(categories));
     fd.append('desc',desc);
     fd.append('objectPosition',_galUploadPos);
     var sr=await fetch('/api/admin/upload-gallery?token='+encodeURIComponent(TOKEN),{method:'POST',body:fd});
@@ -943,7 +962,7 @@ function galOpenEdit(filename){
   document.getElementById('gal-edit-dot').style.top='50%';
   document.getElementById('gal-edit-pos-val').textContent='Focus: '+_galEditPos;
   document.getElementById('gal-edit-title').value=p.title||'';
-  document.getElementById('gal-edit-cat').value=p.category||'glam';
+   galSetLabels('gal-edit-cat',p.categories||[p.category||'glam']);
   document.getElementById('gal-edit-desc').value=p.desc||p.description||'';
   document.getElementById('gal-edit-err').style.display='none';
   document.getElementById('gal-feat-btn').textContent=p.featured?'Unfeature':'Feature';
@@ -953,11 +972,12 @@ function galCloseModal(){document.getElementById('gal-modal').style.display='non
 async function galEditSave(){
   var btn=document.getElementById('gal-save-btn');var err=document.getElementById('gal-edit-err');
   var title=document.getElementById('gal-edit-title').value.trim();
-  var category=document.getElementById('gal-edit-cat').value;
+   var categories=galCheckedLabels('gal-edit-cat');
+   if(!categories.length){err.textContent='Choose at least one label.';err.style.display='block';return;}
   var desc=document.getElementById('gal-edit-desc').value.trim();
   btn.disabled=true;btn.textContent='Saving...';err.style.display='none';
   try{
-    var r=await fetch('/api/admin/gallery/'+encodeURIComponent(_galEditFilename)+'/meta?token='+encodeURIComponent(TOKEN),{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify({title,category,desc,objectPosition:_galEditPos})});
+    var r=await fetch('/api/admin/gallery/'+encodeURIComponent(_galEditFilename)+'/meta?token='+encodeURIComponent(TOKEN),{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify({title,categories,desc,objectPosition:_galEditPos})});
     if(!r.ok)throw new Error('Failed to save');
     galCloseModal();await loadGallery();
   }catch(e){err.textContent=e.message;err.style.display='block';}
@@ -1560,7 +1580,8 @@ router.post(
   uploadMiddleware.single("photo"),
   async (req, res) => {
     if (!req.file) { res.status(400).json({ error: "No file uploaded" }); return; }
-    const { title = "Untitled", category = "glam", desc = "" } = req.body as Record<string, string>;
+    const { title = "Untitled", category = "glam", categories: categoriesRaw, desc = "" } = req.body as Record<string, string>;
+    const categories = categoriesRaw ? JSON.parse(categoriesRaw) as string[] : [category];
     try {
       const { secure_url, public_id } = await uploadToCloudinary(req.file.buffer, "glam-by-ankita/gallery");
       const filename = `gallery-${Date.now()}${path.extname(req.file.originalname).toLowerCase() || ".jpg"}`;
@@ -1568,7 +1589,8 @@ router.post(
       meta.unshift({
         filename,
         title,
-        category,
+        category: categories[0] || "glam",
+        categories,
         desc,
         uploadedAt: new Date().toISOString(),
         url: secure_url,
@@ -1594,7 +1616,7 @@ router.put("/admin/gallery/:filename/meta", async (req, res) => {
     res.status(400).json({ error: "Invalid filename" }); return;
   }
 
-  const { title, category, desc, objectPosition } = req.body as { title?: string; category?: string; desc?: string; objectPosition?: string };
+  const { title, category, categories, desc, objectPosition } = req.body as { title?: string; category?: string; categories?: string[]; desc?: string; objectPosition?: string };
   if (!title) { res.status(400).json({ error: "Title is required" }); return; }
 
   const meta = readGalleryMeta();
@@ -1602,7 +1624,8 @@ router.put("/admin/gallery/:filename/meta", async (req, res) => {
   if (idx === -1) { res.status(404).json({ error: "Photo not found" }); return; }
 
   meta[idx].title = title;
-  meta[idx].category = category || meta[idx].category;
+   meta[idx].categories = Array.isArray(categories) && categories.length ? categories : [category || meta[idx].category || "glam"];
+   meta[idx].category = meta[idx].categories[0];
   meta[idx].desc = desc ?? "";
   if (objectPosition !== undefined) meta[idx].objectPosition = objectPosition;
   writeGalleryMeta(meta);
