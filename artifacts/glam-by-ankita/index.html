@@ -692,6 +692,24 @@
     .booking-intro-mark { color:var(--gold-dark); font-family:'Playfair Display',serif; font-size:1.35rem; line-height:1; }
     .booking-intro strong { display:block; color:var(--text-dark); font-family:'Playfair Display',serif; font-size:1rem; margin-bottom:0.25rem; }
     .booking-intro span { display:block; color:var(--text-mid); font-size:0.82rem; line-height:1.55; }
+    .booking-modern { position:relative; }
+    .booking-modern .form-tabs { border:0; gap:0.5rem; padding:0.5rem; background:#2c1810; border-radius:14px 14px 0 0; }
+    .booking-modern .ftab { border:0; border-radius:9px; color:#f6e9df; background:transparent; padding:0.9rem 1rem; }
+    .booking-modern .ftab.active { background:linear-gradient(135deg,#d6b574,#a87b35); color:#fff; box-shadow:0 4px 14px rgba(0,0,0,.2); }
+    .booking-modern .form-panel { padding:2.25rem; border:0; border-radius:0 0 14px 14px; box-shadow:0 18px 50px rgba(73,39,28,.13); }
+    .booking-modern .booking-intro { display:block; position:relative; overflow:hidden; padding:1.45rem 1.5rem; background:linear-gradient(135deg,#3a2119 0%,#6b3d2e 55%,#a87b35 150%); border:0; border-radius:12px; color:#fff; }
+    .booking-modern .booking-intro:after { content:'✦'; position:absolute; right:1.4rem; top:0.65rem; font-size:4rem; color:rgba(255,255,255,.13); transform:rotate(14deg); }
+    .booking-modern .booking-intro-mark { display:none; }
+    .booking-modern .booking-intro strong { color:#fff; font-size:1.3rem; margin-bottom:.4rem; }
+    .booking-modern .booking-intro span { color:#f8e9dd; font-size:.88rem; max-width:90%; }
+    .booking-modern .fgroup { margin-bottom:1.2rem; }
+    .booking-modern .fgroup label { color:#6b3d2e; letter-spacing:.08em; }
+    .booking-modern .fgroup input, .booking-modern .fgroup select, .booking-modern .fgroup textarea { background:#fffaf7; border-color:#ead4c9; border-radius:9px; padding:.82rem 1rem; }
+    .booking-modern .check-grid { gap:.65rem; }
+    .booking-modern .check-item { border:1px solid #ead4c9; border-radius:10px; padding:.75rem; background:#fffaf7; transition:.2s ease; }
+    .booking-modern .check-item:has(input:checked) { border-color:var(--gold); background:#fff5df; box-shadow:0 0 0 2px rgba(201,169,110,.15); }
+    .booking-modern .form-submit-row { padding-top:.6rem; }
+    .booking-modern #btn-book { width:100%; border-radius:10px; padding:1rem; font-size:1rem; letter-spacing:.02em; box-shadow:0 8px 20px rgba(158,124,74,.25); }
     .form-panel > div { display: none; }
     .form-panel > div.active { display: block; }
     .frow { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1rem; }
@@ -1651,7 +1669,7 @@
       </div>
 
       <div data-anim="right">
-        <div id="form-container">
+         <div id="form-container" class="booking-modern">
         <div class="form-tabs">
           <button class="ftab active" onclick="switchTab(this,'tab-book')">💄 Book Makeup Appointment</button>
           <button class="ftab" onclick="switchTab(this,'tab-collab')">🤝 Work With Me</button>
@@ -1660,8 +1678,9 @@
           <div id="tab-book" class="active">
              <div class="booking-intro">
                <div class="booking-intro-mark">✦</div>
-               <div><strong>Let’s plan your perfect look</strong><span>Share a few details about your occasion, style and vision. Bridal enquiries are warmly welcomed, and every look is tailored with your features, outfit and photography in mind.</span></div>
+               <div><strong>Your beauty moment starts here</strong><span>Tell me about your occasion, your dream look and what makes you feel most like yourself. Bridal enquiries are warmly welcomed — every detail is tailored to you, your outfit and your photography.</span></div>
              </div>
+             <p style="margin:0 0 1.2rem;color:var(--text-mid);font-size:.84rem;">A few thoughtful details help me create the best recommendation and respond with availability within 24–48 hours.</p>
             <div class="frow">
               <div class="fgroup"><label>First Name *</label><input id="book-first" type="text" placeholder="Your first name"></div>
               <div class="fgroup"><label>Last Name *</label><input id="book-last" type="text" placeholder="Your last name"></div>
@@ -2177,17 +2196,17 @@
     try {
       // Always fetch fresh from API so admin changes appear immediately
       let photos = null;
-      const [apiResponse, staticResponse] = await Promise.all([
-        fetch('/api/gallery/list?_=' + Date.now()),
-        fetch('/gallery/gallery.json?_=' + Date.now())
+      const [apiPhotosResult, staticPhotosResult] = await Promise.all([
+        fetch('/api/gallery/list?_=' + Date.now()).then(r => r.ok ? r.json() : []).catch(() => []),
+        fetch('/gallery/gallery.json?_=' + Date.now()).then(r => r.ok ? r.json() : []).catch(() => [])
       ]);
-      if (apiResponse.ok) photos = await apiResponse.json();
+      if (apiPhotosResult.length) photos = apiPhotosResult;
       const apiPhotos = photos;
       if (!apiPhotos || !apiPhotos.length || !apiPhotos.some(p => p.homepageFeatured)) {
         // Use the bundled metadata when an older API build does not include
         // homepage selections or the latest gallery upload yet.
-        if (staticResponse.ok) {
-          const staticPhotos = await staticResponse.json();
+        const staticPhotos = staticPhotosResult;
+        if (staticPhotos.length) {
           if (!apiPhotos || !apiPhotos.length) {
             photos = staticPhotos;
           } else if (staticPhotos.some(p => p.homepageFeatured)) {
@@ -2204,7 +2223,13 @@
           }
         }
       }
-      if (!photos || !photos.length) { document.getElementById('homepage-featured').style.display = 'none'; return; }
+      if (!photos || !photos.length) {
+        photos = [
+          { filename:'bridal-editorial-tfp.jpeg', url:'/gallery/bridal-editorial-tfp.jpeg', title:'Bridal Glam with Soft Golden Eyes', desc:'Bridal makeup by Ankita', categories:['bridal','editorial'], homepageFeatured:true, homepageFeaturedOrder:0, featured:true },
+          { filename:'soft-smokey.jpeg', url:'/gallery/soft-smokey.jpeg', title:'Soft Gold Shimmer Glam', desc:'Polished and timeless', categories:['glam'], homepageFeatured:true, homepageFeaturedOrder:1 },
+          { filename:'recreational-makeup.jpeg', url:'/gallery/recreational-makeup.jpeg', title:'Fresh Occasion Glam', desc:'Fresh, polished and radiant', categories:['glam'], homepageFeatured:true, homepageFeaturedOrder:2 }
+        ];
+      }
       _galleryLoaded = true;
       renderHomepageFeatured(photos);
       const grid = document.getElementById('photoGrid');
