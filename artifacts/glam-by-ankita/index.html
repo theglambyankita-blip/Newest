@@ -94,7 +94,7 @@
       "aggregateRating": {
         "@type": "AggregateRating",
         "ratingValue": "5",
-        "reviewCount": "3",
+         "reviewCount": "4",
         "bestRating": "5",
         "worstRating": "1"
       },
@@ -116,6 +116,12 @@
           "reviewRating": { "@type": "Rating", "ratingValue": "5", "bestRating": "5" },
           "author": { "@type": "Person", "name": "Madhvi Singh" },
           "reviewBody": "Absolutely loved my soft glam makeup! Such a great experience from start to finish. The service was very professional, and my makeup turned out even better than I imagined. I felt beautiful, confident, and received so many compliments. The whole experience amazing. Thank you Ankita!"
+         },
+         {
+           "@type": "Review",
+           "reviewRating": { "@type": "Rating", "ratingValue": "5", "bestRating": "5" },
+           "author": { "@type": "Person", "name": "Priya Virdee-Hero" },
+           "reviewBody": "Lovely artist and gorgeous glam!!! Was very patient and checked in about my preferences with the look. Had a great experience :)"
         }
       ],
       "sameAs": [
@@ -1348,12 +1354,24 @@
             </div>
           </div>
         </article>
+         <article class="why-card testimonial-slide" data-testimonial-slide>
+           <div class="testimonial-stars" aria-label="5 out of 5 stars">★★★★★</div>
+           <p class="testimonial-quote">"Lovely artist and gorgeous glam!!! Was very patient and checked in about my preferences with the look. Had a great experience :)"</p>
+           <div class="testimonial-author">
+             <div class="testimonial-avatar">P</div>
+             <div>
+               <span class="testimonial-author-name">Priya Virdee-Hero</span>
+               <span class="testimonial-author-role">Model</span>
+             </div>
+           </div>
+         </article>
       </div>
       <button class="testimonial-arrow next" type="button" onclick="changeTestimonial(1)" aria-label="Next review">›</button>
       <div class="testimonial-dots" role="tablist" aria-label="Choose a review">
         <button class="testimonial-dot active" type="button" onclick="showTestimonial(0)" aria-label="Show review 1" aria-selected="true"></button>
         <button class="testimonial-dot" type="button" onclick="showTestimonial(1)" aria-label="Show review 2" aria-selected="false"></button>
         <button class="testimonial-dot" type="button" onclick="showTestimonial(2)" aria-label="Show review 3" aria-selected="false"></button>
+         <button class="testimonial-dot" type="button" onclick="showTestimonial(3)" aria-label="Show review 4" aria-selected="false"></button>
       </div>
     </div>
   </div>
