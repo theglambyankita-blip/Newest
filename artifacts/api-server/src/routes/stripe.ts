@@ -147,6 +147,7 @@ router.post("/confirm-payment", async (req, res) => {
   const clientName  = String(bookingData.client_name  || bookingData.clientName  || "");
   const clientEmail = String(bookingData.client_email || bookingData.clientEmail || "");
   const totalAud    = Number(bookingData.total_aud    || bookingData.totalAud    || 0);
+  const paymentType = bookingData.payment_type === "full" ? "full" : "deposit";
   const cd = (bookingData.confirmed_data || bookingData.confirmedData || {}) as Record<string, string>;
 
   // Skip DB save and emails in test mode — no real booking, no real charge

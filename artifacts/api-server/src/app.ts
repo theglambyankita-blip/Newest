@@ -95,7 +95,7 @@ app.post("/api/webhook", express.raw({ type: "application/json" }), async (req, 
           numPeople:            bookingPeople   || null,
           totalAud:             String(pi.amount / 100),
           paymentMethod:        "card",
-            paymentType,
+          paymentType,
           status:               "confirmed",
           stripePaymentIntentId: pi.id,
         });
