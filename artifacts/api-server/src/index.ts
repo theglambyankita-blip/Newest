@@ -22,6 +22,9 @@ async function runMigrations() {
     await pool.query(`
       ALTER TABLE bookings ADD COLUMN IF NOT EXISTS send_reminder TEXT DEFAULT 'false';
       ALTER TABLE bookings ADD COLUMN IF NOT EXISTS reminder_sent TEXT DEFAULT 'false';
+      ALTER TABLE bookings ADD COLUMN IF NOT EXISTS phone_number TEXT;
+      ALTER TABLE bookings ADD COLUMN IF NOT EXISTS payment_token TEXT;
+      ALTER TABLE bookings ADD COLUMN IF NOT EXISTS client_message TEXT;
       CREATE TABLE IF NOT EXISTS coupons (
         id SERIAL PRIMARY KEY,
         code TEXT NOT NULL UNIQUE,

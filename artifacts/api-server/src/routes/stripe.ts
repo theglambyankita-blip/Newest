@@ -165,21 +165,40 @@ router.post("/confirm-payment", async (req, res) => {
     } catch (e) { console.error("Coupon usesCount increment error:", e); }
   }
 
-  // Save to DB
-  db.insert(bookings).values({
-    clientName:    clientName  || null,
-    clientEmail:   clientEmail || null,
-    service:       cd["Service"]          || null,
-    bookingDate:   cd["Date"]             || null,
-    bookingTime:   cd["Time"]             || null,
-    location:      cd["Mobile Makeup Location"]
-      ? `${cd["Location"] || "Mobile Makeup"} — ${cd["Mobile Makeup Location"]}`
-      : (cd["Location"] || null),
-    numPeople:     cd["Number of People"] || null,
-    totalAud:      totalAud ? String(totalAud) : null,
-    paymentMethod: "card",
-    status:        "confirmed",
-  }).catch((e) => console.error("DB insert card booking error:", e));
+  // Confirm the existing admin-created booking when this is a manually generated link.
+  // Public request links do not have paymentToken in the database, so they keep the
+  // original insert behavior.
+  try {
+    const existing = await db.select().from(bookings).where(eq(bookings.paymentToken, token)).limit(1);
+    if (existing.length) {
+      await db.update(bookings)
+        .set({
+          totalAud: totalAud ? String(totalAud) : null,
+          paymentMethod: "card",
+          status: "confirmed",
+          stripePaymentIntentId: payment_intent_id || null,
+        })
+        .where(eq(bookings.id, existing[0].id));
+    } else {
+      await db.insert(bookings).values({
+        clientName:    clientName  || null,
+        clientEmail:   clientEmail || null,
+        service:       cd["Service"]          || null,
+        bookingDate:   cd["Date"]             || null,
+        bookingTime:   cd["Time"]             || null,
+        location:      cd["Mobile Makeup Location"]
+          ? `${cd["Location"] || "Mobile Makeup"} — ${cd["Mobile Makeup Location"]}`
+          : (cd["Location"] || null),
+        numPeople:     cd["Number of People"] || null,
+        totalAud:      totalAud ? String(totalAud) : null,
+        paymentMethod: "card",
+        status:        "confirmed",
+        stripePaymentIntentId: payment_intent_id || null,
+      });
+    }
+  } catch (e) {
+    console.error("DB insert/update card booking error:", e);
+  }
 
   // Retrieve Stripe receipt URL from the PaymentIntent's charge
   let receiptUrl: string | null = null;

@@ -4,3 +4,4 @@
 - [Clerk auth setup](glam-clerk-setup.md) — Replit-managed Clerk provisioned; React app wired into index.html via #root overlay; account/sign-in/sign-up are React routes; vanilla JS hides itself for these paths.
 - [Gallery GALLERY_DIR path fix](glam-gallery-dir.md) — process.cwd() resolves to artifacts/api-server/ (wrong); must use import.meta.url to reliably reach the gallery folder.
 - [Supabase → Replit DB fallback](db-supabase-fallback.md) — DATABASE_URL secret pointed to deleted Supabase; lib/db/src/index.ts now falls back to PG* env vars when URL contains "supabase.co".
+- [Legacy booking schema migrations](legacy-booking-migrations.md) — older databases may miss columns already represented in the Drizzle schema; keep startup ALTER migrations idempotent.

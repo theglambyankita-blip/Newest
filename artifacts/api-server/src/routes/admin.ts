@@ -128,6 +128,24 @@ function writeReelsMeta(items: ReelMeta[]) {
 }
 const SITE_URL = "https://www.theglambyankita.com";
 
+function toUrlSafeBase64(obj: object): string {
+  return Buffer.from(JSON.stringify(obj), "utf8")
+    .toString("base64")
+    .replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
+}
+
+function cleanValue(value: unknown, maxLength = 500): string {
+  return String(value ?? "").trim().slice(0, maxLength);
+}
+
+function optionalDetails(fields: Record<string, unknown>): Record<string, string> {
+  return Object.fromEntries(
+    Object.entries(fields)
+      .map(([key, value]) => [key, cleanValue(value)])
+      .filter(([, value]) => Boolean(value)),
+  );
+}
+
 function createTransporter() {
   const user = process.env["GMAIL_USER"];
   const pass = process.env["GMAIL_APP_PASSWORD"];
@@ -372,6 +390,7 @@ th{padding:10px 12px;text-align:left;font-size:0.75rem;font-weight:700;color:#6b
 .brow:hover td{background:#fdf5f0;}
 .brow{cursor:pointer;}
 .email-form{padding:24px;}
+.booking-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:0 16px;}
 .field{margin-bottom:16px;}
 label{display:block;font-size:0.75rem;font-weight:700;color:#6b3d2e;text-transform:uppercase;letter-spacing:0.06em;margin-bottom:6px;}
 input[type=text],input[type=email],input[type=number],input[type=file],textarea,select{width:100%;padding:10px 13px;border:1.5px solid #e0c8c0;border-radius:6px;font-size:0.92rem;color:#2c1810;background:#fff;font-family:inherit;outline:none;transition:border-color .2s;}
@@ -379,6 +398,7 @@ input:focus,textarea:focus,select:focus{border-color:#c9a96e;}
 textarea{resize:vertical;min-height:140px;}
 .btn{display:inline-block;padding:13px 28px;background:linear-gradient(135deg,#c9a96e,#9e7c4a);color:#fff;border:none;border-radius:8px;font-size:0.95rem;font-weight:700;cursor:pointer;font-family:inherit;}
 .btn:disabled{opacity:0.5;cursor:not-allowed;}
+@media(max-width:640px){.booking-grid{grid-template-columns:1fr;}}
 #no-results{display:none;padding:18px;color:#aaa;text-align:center;font-size:0.9rem;}
 </style>
 </head>
@@ -398,6 +418,31 @@ textarea{resize:vertical;min-height:140px;}
   </div>
 </div>
 <div class="content">
+  <div class="section">
+    <div class="section-title">&#10022; Add Direct Booking</div>
+    <div class="card" style="padding:20px 24px;">
+      <p style="font-size:0.84rem;color:#6b3d2e;line-height:1.55;margin:0 0 16px;">For clients who contact you directly. Leave any field blank and it will stay private rather than appearing on the client's payment page.</p>
+      <div id="booking-success" style="display:none;background:#f0fff4;border:1px solid #a8e6b8;color:#2c6e3f;padding:12px 16px;border-radius:6px;margin-bottom:16px;font-size:0.88rem;"></div>
+      <div id="booking-error" style="display:none;background:#fff0f0;border:1px solid #f5c0c0;color:#c0392b;padding:12px 16px;border-radius:6px;margin-bottom:16px;font-size:0.88rem;"></div>
+      <div class="booking-grid">
+        <div class="field"><label>First name</label><input type="text" id="bk-first-name" autocomplete="given-name" placeholder="Ankita"></div>
+        <div class="field"><label>Last name</label><input type="text" id="bk-last-name" autocomplete="family-name" placeholder="Awasthi"></div>
+        <div class="field"><label>Email</label><input type="email" id="bk-email" autocomplete="email" placeholder="client@example.com"></div>
+        <div class="field"><label>Phone number</label><input type="text" id="bk-phone" autocomplete="tel" placeholder="+61 ..."></div>
+        <div class="field"><label>Date</label><input type="date" id="bk-date"></div>
+        <div class="field"><label>Time</label><input type="time" id="bk-time"></div>
+        <div class="field"><label>Service</label><input type="text" id="bk-service" placeholder="e.g. Full Glam"></div>
+        <div class="field"><label>Number of people</label><input type="number" id="bk-people" min="1" step="1" placeholder="1"></div>
+        <div class="field"><label>Location</label><input type="text" id="bk-location" placeholder="Studio or client address"></div>
+        <div class="field"><label>Price (A$)</label><input type="number" id="bk-price" min="0.50" step="0.01" placeholder="150.00"></div>
+      </div>
+      <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-top:4px;">
+        <button class="btn" id="bk-save-btn" onclick="saveDirectBooking(false)">Save Booking</button>
+        <button class="btn" id="bk-link-btn" style="background:linear-gradient(135deg,#6f8f72,#3f6b4b);" onclick="saveDirectBooking(true)">Save &amp; Create Payment Link</button>
+        <span id="booking-link-output" style="font-size:0.83rem;word-break:break-all;"></span>
+      </div>
+    </div>
+  </div>
   <div class="section">
     <div class="section-title">ð ${viewLabels[view] || 'All Bookings'} (${displayedBookings.length})</div>
     <div class="toolbar">
@@ -641,6 +686,48 @@ function filterTable(){
   var shown=0;
   rows.forEach(function(r,i){var txt=r.textContent.toLowerCase();var show=!q||txt.indexOf(q)>=0;r.style.display=show?'':'none';if(details[i])details[i].style.display='none';if(show)shown++;});
   document.getElementById('no-results').style.display=shown===0&&q?'block':'none';
+}
+async function saveDirectBooking(withPaymentLink){
+  var succ=document.getElementById('booking-success'),err=document.getElementById('booking-error');
+  var saveBtn=document.getElementById('bk-save-btn'),linkBtn=document.getElementById('bk-link-btn');
+  var output=document.getElementById('booking-link-output');
+  succ.style.display='none';err.style.display='none';output.textContent='';
+  var payload={
+    firstName:document.getElementById('bk-first-name').value.trim(),
+    lastName:document.getElementById('bk-last-name').value.trim(),
+    email:document.getElementById('bk-email').value.trim(),
+    phoneNumber:document.getElementById('bk-phone').value.trim(),
+    date:document.getElementById('bk-date').value,
+    time:document.getElementById('bk-time').value,
+    service:document.getElementById('bk-service').value.trim(),
+    numberOfPeople:document.getElementById('bk-people').value.trim(),
+    location:document.getElementById('bk-location').value.trim(),
+    price:document.getElementById('bk-price').value.trim(),
+    createPaymentLink:withPaymentLink
+  };
+  if(withPaymentLink && (!payload.price || Number(payload.price)<0.5)){
+    err.textContent='Enter a price of at least A$0.50 to create a payment link.';err.style.display='block';return;
+  }
+  saveBtn.disabled=true;linkBtn.disabled=true;
+  saveBtn.textContent='Saving...';linkBtn.textContent=withPaymentLink?'Creating link...':'Create payment link';
+  try{
+    var r=await fetch('/api/admin/create-booking?token='+encodeURIComponent(TOKEN),{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});
+    var j=await r.json();if(!r.ok)throw new Error(j.error||'Could not save booking.');
+    succ.textContent=withPaymentLink?'Booking saved. Payment link created below.':'Booking saved successfully.';
+    succ.style.display='block';
+    if(j.paymentUrl){
+      var a=document.createElement('a');a.href=j.paymentUrl;a.target='_blank';a.rel='noopener';a.textContent='Open payment link';
+      a.style.cssText='color:#2c6e3f;font-weight:700;text-decoration:underline;';
+      output.appendChild(a);
+      var copy=document.createElement('button');copy.type='button';copy.textContent=' Copy link';
+      copy.style.cssText='margin-left:8px;border:1px solid #c9a96e;border-radius:5px;background:#fff;color:#9e7c4a;padding:4px 8px;cursor:pointer;';
+      copy.onclick=function(){navigator.clipboard.writeText(j.paymentUrl).then(function(){copy.textContent=' Copied!';}).catch(function(){window.prompt('Copy this payment link:',j.paymentUrl);});};
+      output.appendChild(copy);
+    }
+    ['bk-first-name','bk-last-name','bk-email','bk-phone','bk-date','bk-time','bk-service','bk-people','bk-location','bk-price'].forEach(function(id){document.getElementById(id).value='';});
+    setTimeout(function(){window.location.reload();},withPaymentLink?2500:1200);
+  }catch(e){err.textContent=e.message||'Could not save booking.';err.style.display='block';}
+  saveBtn.disabled=false;linkBtn.disabled=false;saveBtn.textContent='Save Booking';linkBtn.textContent='Save & Create Payment Link';
 }
 function prefillEmail(email){document.getElementById('e-to').value=email;document.getElementById('e-to').scrollIntoView({behavior:'smooth'});}
 function exportCSV(){
@@ -1224,6 +1311,89 @@ loadReels();
 </html>`;
   res.setHeader("Content-Type", "text/html; charset=utf-8");
   res.send(html);
+});
+
+// ── POST /api/admin/create-booking — add a direct booking and optional payment link ──
+router.post("/admin/create-booking", async (req, res) => {
+  const adminToken = req.query.token as string;
+  const valid = await validateToken(adminToken).catch(() => false);
+  if (!valid) { res.status(403).json({ error: "Unauthorized" }); return; }
+
+  const body = req.body as Record<string, unknown>;
+  const firstName = cleanValue(body.firstName, 120);
+  const lastName = cleanValue(body.lastName, 120);
+  const clientName = [firstName, lastName].filter(Boolean).join(" ");
+  const clientEmail = cleanValue(body.email, 240);
+  const phoneNumber = cleanValue(body.phoneNumber, 80);
+  const date = cleanValue(body.date, 30);
+  const time = cleanValue(body.time, 30);
+  const service = cleanValue(body.service, 200);
+  const numberOfPeople = cleanValue(body.numberOfPeople, 20);
+  const location = cleanValue(body.location, 500);
+  const priceRaw = cleanValue(body.price, 30);
+  const createPaymentLink = body.createPaymentLink === true;
+  const price = priceRaw ? Number(priceRaw) : 0;
+
+  if (priceRaw && (!Number.isFinite(price) || price < 0)) {
+    res.status(400).json({ error: "Enter a valid price." });
+    return;
+  }
+  if (createPaymentLink && price < 0.5) {
+    res.status(400).json({ error: "A payment link needs a price of at least A$0.50." });
+    return;
+  }
+  if (clientEmail && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(clientEmail)) {
+    res.status(400).json({ error: "Enter a valid email address or leave email blank." });
+    return;
+  }
+
+  const confirmedData = optionalDetails({
+    "First Name": firstName,
+    "Last Name": lastName,
+    Email: clientEmail,
+    "Phone Number": phoneNumber,
+    Date: date,
+    Time: time,
+    Service: service,
+    "Number of People": numberOfPeople,
+    Location: location,
+  });
+
+  const paymentToken = createPaymentLink
+    ? toUrlSafeBase64({
+        confirmed_data: confirmedData,
+        total_aud: price,
+        client_name: clientName,
+        client_email: clientEmail,
+        source: "manual_admin_booking",
+      })
+    : null;
+
+  try {
+    const inserted = await db.insert(bookings).values({
+      clientName: clientName || null,
+      clientEmail: clientEmail || null,
+      phoneNumber: phoneNumber || null,
+      service: service || null,
+      bookingDate: date || null,
+      bookingTime: time || null,
+      location: location || null,
+      numPeople: numberOfPeople || null,
+      totalAud: priceRaw ? String(price) : null,
+      paymentMethod: createPaymentLink ? "payment_link" : "manual",
+      status: createPaymentLink ? "awaiting_payment" : "confirmed",
+      paymentToken,
+    }).returning({ id: bookings.id });
+
+    res.json({
+      ok: true,
+      bookingId: inserted[0]?.id ?? null,
+      paymentUrl: paymentToken ? `${SITE_URL}/p?b=${paymentToken}` : null,
+    });
+  } catch (e) {
+    console.error("Admin create-booking error:", e);
+    res.status(500).json({ error: "Could not save the booking." });
+  }
 });
 
 // ── POST /api/admin/send-client-email ───────────────────────────

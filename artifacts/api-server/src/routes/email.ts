@@ -3,6 +3,7 @@ import nodemailer from "nodemailer";
 import multer from "multer";
 import { buildIcs } from "../lib/ics.js";
 import { db, bookings } from "@workspace/db";
+import { eq } from "drizzle-orm";
 
 const router = Router();
 const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 10 * 1024 * 1024, files: 5 } });
@@ -268,7 +269,8 @@ router.get("/config", (_req, res) => {
 
 // ── SELECT CASH ─────────────────────────────────────────────────
 router.post("/select-cash", async (req, res) => {
-  const { client_name, client_email, total_aud, confirmed_data } = req.body as {
+  const { token, client_name, client_email, total_aud, confirmed_data } = req.body as {
+    token?: string;
     client_name?: string;
     client_email?: string;
     total_aud?: number;
@@ -276,18 +278,33 @@ router.post("/select-cash", async (req, res) => {
   };
 
   const cd = confirmed_data as Record<string, string> | undefined;
-  db.insert(bookings).values({
-    clientName:    client_name   || null,
-    clientEmail:   client_email  || null,
-    service:       cd?.["Service"]  || null,
-    bookingDate:   cd?.["Date"]     || null,
-    bookingTime:   cd?.["Time"]     || null,
-    location:      cd?.["Location"] || null,
-    numPeople:     cd?.["Number of People"] || null,
-    totalAud:      total_aud != null ? String(total_aud) : null,
-    paymentMethod: "cash",
-    status:        "confirmed",
-  }).catch((e) => console.error("DB insert cash booking error:", e));
+  try {
+    const existing = token
+      ? await db.select().from(bookings).where(eq(bookings.paymentToken, token)).limit(1)
+      : [];
+    if (existing.length) {
+      await db.update(bookings).set({
+        totalAud: total_aud != null ? String(total_aud) : null,
+        paymentMethod: "cash",
+        status: "confirmed",
+      }).where(eq(bookings.id, existing[0].id));
+    } else {
+      await db.insert(bookings).values({
+        clientName:    client_name   || null,
+        clientEmail:   client_email  || null,
+        service:       cd?.["Service"]  || null,
+        bookingDate:   cd?.["Date"]     || null,
+        bookingTime:   cd?.["Time"]     || null,
+        location:      cd?.["Location"] || null,
+        numPeople:     cd?.["Number of People"] || null,
+        totalAud:      total_aud != null ? String(total_aud) : null,
+        paymentMethod: "cash",
+        status:        "confirmed",
+      });
+    }
+  } catch (e) {
+    console.error("DB insert/update cash booking error:", e);
+  }
 
   const transporter = createTransporter();
   if (transporter && client_name) {

@@ -16,6 +16,7 @@ import { logger } from "./lib/logger";
 import { buildIcs } from "./lib/ics";
 import { initAdminToken } from "./routes/admin";
 import { db, bookings } from "@workspace/db";
+import { eq } from "drizzle-orm";
 
 const SITE_URL = "https://www.theglambyankita.com";
 
@@ -67,21 +68,39 @@ app.post("/api/webhook", express.raw({ type: "application/json" }), async (req, 
     const bookingPeople   = pi.metadata?.booking_people   || "";
     const bookingToken    = pi.metadata?.booking_token    || "";
 
-    db.insert(bookings).values({
-      clientName,
-      clientEmail,
-      service:              bookingService  || null,
-      bookingDate:          bookingDate     || null,
-      bookingTime:          bookingTime     || null,
-      location:             bookingMobileLocation
-        ? `${bookingLocation || "Mobile Makeup"} — ${bookingMobileLocation}`
-        : (bookingLocation || null),
-      numPeople:            bookingPeople   || null,
-      totalAud:             String(pi.amount / 100),
-      paymentMethod:        "card",
-      status:               "confirmed",
-      stripePaymentIntentId: pi.id,
-    }).catch((e) => console.error("DB insert booking error:", e));
+    try {
+      const existing = bookingToken
+        ? await db.select().from(bookings).where(eq(bookings.paymentToken, bookingToken)).limit(1)
+        : [];
+      if (existing.length) {
+        await db.update(bookings)
+          .set({
+            totalAud: String(pi.amount / 100),
+            paymentMethod: "card",
+            status: "confirmed",
+            stripePaymentIntentId: pi.id,
+          })
+          .where(eq(bookings.id, existing[0].id));
+      } else {
+        await db.insert(bookings).values({
+          clientName,
+          clientEmail,
+          service:              bookingService  || null,
+          bookingDate:          bookingDate     || null,
+          bookingTime:          bookingTime     || null,
+          location:             bookingMobileLocation
+            ? `${bookingLocation || "Mobile Makeup"} — ${bookingMobileLocation}`
+            : (bookingLocation || null),
+          numPeople:            bookingPeople   || null,
+          totalAud:             String(pi.amount / 100),
+          paymentMethod:        "card",
+          status:               "confirmed",
+          stripePaymentIntentId: pi.id,
+        });
+      }
+    } catch (e) {
+      console.error("DB insert/update booking error:", e);
+    }
 
     const gmailUser = process.env["GMAIL_USER"];
     const gmailPass = process.env["GMAIL_APP_PASSWORD"];

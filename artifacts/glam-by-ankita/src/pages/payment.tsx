@@ -235,7 +235,19 @@ export default function PaymentPage() {
     if (isTestMode) { setScreen("success-cash"); return; }
     setCashLoading(true);
     const cashAud = appliedCoupon ? appliedCoupon.newAmount : booking.totalAud;
-    try { await fetch(`${BASE}/api/select-cash`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ token: rawToken, total_aud: cashAud }) }); } catch {}
+    try {
+      await fetch(`${BASE}/api/select-cash`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          token: rawToken,
+          total_aud: cashAud,
+          client_name: booking.clientName,
+          client_email: booking.clientEmail,
+          confirmed_data: booking.confirmedData,
+        }),
+      });
+    } catch {}
     setCashLoading(false); setScreen("success-cash");
   }
 
