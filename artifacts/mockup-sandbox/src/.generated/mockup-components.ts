@@ -2,9 +2,9 @@
 type ModuleMap = Record<string, () => Promise<Record<string, unknown>>>;
 export const modules: ModuleMap = {
   "./components/mockups/glam-bold/BoldGold.tsx": () => import("../components/mockups/glam-bold/BoldGold.tsx"),
+  "./components/mockups/glam-dark/AfterDark.tsx": () => import("../components/mockups/glam-dark/AfterDark.tsx"),
   "./components/mockups/glam-editorial/SoftEditorial.tsx": () => import("../components/mockups/glam-editorial/SoftEditorial.tsx"),
   "./components/mockups/glam-variants/CinemaEditorial.tsx": () => import("../components/mockups/glam-variants/CinemaEditorial.tsx"),
   "./components/mockups/glam-variants/PetalLuxe.tsx": () => import("../components/mockups/glam-variants/PetalLuxe.tsx"),
-  "./components/mockups/glam-variants/SilkAndGold.tsx": () => import("../components/mockups/glam-variants/SilkAndGold.tsx"),
-  "./components/mockups/glam-dark/AfterDark.tsx": () => import("../components/mockups/glam-dark/AfterDark.tsx")
+  "./components/mockups/glam-variants/SilkAndGold.tsx": () => import("../components/mockups/glam-variants/SilkAndGold.tsx")
 };
