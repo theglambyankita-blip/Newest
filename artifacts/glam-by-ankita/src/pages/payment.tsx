@@ -9,13 +9,16 @@ function decodeToken(raw: string): Record<string, unknown> {
   return JSON.parse(atob(b64 + "=".repeat(pad)));
 }
 
+type PaymentType = "full" | "deposit";
+
 function normalise(d: Record<string, unknown>) {
   const clientName = (d.clientName || d.client_name || "") as string;
   const clientEmail = (d.clientEmail || d.client_email || "") as string;
   const totalAud = Number(d.totalAud ?? d.total_aud ?? 0);
   const notes = (d.notes || "") as string;
   const confirmedData = (d.confirmedData || d.confirmed_data || {}) as Record<string, string>;
-  return { clientName, clientEmail, totalAud, notes, confirmedData };
+  const paymentType: PaymentType = d.paymentType === "full" || d.payment_type === "full" ? "full" : "deposit";
+  return { clientName, clientEmail, totalAud, notes, confirmedData, paymentType };
 }
 
 function buildCalendarUrls(confirmedData: Record<string, string>, uid?: string) {
@@ -287,9 +290,9 @@ export default function PaymentPage() {
         <motion.div initial={{ scale: 0.6, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} transition={{ type: "spring", stiffness: 180, damping: 14 }}
           style={{ background: "#f0fff4", border: "1px solid #a8e6b8", borderRadius: 14, padding: "40px 28px", textAlign: "center" }}>
           <motion.div initial={{ scale: 0 }} animate={{ scale: [0, 1.3, 1] }} transition={{ delay: 0.2, duration: 0.5 }} style={{ fontSize: "3.5rem", marginBottom: 12 }}>🎉</motion.div>
-          <h2 style={{ fontFamily: "Georgia,serif", color: "#2c6e3f", marginBottom: 10, fontSize: "1.5rem" }}>Deposit Paid!</h2>
+           <h2 style={{ fontFamily: "Georgia,serif", color: "#2c6e3f", marginBottom: 10, fontSize: "1.5rem" }}>{booking?.paymentType === "full" ? "Payment Complete!" : "Deposit Paid!"}</h2>
           <p style={{ color: "#3a6b47", fontSize: "0.95rem", lineHeight: 1.7, margin: 0 }}>
-            Your deposit has been received — your appointment is officially locked in.<br />A confirmation has been sent to your email. See you soon! ✨
+             Your {booking?.paymentType === "full" ? "payment" : "deposit"} has been received — your appointment is officially locked in.<br />A confirmation has been sent to your email. See you soon! ✨
           </p>
         </motion.div>
         {booking && (
@@ -324,7 +327,7 @@ export default function PaymentPage() {
           <p style={{ color: "#4a2e22", fontSize: "0.95rem", lineHeight: 1.7, margin: 0 }}>
             Got it — Ankita has been notified and your appointment is confirmed.<br />A confirmation email has been sent to you. See you soon! ✨
           </p>
-          {booking && <p style={{ color: "#9e7c4a", fontSize: "0.85rem", marginTop: 10 }}>Cash deposit of <strong>A${booking.totalAud.toFixed(2)}</strong> to be paid at appointment.</p>}
+           {booking && <p style={{ color: "#9e7c4a", fontSize: "0.85rem", marginTop: 10 }}>{booking.paymentType === "full" ? "Full payment" : "Cash deposit"} of <strong>A${booking.totalAud.toFixed(2)}</strong> to be paid at appointment.</p>}
         </motion.div>
         {booking && (
           <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.4 }}>
@@ -357,8 +360,8 @@ export default function PaymentPage() {
 
       <motion.div initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.35 }}
         style={{ background: "linear-gradient(135deg,#c9a96e,#9e7c4a)", padding: "24px 24px 0", color: "#fff" }}>
-        <h1 style={{ fontFamily: "Georgia,serif", fontSize: "1.45rem", margin: "0 0 4px" }}>Confirm & Pay Deposit</h1>
-        <p style={{ fontSize: "0.85rem", opacity: 0.88, margin: 0 }}>Review your booking and complete your deposit to lock in your appointment.</p>
+         <h1 style={{ fontFamily: "Georgia,serif", fontSize: "1.45rem", margin: "0 0 4px" }}>Confirm &amp; Pay {booking?.paymentType === "full" ? "in Full" : "Deposit"}</h1>
+         <p style={{ fontSize: "0.85rem", opacity: 0.88, margin: 0 }}>Review your booking and complete your {booking?.paymentType === "full" ? "payment" : "deposit"} to {booking?.paymentType === "full" ? "confirm" : "lock in"} your appointment.</p>
         <ProgressSteps step={progressStep} />
       </motion.div>
 
@@ -399,7 +402,7 @@ export default function PaymentPage() {
 
               <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} transition={{ delay: 0.25, type: "spring", stiffness: 200 }}
                 style={{ background: "linear-gradient(135deg,#fff9f0,#fdf5e8)", border: "2px solid #c9a96e", borderRadius: 10, padding: "20px 24px", marginBottom: 16, textAlign: "center", animation: "pulse-glow 3s ease-in-out infinite" }}>
-                <div style={{ fontSize: "0.82rem", color: "#9e7c4a", fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.06em" }}>Deposit Due</div>
+                 <div style={{ fontSize: "0.82rem", color: "#9e7c4a", fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.06em" }}>{booking.paymentType === "full" ? "Full Payment Due" : "Deposit Due"}</div>
                 <motion.div animate={{ scale: [1, 1.03, 1] }} transition={{ repeat: Infinity, duration: 2.5, ease: "easeInOut" }}
                   style={{ fontFamily: "Georgia,serif", fontSize: "2rem", color: appliedCoupon ? "#2c6e3f" : "#6b3d2e", margin: "6px 0 2px" }}>
                   {appliedCoupon ? (
@@ -415,7 +418,7 @@ export default function PaymentPage() {
                     <button type="button" onClick={handleRemoveCoupon} style={{ marginLeft: 8, background: "none", border: "none", color: "#c0392b", fontSize: "0.78rem", cursor: "pointer", textDecoration: "underline", padding: 0 }}>Remove</button>
                   </div>
                 )}
-                <div style={{ fontSize: "0.82rem", color: "#9e7c4a" }}>Secures your appointment · Non-refundable</div>
+                 <div style={{ fontSize: "0.82rem", color: "#9e7c4a" }}>{booking.paymentType === "full" ? "Confirms your appointment · Non-refundable" : "Secures your appointment · Non-refundable"}</div>
               </motion.div>
 
               {/* Promo code toggle */}
@@ -522,7 +525,7 @@ export default function PaymentPage() {
                       style={{ display: "inline-block", width: 16, height: 16, border: "2.5px solid rgba(255,255,255,0.4)", borderTopColor: "#fff", borderRadius: "50%" }} />
                     Processing…
                   </span>
-                ) : `Pay A$${booking?.totalAud.toFixed(2) ?? ""} Deposit ✦`}
+                ) : `Pay A$${booking?.totalAud.toFixed(2) ?? ""} ${booking?.paymentType === "full" ? "in Full" : "Deposit"} ✦`}
               </motion.button>
               <p style={{ textAlign: "center", fontSize: "0.78rem", color: "#aaa", marginTop: 10 }}>Secured by Stripe · Your card details are never stored by us.</p>
             </motion.div>

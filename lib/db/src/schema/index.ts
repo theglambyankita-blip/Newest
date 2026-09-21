@@ -19,6 +19,7 @@ export const bookings = pgTable("bookings", {
   numPeople: text("num_people"),
   totalAud: numeric("total_aud"),
   paymentMethod: text("payment_method"),
+  paymentType: text("payment_type").default("deposit"),
   status: text("status").default("confirmed"),
   stripePaymentIntentId: text("stripe_payment_intent_id"),
   paymentToken: text("payment_token"),

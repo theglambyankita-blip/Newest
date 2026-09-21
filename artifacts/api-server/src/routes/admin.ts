@@ -395,6 +395,7 @@ th{padding:10px 12px;text-align:left;font-size:0.75rem;font-weight:700;color:#6b
 label{display:block;font-size:0.75rem;font-weight:700;color:#6b3d2e;text-transform:uppercase;letter-spacing:0.06em;margin-bottom:6px;}
 input[type=text],input[type=email],input[type=number],input[type=file],textarea,select{width:100%;padding:10px 13px;border:1.5px solid #e0c8c0;border-radius:6px;font-size:0.92rem;color:#2c1810;background:#fff;font-family:inherit;outline:none;transition:border-color .2s;}
 input:focus,textarea:focus,select:focus{border-color:#c9a96e;}
+input[type=radio]{width:auto;padding:0;accent-color:#9e7c4a;}
 textarea{resize:vertical;min-height:140px;}
 .btn{display:inline-block;padding:13px 28px;background:linear-gradient(135deg,#c9a96e,#9e7c4a);color:#fff;border:none;border-radius:8px;font-size:0.95rem;font-weight:700;cursor:pointer;font-family:inherit;}
 .btn:disabled{opacity:0.5;cursor:not-allowed;}
@@ -434,7 +435,17 @@ textarea{resize:vertical;min-height:140px;}
         <div class="field"><label>Service</label><input type="text" id="bk-service" placeholder="e.g. Full Glam"></div>
         <div class="field"><label>Number of people</label><input type="number" id="bk-people" min="1" step="1" placeholder="1"></div>
         <div class="field"><label>Location</label><input type="text" id="bk-location" placeholder="Studio or client address"></div>
-        <div class="field"><label>Price (A$)</label><input type="number" id="bk-price" min="0.50" step="0.01" placeholder="150.00"></div>
+        <div class="field" style="grid-column:1 / -1;"><label>Payment option</label>
+          <div style="display:flex;gap:18px;flex-wrap:wrap;color:#4a2e22;font-size:0.9rem;">
+            <label style="display:flex;align-items:center;gap:7px;text-transform:none;letter-spacing:0;font-weight:600;">
+              <input type="radio" name="bk-payment-type" value="deposit" checked> Deposit only — pay the amount below now
+            </label>
+            <label style="display:flex;align-items:center;gap:7px;text-transform:none;letter-spacing:0;font-weight:600;">
+              <input type="radio" name="bk-payment-type" value="full"> Pay in full — pay the amount below now
+            </label>
+          </div>
+        </div>
+        <div class="field"><label>Amount to pay now (A$)</label><input type="number" id="bk-price" min="0.50" step="0.01" placeholder="150.00"></div>
       </div>
       <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-top:4px;">
         <button class="btn" id="bk-save-btn" onclick="saveDirectBooking(false)">Save Booking</button>
@@ -703,6 +714,7 @@ async function saveDirectBooking(withPaymentLink){
     numberOfPeople:document.getElementById('bk-people').value.trim(),
     location:document.getElementById('bk-location').value.trim(),
     price:document.getElementById('bk-price').value.trim(),
+    paymentType:document.querySelector('input[name="bk-payment-type"]:checked').value,
     createPaymentLink:withPaymentLink
   };
   if(withPaymentLink && (!payload.price || Number(payload.price)<0.5)){
@@ -725,6 +737,7 @@ async function saveDirectBooking(withPaymentLink){
       output.appendChild(copy);
     }
     ['bk-first-name','bk-last-name','bk-email','bk-phone','bk-date','bk-time','bk-service','bk-people','bk-location','bk-price'].forEach(function(id){document.getElementById(id).value='';});
+    document.querySelector('input[name="bk-payment-type"][value="deposit"]').checked=true;
     setTimeout(function(){window.location.reload();},withPaymentLink?2500:1200);
   }catch(e){err.textContent=e.message||'Could not save booking.';err.style.display='block';}
   saveBtn.disabled=false;linkBtn.disabled=false;saveBtn.textContent='Save Booking';linkBtn.textContent='Save & Create Payment Link';
@@ -1331,6 +1344,7 @@ router.post("/admin/create-booking", async (req, res) => {
   const numberOfPeople = cleanValue(body.numberOfPeople, 20);
   const location = cleanValue(body.location, 500);
   const priceRaw = cleanValue(body.price, 30);
+  const paymentType = body.paymentType === "full" ? "full" : "deposit";
   const createPaymentLink = body.createPaymentLink === true;
   const price = priceRaw ? Number(priceRaw) : 0;
 
@@ -1363,6 +1377,7 @@ router.post("/admin/create-booking", async (req, res) => {
     ? toUrlSafeBase64({
         confirmed_data: confirmedData,
         total_aud: price,
+        payment_type: paymentType,
         client_name: clientName,
         client_email: clientEmail,
         source: "manual_admin_booking",
@@ -1381,6 +1396,7 @@ router.post("/admin/create-booking", async (req, res) => {
       numPeople: numberOfPeople || null,
       totalAud: priceRaw ? String(price) : null,
       paymentMethod: createPaymentLink ? "payment_link" : "manual",
+      paymentType,
       status: createPaymentLink ? "awaiting_payment" : "confirmed",
       paymentToken,
     }).returning({ id: bookings.id });

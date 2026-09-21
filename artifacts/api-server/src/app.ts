@@ -67,6 +67,7 @@ app.post("/api/webhook", express.raw({ type: "application/json" }), async (req, 
     const bookingMobileLocation = pi.metadata?.booking_mobile_location || "";
     const bookingPeople   = pi.metadata?.booking_people   || "";
     const bookingToken    = pi.metadata?.booking_token    || "";
+    const paymentType     = pi.metadata?.payment_type === "full" ? "full" : "deposit";
 
     try {
       const existing = bookingToken
@@ -94,6 +95,7 @@ app.post("/api/webhook", express.raw({ type: "application/json" }), async (req, 
           numPeople:            bookingPeople   || null,
           totalAud:             String(pi.amount / 100),
           paymentMethod:        "card",
+            paymentType,
           status:               "confirmed",
           stripePaymentIntentId: pi.id,
         });

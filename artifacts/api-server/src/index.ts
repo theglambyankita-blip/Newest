@@ -25,6 +25,7 @@ async function runMigrations() {
       ALTER TABLE bookings ADD COLUMN IF NOT EXISTS phone_number TEXT;
       ALTER TABLE bookings ADD COLUMN IF NOT EXISTS payment_token TEXT;
       ALTER TABLE bookings ADD COLUMN IF NOT EXISTS client_message TEXT;
+      ALTER TABLE bookings ADD COLUMN IF NOT EXISTS payment_type TEXT DEFAULT 'deposit';
       CREATE TABLE IF NOT EXISTS coupons (
         id SERIAL PRIMARY KEY,
         code TEXT NOT NULL UNIQUE,

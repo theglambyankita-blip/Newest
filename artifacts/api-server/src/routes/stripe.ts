@@ -100,6 +100,7 @@ router.post("/create-payment-intent", async (req, res) => {
 
   const clientEmail = (bookingData.client_email || bookingData.clientEmail || "") as string;
   const clientName  = (bookingData.client_name  || bookingData.clientName  || "") as string;
+  const paymentType = bookingData.payment_type === "full" ? "full" : "deposit";
   const cd = (bookingData.confirmed_data || bookingData.confirmedData || {}) as Record<string, string>;
 
   const stripe = new Stripe(secretKey);
@@ -121,6 +122,7 @@ router.post("/create-payment-intent", async (req, res) => {
         booking_token:    token.length <= 450 ? token : "",
         coupon_code:      appliedCouponCode || "",
         original_aud:     appliedCouponCode ? String(totalAud) : "",
+        payment_type:     paymentType,
       },
     });
     res.json({ client_secret: paymentIntent.client_secret, couponApplied: !!appliedCouponCode, finalAud });
@@ -192,6 +194,7 @@ router.post("/confirm-payment", async (req, res) => {
         numPeople:     cd["Number of People"] || null,
         totalAud:      totalAud ? String(totalAud) : null,
         paymentMethod: "card",
+        paymentType,
         status:        "confirmed",
         stripePaymentIntentId: payment_intent_id || null,
       });
