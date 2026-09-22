@@ -1,0 +1,276 @@
+I need you to add a manual booking and payment system to my existing The Glam By Ankita website without breaking anything that already works.
+
+Before making changes, inspect the existing project, Admin Dashboard, booking system, database, Stripe integration, authentication, services, pricing, payment statuses, and revenue calculations. Reuse the existing architecture and styling. Do not create a second Stripe account, fake payments, placeholder buttons, duplicate booking systems, or unnecessary rewrites.
+
+Manual Bookings
+
+Add a Manual Bookings section to the Admin Dashboard with an Add Manual Booking button.
+
+Manual bookings are for customers who contact me through email, Instagram, phone, SMS, WhatsApp, referrals, or in person.
+
+The form must support:
+
+* First name
+* Last name
+* Email
+* Phone
+* Date
+* Time
+* Service
+* Number of people
+* Free-text location
+* Main service price
+* Optional add-ons with separate names and prices
+* Admin notes
+* Booking status
+* Booking type
+
+All fields must be editable after creation.
+
+Service names must allow custom text, not only existing services. Number of people must accept any positive whole number. Location must be free text.
+
+If an optional field is blank, hide it completely on the customer payment page. Do not show empty labels, dashes, “N/A,” or “Not provided.”
+
+Payment Links
+
+Add a secure Generate Payment Link feature for each manual booking.
+
+After generating a link, show:
+
+* Copy Payment Link
+* Open Payment Page
+* Disable Link
+* Regenerate Link
+* View Payment Status
+
+I will copy and send the link myself. Do not automatically email customers.
+
+Use the existing Stripe integration with secure server-side validation. Never expose Stripe secret keys or webhook secrets. The server/database must determine the amount charged; never trust frontend pricing.
+
+Support these customer payment settings:
+
+* Deposit only
+* Full payment only
+* Customer can choose deposit or full payment
+
+For deposits, support:
+
+* Fixed amount
+* Percentage
+
+Show the calculated deposit and remaining balance before generating the link.
+
+The remaining balance must not be charged with the initial deposit. Allow the admin to choose whether the remaining balance is payable by:
+
+* Cash on the day
+* Online payment on the day
+* Cash or online payment
+
+The customer payment page must clearly show the total, amount due today, remaining balance, and payment instructions. It must use The Glam By Ankita branding and be mobile-friendly.
+
+Only display information entered by the admin. Customers must not be able to edit booking details, change prices, access the Admin Dashboard, or access another booking.
+
+Use secure random payment-link tokens rather than exposed sequential IDs. Support optional expiration dates. Disabled or expired links must not accept payment.
+
+Payment Confirmation and History
+
+Do not mark payments as successful merely because a customer reaches a success page. Confirm payments through Stripe’s proper payment confirmation/webhook process.
+
+Store:
+
+* Paid amount
+* Remaining balance
+* Payment status
+* Stripe payment IDs
+* Payment date
+* Payment method
+* Payment history
+
+Support these statuses:
+
+* UNPAID
+* DEPOSIT PAID
+* PARTIALLY PAID
+* PAID IN FULL
+* BALANCE DUE
+* CANCELLED
+* EXPIRED
+* FAILED
+
+Add an admin Record Payment function for offline payments. It must accept:
+
+* Amount
+* Payment method: Cash, Online, or Other
+* Payment date
+* Admin note
+
+Recording cash must not create a Stripe charge.
+
+Editing and Safety
+
+Manual bookings must be fully editable, including customer details, date, time, service, number of people, location, prices, add-ons, deposit settings, payment options, status, booking type, and notes.
+
+Recalculate totals dynamically when price components change. For example:
+
+Makeup $180 + Hair $30 = $210
+If Hair changes to $50, total becomes $230.
+
+If an active payment link exists and the booking amount changes, warn the admin and require the link to be disabled or regenerated. Never leave an active link charging an outdated amount.
+
+Admin Dashboard
+
+Show manual bookings in the existing bookings area and clearly label them MANUAL BOOKING.
+
+Display:
+
+* Customer
+* Service
+* Date
+* Time
+* Number of people
+* Location
+* Total
+* Paid
+* Balance
+* Payment status
+* Booking type
+
+Add or preserve filters for:
+
+* All
+* Upcoming
+* Completed
+* Manual bookings
+* Website bookings
+* Unpaid
+* Deposit paid
+* Paid in full
+* Balance due
+* Cancelled
+* Historical
+
+Add search by customer name, email, phone, service, or booking ID.
+
+Historical bookings must use the same booking system and remain included in revenue calculations. They must be editable, searchable, filterable, and able to receive recorded payments or payment links.
+
+Add These Krishna Bookings
+
+Create this historical booking as a normal editable database record:
+
+Krishna — Bridal Trial
+
+* First name: Krishna
+* Last name: blank
+* Date: 19 September 2026
+* Time: 8:00 AM
+* Service: Soft Glam
+* Price: $75 AUD
+* Location: Southbank Studio
+* Number of people: 1
+* Booking type: Manual / Historical Booking
+* Status: Completed
+* Payment status: Paid in Full
+* Amount paid: $75
+* Balance: $0
+* Purpose: Bridal Makeup Trial
+* Admin note: Bridal makeup trial booking.
+
+This must contribute exactly $75 AUD to actual revenue and must not be counted twice.
+
+Create this upcoming booking:
+
+Krishna — Wedding Booking
+
+* Date: 18 October 2026
+* Service: Bridal Makeup
+* Bridal Makeup: $180 AUD
+* Hair: $30 AUD
+* Total: $210 AUD
+* Location: Sage Hotel Melbourne Ringwood
+* Time: blank
+* Number of people: 1
+* Booking type: Manual Booking
+* Status: Upcoming
+* Payment status: Unpaid
+* Amount paid: $0
+* Balance: $210
+* Admin note: Wedding day booking — bridal makeup + hair.
+
+Do not invent a time. Store Bridal Makeup and Hair as separate editable items within one booking. If Hair changes to $50, the total must become $230 automatically.
+
+Revenue
+
+Clearly distinguish:
+
+* Total booking value
+* Total revenue received
+* Outstanding balance
+* Upcoming booking value
+* Completed revenue
+
+Revenue received must be based only on actual successful Stripe payments and recorded offline payments. A $210 unpaid booking must not count as $210 received. A $75 paid historical booking must count as $75 received.
+
+Do not count add-ons as separate bookings.
+
+Database
+
+Use the existing database and schema conventions. Add the necessary fields/tables for:
+
+* Manual bookings
+* Booking items/add-ons
+* Secure payment links
+* Payment records
+* Payment history
+* Payment statuses
+* Amount paid
+* Balance due
+* Expiration and disabled links
+
+Do not introduce an unnecessary new database.
+
+Testing
+
+Test at minimum:
+
+1. Full payment: $120 paid, balance $0, status Paid in Full.
+2. Fixed deposit: $180 total, $50 paid, $130 balance.
+3. Percentage deposit: $200 total, 30% deposit, $60 paid, $140 balance.
+4. Deposit plus $130 cash balance results in $180 paid and Paid in Full.
+5. Blank phone and location are hidden from the customer page.
+6. Custom service names work.
+7. Multiple people display correctly.
+8. Editing add-on prices recalculates totals.
+9. Krishna trial displays correctly and contributes $75 revenue.
+10. Krishna wedding displays $210 total, $0 paid, and $210 balance.
+11. Krishna wedding deposit of $50 plus $160 cash updates to Paid in Full.
+
+Also verify:
+
+* All buttons and forms work.
+* No empty fields appear.
+* No console errors exist.
+* Mobile layouts work.
+* Customer preview matches the actual payment page.
+* Database edits persist.
+* Revenue calculations are correct.
+* Payment statuses update correctly.
+* Stripe webhooks work.
+* Payment links are secure.
+* Existing public bookings, Admin Dashboard, services, coupons, gallery, authentication, Stripe functionality, and customer features remain intact.
+
+Do not hard-code prices, customer information, dates, times, services, payment links, or revenue calculations. The Krishna bookings should be initial editable records, not hard-coded UI content.
+
+Implement, test, fix errors, test again, and complete a final review before stopping. Do not leave partial functionality or tell me to finish it myself.
+
+At the end, provide a concise report listing:
+
+1. Files/components changed
+2. Database changes
+3. Stripe changes
+4. Manual booking workflow
+5. Payment-link workflow
+6. Revenue logic
+7. Krishna bookings added
+8. Tests performed
+9. Required environment variables or configuration
+10. Confirmation that existing functionality was preserved
