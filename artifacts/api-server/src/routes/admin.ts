@@ -290,7 +290,7 @@ function paymentLinkUrl(token: string): string {
 }
 
 async function seedKrishnaBookings() {
-  const existingTrial = await db.select().from(bookings)
+  const existingTrial: Booking[] = await db.select().from(bookings)
     .where(eq(bookings.clientName, "Krishna"))
     .catch(() => []);
   const trial = existingTrial.find((booking) => booking.bookingDate === "2026-09-19" && booking.service === "Soft Glam");
@@ -385,6 +385,38 @@ router.get("/admin", async (req, res) => {
     .orderBy(desc(bookings.createdAt))
     .catch(() => []);
 
+  const allPaymentRecords = await db
+    .select()
+    .from(paymentRecords)
+    .catch(() => []);
+  const paymentRecordsByBooking = new Map<number, typeof allPaymentRecords>();
+  for (const record of allPaymentRecords) {
+    const existing = paymentRecordsByBooking.get(record.bookingId) || [];
+    existing.push(record);
+    paymentRecordsByBooking.set(record.bookingId, existing);
+  }
+  function financialsForBooking(b: Booking) {
+    const records = paymentRecordsByBooking.get(b.id) || [];
+    const recordedPaid = records.reduce((sum, record) => sum + Number(record.amount || 0), 0);
+    const storedPaid = Number(b.amountPaid || 0);
+    // Manual bookings use payment_records as the source of truth. For older
+    // website bookings, retain the historical card-payment value when there
+    // is no payment record yet.
+    const paid = records.length
+      ? recordedPaid
+      : storedPaid > 0
+        ? storedPaid
+        : b.paymentMethod === "card" && b.status === "confirmed"
+          ? Number(b.totalAud || 0)
+          : 0;
+    const total = Number(b.totalAud || 0);
+    return {
+      total: Number.isFinite(total) ? total : 0,
+      paid: Number.isFinite(paid) ? paid : 0,
+      balance: Math.max(0, total - (Number.isFinite(paid) ? paid : 0)),
+    };
+  }
+
   const today = new Date().toISOString().split("T")[0];
   const thisMonthPrefix = today.slice(0, 7);
 
@@ -419,10 +451,14 @@ router.get("/admin", async (req, res) => {
   const viewUrl = (v: string) => v === "all" ? baseUrl : `${baseUrl}&view=${v}`;
 
   function bookingRow(b: (typeof allBookings)[0], idx: number) {
+    const finance = financialsForBooking(b);
+    const isManual = b.manualBooking === "true";
     const badge =
-      b.paymentMethod === "cash"
-        ? `<span style="background:#f0e8c8;color:#8a6a00;padding:2px 8px;border-radius:20px;font-size:0.75rem;font-weight:700;">Cash</span>`
-        : `<span style="background:#e8f4e8;color:#2c6e3f;padding:2px 8px;border-radius:20px;font-size:0.75rem;font-weight:700;">Card</span>`;
+      b.paymentStatus === "paid_in_full" || finance.balance <= 0 && finance.paid > 0
+        ? `<span style="background:#e8f4e8;color:#2c6e3f;padding:2px 8px;border-radius:20px;font-size:0.75rem;font-weight:700;">Paid</span>`
+        : finance.paid > 0
+          ? `<span style="background:#fff4dc;color:#8a6a00;padding:2px 8px;border-radius:20px;font-size:0.75rem;font-weight:700;">Part paid</span>`
+          : `<span style="background:#f5e8e8;color:#9a4d43;padding:2px 8px;border-radius:20px;font-size:0.75rem;font-weight:700;">Unpaid</span>`;
     const createdDate = b.createdAt ? new Date(b.createdAt).toLocaleDateString("en-AU", { day:"2-digit", month:"short", year:"numeric" }) : "—";
     const hasMsg = !!(b.clientMessage && b.clientMessage.trim());
     const reminderDone = b.reminderSent === "true";
@@ -435,22 +471,28 @@ router.get("/admin", async (req, res) => {
       <td style="padding:10px 12px;color:#4a2e22;font-size:0.85rem;">${esc(b.clientEmail || "—")}</td>
       <td style="padding:10px 12px;color:#4a2e22;font-size:0.85rem;">${esc(b.service || "—")}</td>
       <td style="padding:10px 12px;color:#4a2e22;font-size:0.85rem;white-space:nowrap;">${esc(b.bookingDate || "—")}${b.bookingTime ? ` ${esc(b.bookingTime)}` : ""}</td>
-      <td style="padding:10px 12px;color:#4a2e22;font-size:0.85rem;">${b.totalAud ? `A$${Number(b.totalAud).toFixed(2)}` : "—"}</td>
+      <td style="padding:10px 12px;color:#4a2e22;font-size:0.85rem;white-space:nowrap;">${finance.total > 0 ? `A$${finance.total.toFixed(2)}` : "—"}</td>
+      <td style="padding:10px 12px;color:#2c6e3f;font-size:0.85rem;white-space:nowrap;">${finance.paid > 0 ? `A$${finance.paid.toFixed(2)}` : "—"}</td>
+      <td style="padding:10px 12px;color:${finance.balance > 0 ? "#9a4d43" : "#6b3d2e"};font-size:0.85rem;white-space:nowrap;">${finance.balance > 0 ? `A$${finance.balance.toFixed(2)}` : "—"}</td>
       <td style="padding:10px 12px;">${badge}</td>
       <td style="padding:10px 12px;">${msgBadge}</td>
     </tr>
     <tr class="brow-detail" id="detail-${idx}" style="display:none;background:#fdf8f4;">
-      <td colspan="7" style="padding:12px 20px 16px;">
+      <td colspan="9" style="padding:12px 20px 16px;">
         <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:10px;font-size:0.83rem;">
           ${b.location ? `<div><span style="font-weight:700;color:#6b3d2e;">Location:</span> ${esc(b.location)}</div>` : ""}
           ${b.numPeople ? `<div><span style="font-weight:700;color:#6b3d2e;">People:</span> ${esc(b.numPeople)}</div>` : ""}
           ${b.stripePaymentIntentId ? `<div><span style="font-weight:700;color:#6b3d2e;">Stripe PI:</span> <span style="font-family:monospace;font-size:0.78rem;">${esc(b.stripePaymentIntentId)}</span></div>` : ""}
           <div><span style="font-weight:700;color:#6b3d2e;">Status:</span> ${esc(b.status || "confirmed")}</div>
+          <div><span style="font-weight:700;color:#6b3d2e;">Total value:</span> A$${finance.total.toFixed(2)}</div>
+          <div><span style="font-weight:700;color:#6b3d2e;">Paid:</span> A$${finance.paid.toFixed(2)}</div>
+          <div><span style="font-weight:700;color:#6b3d2e;">Outstanding:</span> A$${finance.balance.toFixed(2)}</div>
           <div><span style="font-weight:700;color:#6b3d2e;">Booked on:</span> ${createdDate}</div>
         </div>
         <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px;">
           <button onclick="prefillEmail('${esc(b.clientEmail || "")}');event.stopPropagation();" style="background:none;border:1px solid #c9a96e;color:#9e7c4a;padding:5px 14px;border-radius:5px;font-size:0.8rem;cursor:pointer;">✉️ Email this client</button>
           <button onclick="openMessageModal(${b.id},${idx},event)" style="background:none;border:1px solid #c9a96e;color:#9e7c4a;padding:5px 14px;border-radius:5px;font-size:0.8rem;cursor:pointer;">${msgLabel}</button>
+          ${isManual ? `<button onclick="openManualEditor(${b.id},event)" style="background:linear-gradient(135deg,#c9a96e,#9e7c4a);border:0;color:#fff;padding:5px 14px;border-radius:5px;font-size:0.8rem;font-weight:700;cursor:pointer;">✎ Edit booking &amp; payments</button>` : ""}
         </div>
         ${hasMsg ? `<div id="msg-preview-${idx}" style="margin-top:10px;padding:10px 14px;background:#fff9f5;border:1px solid #e8c4bc;border-radius:6px;font-size:0.83rem;color:#4a2e22;line-height:1.6;white-space:pre-wrap;">${esc(b.clientMessage || "")}</div>` : `<div id="msg-preview-${idx}" style="display:none;margin-top:10px;padding:10px 14px;background:#fff9f5;border:1px solid #e8c4bc;border-radius:6px;font-size:0.83rem;color:#4a2e22;line-height:1.6;white-space:pre-wrap;"></div>`}
       </td>
@@ -459,13 +501,10 @@ router.get("/admin", async (req, res) => {
 
   const allBookingRows = displayedBookings.map((b, i) => bookingRow(b, i)).join("");
 
-  const totalRevenue = allBookings
-    .filter((b) => b.paymentMethod === "card" && b.totalAud)
-    .reduce((sum, b) => sum + Number(b.totalAud || 0), 0);
-
-  const thisMonthRevenue = thisMonth
-    .filter((b) => b.totalAud)
-    .reduce((sum, b) => sum + Number(b.totalAud || 0), 0);
+  const totalBookingValue = allBookings.reduce((sum, b) => sum + financialsForBooking(b).total, 0);
+  const amountActuallyPaid = allBookings.reduce((sum, b) => sum + financialsForBooking(b).paid, 0);
+  const outstandingBalance = allBookings.reduce((sum, b) => sum + financialsForBooking(b).balance, 0);
+  const thisMonthPaid = thisMonth.reduce((sum, b) => sum + financialsForBooking(b).paid, 0);
 
   const cloudName = process.env["CLOUDINARY_CLOUD_NAME"] || "";
 
@@ -536,8 +575,10 @@ textarea{resize:vertical;min-height:140px;}
   <div class="stats">
     <a class="stat ${view==='all'?'active':''}" href="${viewUrl('all')}"><div class="stat-val">${allBookings.length}</div><div class="stat-lbl">Total Bookings</div></a>
     <a class="stat ${view==='upcoming'?'active':''}" href="${viewUrl('upcoming')}"><div class="stat-val">${upcoming.length}</div><div class="stat-lbl">Upcoming</div></a>
-    <a class="stat ${view==='card'?'active':''}" href="${viewUrl('card')}"><div class="stat-val">A$${totalRevenue.toFixed(2)}</div><div class="stat-lbl">Total Revenue</div></a>
-    <a class="stat"><div class="stat-val">A$${thisMonthRevenue.toFixed(2)}</div><div class="stat-lbl">This Month</div></a>
+     <a class="stat"><div class="stat-val">A$${totalBookingValue.toFixed(2)}</div><div class="stat-lbl">Total Booking Value</div></a>
+     <a class="stat"><div class="stat-val">A$${amountActuallyPaid.toFixed(2)}</div><div class="stat-lbl">Amount Actually Paid</div></a>
+     <a class="stat"><div class="stat-val">A$${outstandingBalance.toFixed(2)}</div><div class="stat-lbl">Outstanding Balance</div></a>
+     <a class="stat"><div class="stat-val">A$${thisMonthPaid.toFixed(2)}</div><div class="stat-lbl">Paid This Month</div></a>
   </div>
 </div>
 <div class="content">
@@ -589,7 +630,7 @@ textarea{resize:vertical;min-height:140px;}
     <div class="card">
       <div class="table-wrap">
         <table id="bookings-table">
-          <thead><tr><th>Client</th><th>Email</th><th>Service</th><th>Date &amp; Time</th><th>Amount</th><th>Payment</th></tr></thead>
+           <thead><tr><th>Client</th><th>Email</th><th>Service</th><th>Date &amp; Time</th><th>Total value</th><th>Paid</th><th>Outstanding</th><th>Payment</th><th>Message</th></tr></thead>
           <tbody id="bookings-tbody">${allBookingRows}</tbody>
         </table>
         <div id="no-results">No bookings match your search.</div>
@@ -754,6 +795,72 @@ textarea{resize:vertical;min-height:140px;}
       <div id="cp-list"><p style="color:#9e7c4a;font-size:0.85rem;">Loading...</p></div>
     </div>
   </div>
+  <div id="manual-booking-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.55);z-index:10000;align-items:center;justify-content:center;padding:16px;">
+    <div style="background:#fff;border-radius:12px;max-width:780px;width:100%;max-height:94vh;overflow-y:auto;box-shadow:0 20px 60px rgba(0,0,0,0.24);">
+      <div style="background:linear-gradient(135deg,#c9a96e,#9e7c4a);padding:18px 24px;border-radius:12px 12px 0 0;display:flex;align-items:center;justify-content:space-between;gap:12px;">
+        <div><h3 style="color:#fff;margin:0;font-size:1.05rem;">&#9999; Edit Manual Booking</h3><p style="color:rgba(255,255,255,.86);font-size:.78rem;margin:4px 0 0;">Changes are saved to the bookings database and remain after refresh.</p></div>
+        <button onclick="closeManualEditor()" style="border:0;background:rgba(255,255,255,.18);color:#fff;border-radius:50%;width:30px;height:30px;font-size:1.1rem;cursor:pointer;">&times;</button>
+      </div>
+      <div style="padding:20px 24px;">
+        <input type="hidden" id="manual-edit-id">
+        <div id="manual-edit-loading" style="display:none;color:#9e7c4a;font-size:.85rem;margin-bottom:12px;">Loading booking...</div>
+        <div id="manual-edit-status" style="display:none;padding:10px 14px;border-radius:6px;font-size:.85rem;margin-bottom:14px;"></div>
+        <div style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:0 14px;">
+          <div class="field"><label>First name</label><input type="text" id="manual-first-name"></div>
+          <div class="field"><label>Last name</label><input type="text" id="manual-last-name"></div>
+          <div class="field"><label>Email</label><input type="email" id="manual-email"></div>
+          <div class="field"><label>Phone number</label><input type="text" id="manual-phone"></div>
+          <div class="field"><label>Date</label><input type="date" id="manual-date"></div>
+          <div class="field"><label>Time</label><input type="time" id="manual-time"></div>
+          <div class="field"><label>Service</label><input type="text" id="manual-service"></div>
+          <div class="field"><label>Number of people</label><input type="number" id="manual-people" min="1" step="1"></div>
+          <div class="field"><label>Location</label><input type="text" id="manual-location"></div>
+          <div class="field"><label>Booking status</label><select id="manual-status"><option value="upcoming">Upcoming</option><option value="confirmed">Confirmed</option><option value="completed">Completed</option><option value="cancelled">Cancelled</option></select></div>
+          <div class="field" style="grid-column:1 / -1;"><label>Admin notes</label><textarea id="manual-notes" style="min-height:76px;"></textarea></div>
+        </div>
+        <div style="border-top:1px solid #f0ddd8;padding-top:15px;margin-top:2px;">
+          <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:10px;">
+            <div><h4 style="font-size:.9rem;color:#6b3d2e;margin:0;">Booking value</h4><p style="font-size:.76rem;color:#9a7060;margin:3px 0 0;">Keep the main service and add-ons separate so totals are clear.</p></div>
+            <div id="manual-total-preview" style="font-weight:700;color:#6b3d2e;">Total: A$0.00</div>
+          </div>
+          <div class="field"><label>Main service price (A$)</label><input type="number" id="manual-main-price" min="0" step="0.01" oninput="manualUpdateTotal()"></div>
+          <div id="manual-addons"></div>
+          <button type="button" onclick="manualAddAddon()" style="padding:7px 12px;border:1px solid #c9a96e;border-radius:6px;background:#fff;color:#9e7c4a;font-weight:700;cursor:pointer;font-family:inherit;">+ Add add-on</button>
+        </div>
+        <div style="border-top:1px solid #f0ddd8;padding-top:15px;margin-top:18px;">
+          <h4 style="font-size:.9rem;color:#6b3d2e;margin:0 0 10px;">Payment tracking</h4>
+          <div id="manual-financial-summary" style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:12px;"></div>
+          <div id="manual-payment-records" style="font-size:.78rem;color:#6b3d2e;margin-bottom:12px;"></div>
+          <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;align-items:end;">
+            <div class="field" style="margin:0;"><label>Record payment (A$)</label><input type="number" id="manual-payment-amount" min="0.01" step="0.01" placeholder="0.00"></div>
+            <div class="field" style="margin:0;"><label>Method</label><select id="manual-payment-method"><option value="cash">Cash</option><option value="online">Online</option><option value="other">Other</option></select></div>
+            <button type="button" onclick="recordManualPayment()" style="padding:10px 12px;border:1px solid #6f8f72;border-radius:6px;background:#f3faf4;color:#3f6b4b;font-weight:700;cursor:pointer;font-family:inherit;">Record payment</button>
+          </div>
+          <div class="field" style="margin-top:10px;"><label>Payment note (optional)</label><input type="text" id="manual-payment-note" placeholder="e.g. Paid at studio"></div>
+        </div>
+        <div style="border-top:1px solid #f0ddd8;padding-top:15px;margin-top:8px;">
+          <h4 style="font-size:.9rem;color:#6b3d2e;margin:0 0 4px;">Payment link</h4>
+          <p style="font-size:.76rem;color:#9a7060;margin:0 0 10px;">Creating a new link disables the previous active link. Payments are only marked paid after Stripe confirmation.</p>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+            <div class="field" style="margin:0;"><label>Payment option</label><select id="manual-link-option"><option value="deposit">Deposit</option><option value="full">Pay in full</option><option value="customer_choice">Customer chooses</option></select></div>
+            <div class="field" style="margin:0;"><label>Deposit type</label><select id="manual-link-deposit-type"><option value="fixed">Fixed amount (A$)</option><option value="percent">Percentage (%)</option></select></div>
+            <div class="field" style="margin:0;"><label>Deposit value</label><input type="number" id="manual-link-deposit-value" min="0" step="0.01" placeholder="e.g. 150"></div>
+            <div class="field" style="margin:0;"><label>Expires (optional)</label><input type="datetime-local" id="manual-link-expires"></div>
+            <div class="field" style="margin:0;"><label>Remaining balance method</label><select id="manual-link-remaining"><option value="cash_or_online">Cash or online</option><option value="cash">Cash</option><option value="online">Online</option></select></div>
+          </div>
+          <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-top:10px;">
+            <button type="button" onclick="createManualPaymentLink()" style="padding:10px 14px;border:0;border-radius:6px;background:linear-gradient(135deg,#6f8f72,#3f6b4b);color:#fff;font-weight:700;cursor:pointer;font-family:inherit;">Create new payment link</button>
+            <button type="button" onclick="disableManualPaymentLink()" style="padding:10px 14px;border:1px solid #e0b0a8;border-radius:6px;background:#fff;color:#a34f43;font-weight:700;cursor:pointer;font-family:inherit;">Disable active link</button>
+          </div>
+          <div id="manual-link-output" style="font-size:.82rem;word-break:break-all;margin-top:10px;"></div>
+        </div>
+        <div style="display:flex;gap:10px;justify-content:flex-end;flex-wrap:wrap;margin-top:20px;">
+          <button type="button" onclick="closeManualEditor()" style="padding:11px 16px;border:1px solid #e0c8c0;border-radius:7px;background:#fff;color:#6b3d2e;font-weight:700;cursor:pointer;font-family:inherit;">Cancel</button>
+          <button type="button" id="manual-save-btn" onclick="saveManualBooking()" class="btn" style="padding:11px 20px;">Save booking changes</button>
+        </div>
+      </div>
+    </div>
+  </div>
   <div id="cp-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:9999;align-items:center;justify-content:center;padding:16px;">
     <div style="background:#fff;border-radius:12px;max-width:480px;width:100%;box-shadow:0 20px 60px rgba(0,0,0,0.2);">
       <div style="background:linear-gradient(135deg,#c9a96e,#9e7c4a);padding:18px 24px;border-radius:12px 12px 0 0;"><h3 style="color:#fff;margin:0;font-size:1.05rem;">&#9999; Edit Promo Code</h3></div>
@@ -811,6 +918,9 @@ var _homepageDragSrc='';
 var _cpCoupons=[];
 var _modalBookingId=null;
 var _modalBookingIdx=null;
+var _manualDetail=null;
+var _manualItems=[];
+var _manualActiveLink=null;
 function toggleDetails(idx){var d=document.getElementById('detail-'+idx);if(d)d.style.display=d.style.display==='none'?'table-row':'none';}
 function filterTable(){
   var q=document.getElementById('search-input').value.toLowerCase();
@@ -819,6 +929,138 @@ function filterTable(){
   var shown=0;
   rows.forEach(function(r,i){var txt=r.textContent.toLowerCase();var show=!q||txt.indexOf(q)>=0;r.style.display=show?'':'none';if(details[i])details[i].style.display='none';if(show)shown++;});
   document.getElementById('no-results').style.display=shown===0&&q?'block':'none';
+}
+function manualMoney(value){return 'A$'+Number(value||0).toFixed(2);}
+function manualStatus(message,ok){
+  var el=document.getElementById('manual-edit-status');if(!el)return;
+  el.textContent=message;el.style.display=message?'block':'none';
+  el.style.background=ok?'#f0fff4':'#fff0f0';el.style.border='1px solid '+(ok?'#a8e6b8':'#f5c0c0');el.style.color=ok?'#2c6e3f':'#c0392b';
+}
+function manualAddAddon(name,amount){
+  var row=document.createElement('div');row.className='manual-addon-row';
+  row.style.cssText='display:grid;grid-template-columns:1fr 150px auto;gap:8px;align-items:end;margin-bottom:8px;';
+  row.innerHTML='<div class="field" style="margin:0;"><label>Add-on name</label><input type="text" class="manual-addon-name" value="'+escHtml(name||'')+'" placeholder="e.g. Hair styling"></div>'+
+    '<div class="field" style="margin:0;"><label>Price (A$)</label><input type="number" class="manual-addon-amount" min="0" step="0.01" value="'+(amount==null?'':Number(amount).toFixed(2))+'" oninput="manualUpdateTotal()"></div>'+
+    '<button type="button" onclick="this.parentNode.remove();manualUpdateTotal();" style="padding:10px 10px;border:1px solid #e0b0a8;border-radius:6px;background:#fff;color:#a34f43;cursor:pointer;font-family:inherit;">Remove</button>';
+  document.getElementById('manual-addons').appendChild(row);manualUpdateTotal();
+}
+function manualUpdateTotal(){
+  var main=Number(document.getElementById('manual-main-price').value||0);
+  var extras=Array.from(document.querySelectorAll('.manual-addon-amount')).reduce(function(sum,input){return sum+Number(input.value||0);},0);
+  document.getElementById('manual-total-preview').textContent='Total: '+manualMoney(main+extras);
+}
+function manualCollectAddons(){
+  return Array.from(document.querySelectorAll('.manual-addon-row')).map(function(row){
+    return {name:row.querySelector('.manual-addon-name').value.trim(),amount:Number(row.querySelector('.manual-addon-amount').value||0)};
+  }).filter(function(item){return item.name||item.amount;});
+}
+function manualRenderFinancials(detail){
+  var b=detail.booking||{},total=Number(b.totalAud||0),paid=Number(b.amountPaid||0),balance=Number(b.balanceDue==null?Math.max(0,total-paid):b.balanceDue);
+  document.getElementById('manual-financial-summary').innerHTML=
+    '<div style="padding:8px;background:#fdf5f0;border:1px solid #f0ddd8;border-radius:6px;"><small style="display:block;color:#9a7060;">Total booking value</small><strong style="color:#6b3d2e;">'+manualMoney(total)+'</strong></div>'+
+    '<div style="padding:8px;background:#f3faf4;border:1px solid #d3ead7;border-radius:6px;"><small style="display:block;color:#5d8a68;">Amount actually paid</small><strong style="color:#2c6e3f;">'+manualMoney(paid)+'</strong></div>'+
+    '<div style="padding:8px;background:#fff8f3;border:1px solid #f0ddd8;border-radius:6px;"><small style="display:block;color:#9a7060;">Outstanding balance</small><strong style="color:'+(balance>0?'#a34f43':'#2c6e3f')+';">'+manualMoney(balance)+'</strong></div>';
+  var records=detail.records||[];
+  document.getElementById('manual-payment-records').innerHTML=records.length
+    ? '<strong>Payment records:</strong> '+records.map(function(record){return manualMoney(record.amount)+' '+String(record.method||'').replace(/^./,function(c){return c.toUpperCase();})+(record.paidAt?' · '+new Date(record.paidAt).toLocaleDateString('en-AU'):'')+(record.note?' · '+escHtml(record.note):'');}).join('<br>')
+    : '<span>No payment records yet. Use the form above for cash, online, or other payments.</span>';
+}
+async function openManualEditor(id,e){
+  if(e)e.stopPropagation();
+  document.getElementById('manual-booking-modal').style.display='flex';
+  document.getElementById('manual-edit-loading').style.display='block';manualStatus('');
+  document.getElementById('manual-edit-id').value=id;
+  try{
+    var r=await fetch('/api/admin/manual-bookings/'+id+'?token='+encodeURIComponent(TOKEN));
+    var detail=await r.json();if(!r.ok)throw new Error(detail.error||'Could not load booking.');
+    _manualDetail=detail;_manualItems=(detail.items||[]).slice().sort(function(a,b){return Number(a.sortOrder||0)-Number(b.sortOrder||0);});
+    var b=detail.booking||{},parts=String(b.clientName||'').trim().split(/\s+/);
+    document.getElementById('manual-first-name').value=parts.shift()||'';
+    document.getElementById('manual-last-name').value=parts.join(' ');
+    document.getElementById('manual-email').value=b.clientEmail||'';document.getElementById('manual-phone').value=b.phoneNumber||'';
+    document.getElementById('manual-date').value=b.bookingDate||'';document.getElementById('manual-time').value=b.bookingTime||'';
+    document.getElementById('manual-service').value=b.service||'';document.getElementById('manual-people').value=b.numPeople||'';
+    document.getElementById('manual-location').value=b.location||'';document.getElementById('manual-status').value=b.bookingStatus||'upcoming';
+    document.getElementById('manual-notes').value=b.adminNotes||'';
+    var main=Number(b.mainServicePrice||0);if(!main&&_manualItems.length)main=Number(_manualItems[0].amount||0);
+    document.getElementById('manual-main-price').value=main?main.toFixed(2):'';
+    document.getElementById('manual-addons').innerHTML='';
+    _manualItems.slice(main||b.service?1:0).forEach(function(item){manualAddAddon(item.name,item.amount);});
+    manualUpdateTotal();manualRenderFinancials(detail);
+    _manualActiveLink=(detail.links||[]).find(function(link){return link.disabled!=='true'&&(!link.expiresAt||new Date(link.expiresAt)>new Date());})||null;
+    var out=document.getElementById('manual-link-output');
+    if(_manualActiveLink){
+      var activeUrl=window.location.origin+'/p?b='+encodeURIComponent(_manualActiveLink.token);
+      out.innerHTML='<span style="color:#2c6e3f;font-weight:700;">Active link:</span> <a href="'+activeUrl+'" target="_blank" rel="noopener" style="color:#2c6e3f;text-decoration:underline;">'+escHtml(activeUrl)+'</a>';
+      document.getElementById('manual-link-option').value=_manualActiveLink.paymentOption||'deposit';
+      document.getElementById('manual-link-deposit-type').value=_manualActiveLink.depositType||'fixed';
+      document.getElementById('manual-link-deposit-value').value=_manualActiveLink.depositValue||'';
+      document.getElementById('manual-link-remaining').value=_manualActiveLink.remainingPaymentMethod||'cash_or_online';
+    }else out.textContent='No active payment link.';
+  }catch(err){manualStatus(err.message||'Could not load booking.',false);}
+  document.getElementById('manual-edit-loading').style.display='none';
+}
+function closeManualEditor(){document.getElementById('manual-booking-modal').style.display='none';}
+function manualPayload(){
+  return {firstName:document.getElementById('manual-first-name').value.trim(),lastName:document.getElementById('manual-last-name').value.trim(),
+    email:document.getElementById('manual-email').value.trim(),phoneNumber:document.getElementById('manual-phone').value.trim(),
+    date:document.getElementById('manual-date').value,time:document.getElementById('manual-time').value,service:document.getElementById('manual-service').value.trim(),
+    numberOfPeople:document.getElementById('manual-people').value.trim(),location:document.getElementById('manual-location').value.trim(),
+    bookingStatus:document.getElementById('manual-status').value,bookingType:'manual',adminNotes:document.getElementById('manual-notes').value.trim(),
+    mainServicePrice:document.getElementById('manual-main-price').value,addOns:manualCollectAddons()};
+}
+async function saveManualBooking(){
+  var id=document.getElementById('manual-edit-id').value,btn=document.getElementById('manual-save-btn');
+  btn.disabled=true;btn.textContent='Saving...';manualStatus('');
+  var payload=manualPayload();
+  try{
+    var r=await fetch('/api/admin/manual-bookings/'+id+'?token='+encodeURIComponent(TOKEN),{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});
+    var j=await r.json();
+    if(r.status===409&&j.requiresLinkAction&&confirm('Changing the total requires disabling the active payment link. Disable it and save these booking changes?')){
+      payload.disableActiveLinks=true;
+      r=await fetch('/api/admin/manual-bookings/'+id+'?token='+encodeURIComponent(TOKEN),{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});
+      j=await r.json();
+    }
+    if(!r.ok)throw new Error(j.error||'Could not update booking.');
+    window.location.reload();
+  }catch(err){manualStatus(err.message||'Could not update booking.',false);}
+  btn.disabled=false;btn.textContent='Save booking changes';
+}
+async function createManualPaymentLink(){
+  var id=document.getElementById('manual-edit-id').value;if(!id)return;
+  var visibleTotal=Number(document.getElementById('manual-total-preview').textContent.replace(/[^0-9.-]/g,''));
+  var savedTotal=Number((_manualDetail&&_manualDetail.booking&&_manualDetail.booking.totalAud)||0);
+  if(Number.isFinite(visibleTotal)&&Math.abs(visibleTotal-savedTotal)>0.005){
+    manualStatus('Save the booking changes before creating a payment link for the new total.',false);return;
+  }
+  var body={paymentOption:document.getElementById('manual-link-option').value,depositType:document.getElementById('manual-link-deposit-type').value,
+    depositValue:document.getElementById('manual-link-deposit-value').value,expiresAt:document.getElementById('manual-link-expires').value,
+    remainingPaymentMethod:document.getElementById('manual-link-remaining').value};
+  try{
+    var r=await fetch('/api/admin/manual-bookings/'+id+'/payment-link?token='+encodeURIComponent(TOKEN),{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
+    var j=await r.json();if(!r.ok)throw new Error(j.error||'Could not create payment link.');
+    var out=document.getElementById('manual-link-output');
+    out.innerHTML='<span style="color:#2c6e3f;font-weight:700;">New payment link:</span> <a href="'+j.paymentUrl+'" target="_blank" rel="noopener" style="color:#2c6e3f;text-decoration:underline;">'+escHtml(j.paymentUrl)+'</a> <button type="button" onclick="navigator.clipboard.writeText('+JSON.stringify(j.paymentUrl)+')" style="margin-left:6px;border:1px solid #c9a96e;border-radius:5px;background:#fff;color:#9e7c4a;padding:3px 7px;cursor:pointer;">Copy</button>';
+    _manualActiveLink={token:j.token};manualStatus('Payment link created. Payment status will change only after Stripe confirms payment.',true);
+  }catch(err){manualStatus(err.message||'Could not create payment link.',false);}
+}
+async function disableManualPaymentLink(){
+  var id=document.getElementById('manual-edit-id').value;if(!id||!confirm('Disable the active payment link? The client will no longer be able to use it.'))return;
+  try{
+    var r=await fetch('/api/admin/manual-bookings/'+id+'/disable-link?token='+encodeURIComponent(TOKEN));var j=await r.json();
+    if(!r.ok)throw new Error(j.error||'Could not disable payment link.');
+    _manualActiveLink=null;document.getElementById('manual-link-output').textContent='Active payment link disabled.';manualStatus('Payment link disabled.',true);
+  }catch(err){manualStatus(err.message||'Could not disable payment link.',false);}
+}
+async function recordManualPayment(){
+  var id=document.getElementById('manual-edit-id').value,amount=Number(document.getElementById('manual-payment-amount').value||0);
+  if(!id||!Number.isFinite(amount)||amount<=0){manualStatus('Enter a positive payment amount.',false);return;}
+  try{
+    var r=await fetch('/api/admin/manual-bookings/'+id+'/record-payment?token='+encodeURIComponent(TOKEN),{method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({amount,method:document.getElementById('manual-payment-method').value,note:document.getElementById('manual-payment-note').value.trim()})});
+    var j=await r.json();if(!r.ok)throw new Error(j.error||'Could not record payment.');
+    manualStatus('Payment recorded. Refreshing totals...',true);setTimeout(function(){window.location.reload();},500);
+  }catch(err){manualStatus(err.message||'Could not record payment.',false);}
 }
 async function saveDirectBooking(withPaymentLink){
   var succ=document.getElementById('booking-success'),err=document.getElementById('booking-error');
@@ -1310,9 +1552,11 @@ async function cpEditDelete(){
   var galM=document.getElementById('gal-modal');
   var cpM=document.getElementById('cp-modal');
   var msgM=document.getElementById('message-modal');
+  var manualM=document.getElementById('manual-booking-modal');
   if(galM)galM.addEventListener('click',function(e){if(e.target===this)galCloseModal();});
   if(cpM)cpM.addEventListener('click',function(e){if(e.target===this)cpCloseModal();});
   if(msgM)msgM.addEventListener('click',function(e){if(e.target===this)closeMessageModal();});
+  if(manualM)manualM.addEventListener('click',function(e){if(e.target===this)closeManualEditor();});
 })();
 loadGallery();
 loadCoupons();
@@ -1758,8 +2002,17 @@ router.post("/admin/manual-bookings/:id/disable-link", async (req, res) => {
   if (!(await validateToken(adminToken).catch(() => false))) { res.status(403).json({ error: "Unauthorized" }); return; }
   const id = Number(req.params.id);
   if (!Number.isInteger(id)) { res.status(400).json({ error: "Invalid booking ID." }); return; }
-  await db.update(paymentLinks).set({ disabled: "true" }).where(eq(paymentLinks.bookingId, id));
-  res.json({ ok: true });
+  try {
+    const bookingRows = await db.select().from(bookings).where(eq(bookings.id, id)).limit(1);
+    if (!bookingRows.length || bookingRows[0].manualBooking !== "true") {
+      res.status(404).json({ error: "Manual booking not found." });
+      return;
+    }
+    await db.update(paymentLinks).set({ disabled: "true" }).where(eq(paymentLinks.bookingId, id));
+    res.json({ ok: true });
+  } catch {
+    res.status(500).json({ error: "Could not disable payment link." });
+  }
 });
 
 router.post("/admin/manual-bookings/:id/record-payment", async (req, res) => {
@@ -1774,15 +2027,17 @@ router.post("/admin/manual-bookings/:id/record-payment", async (req, res) => {
   }
   try {
     const bookingRows = await db.select().from(bookings).where(eq(bookings.id, id)).limit(1);
-    if (!bookingRows.length) { res.status(404).json({ error: "Booking not found." }); return; }
+    if (!bookingRows.length || bookingRows[0].manualBooking !== "true") { res.status(404).json({ error: "Manual booking not found." }); return; }
     const currentPaid = Number(bookingRows[0].amountPaid || 0);
     const total = Number(bookingRows[0].totalAud || 0);
     if (amount > Math.max(0, total - currentPaid) + 0.005) { res.status(400).json({ error: "Payment cannot exceed the outstanding balance." }); return; }
+    const paidAt = req.body?.paidAt ? new Date(String(req.body.paidAt)) : new Date();
+    if (Number.isNaN(paidAt.getTime())) { res.status(400).json({ error: "Enter a valid payment date." }); return; }
     await db.insert(paymentRecords).values({
       bookingId: id,
       amount: amount.toFixed(2),
       method,
-      paidAt: req.body?.paidAt ? new Date(String(req.body.paidAt)) : new Date(),
+      paidAt,
       note: cleanValue(req.body?.note, 500) || null,
     });
     const totals = await refreshPaymentTotals(id);

@@ -1,0 +1,264 @@
+I am honestly extremely disappointed with the current result.
+
+I have explained these requirements multiple times, and some of the most important things I specifically asked for are STILL not working properly.
+
+This is not what I asked for.
+
+I need you to STOP treating this like a visual design task and actually inspect, fix, test and verify the functionality of the website.
+
+🚨 1. MANUAL BOOKINGS ARE NOT WORKING — THIS MUST BE FIXED
+
+I have already told you that I need to be able to manually add bookings from my EXISTING admin bookings dashboard.
+
+I should NOT have to wait for a customer to submit the website booking form.
+
+I need a proper:
+
++ ADD BOOKING
+
+function inside my existing admin dashboard.
+
+I need to personally enter a booking for a client.
+
+I need to be able to fill out ALL the booking information myself.
+
+I need to be able to edit that booking afterwards.
+
+I need to be able to customise it.
+
+I need to be able to update the price.
+
+I need to be able to update deposits.
+
+I need to be able to update payments.
+
+I need to be able to add notes.
+
+I need to be able to change the date/time/service/client information.
+
+I need to be able to send payment links myself.
+
+THIS WAS ALREADY EXPLAINED.
+
+I am extremely disappointed that I STILL cannot properly add bookings manually.
+
+DO NOT BUILD A SECOND DASHBOARD.
+
+I ALREADY HAVE A BOOKINGS ADMIN DASHBOARD.
+
+Inspect the existing dashboard and FIX/EXTEND IT.
+
+Do not delete it.
+Do not replace it.
+Do not create a disconnected version.
+Do not break existing bookings.
+
+🚨 2. EVERYTHING MUST ACTUALLY CONNECT
+
+This is probably the most important technical requirement.
+
+If I manually add a $500 booking, that booking must become REAL booking data.
+
+It must appear in:
+
+• The bookings dashboard
+• Booking lists
+• Calendar/views
+• Client information
+• Revenue calculations
+• Payment tracking
+• Relevant statistics
+
+If I change the booking from $500 → $600, the relevant totals MUST update.
+
+If I change the amount paid, the paid amount and outstanding balance MUST update.
+
+If I cancel a booking, the relevant statistics MUST update according to the existing system rules.
+
+If I delete a booking where deletion is supported, the relevant calculations MUST update.
+
+If I refresh the website, the booking MUST STILL EXIST.
+
+If I log back in, the booking MUST STILL EXIST.
+
+I do NOT want front-end-only changes.
+
+I do NOT want fake numbers.
+
+I do NOT want placeholder buttons.
+
+I do NOT want something that LOOKS functional but doesn’t actually save.
+
+TOTAL REVENUE MUST ACTUALLY UPDATE.
+
+I cannot stress this enough.
+
+The dashboard must calculate revenue from the actual booking/payment data.
+
+It must NOT use hard-coded numbers.
+
+It must NOT use separate fake calculations.
+
+It must NOT ignore manually created bookings.
+
+I need a single reliable source of truth for the booking data.
+
+Clearly distinguish:
+
+Total Booking Value
+Amount Actually Paid
+Outstanding Balance
+
+and make sure these calculations cannot accidentally double-count deposits or payments.
+
+🚨 3. PAYMENT LINKS
+
+I specifically need to be able to send payment links myself for manually created bookings.
+
+The workflow should be:
+
+Add Booking → Enter Price → Set Deposit/Payment Required → Generate/Send Payment Link → Track Payment → Update Booking → Update Relevant Dashboard Totals
+
+Use the existing payment integration if one already exists.
+
+Do NOT create fake payment links or pretend that a payment has been received.
+
+If the payment provider confirms a payment, the system should use that real payment information.
+
+🚨 4. SEO IS MY BIGGEST PRIORITY
+
+SEO is one of the MAIN ways THE GLAM BY ANKITA gets clients.
+
+I have been getting fewer clients from Google, so this is not a minor improvement.
+
+I need you to properly audit and improve the entire website’s SEO.
+
+If I search Google for:
+
+“Best Makeup Artist Melbourne”
+
+“Makeup Artist Melbourne”
+
+“Melbourne Makeup Artist”
+
+“Melbourne CBD Makeup Artist”
+
+“Indian Makeup Artist Melbourne”
+
+“Bridal Makeup Artist Melbourne”
+
+“Indian Bridal Makeup Melbourne”
+
+“Makeup Artist Southbank”
+
+“Mobile Makeup Artist Melbourne”
+
+and other genuinely high-intent Melbourne makeup searches,
+
+THE GLAM BY ANKITA needs to have the strongest possible legitimate SEO foundation and the best realistic opportunity to appear prominently.
+
+I understand you cannot guarantee Google #1.
+
+But that does NOT mean you can simply add a few keywords and call SEO finished.
+
+Actually audit the website.
+
+Find what is holding it back.
+
+Fix it.
+
+SEO MUST INCLUDE:
+
+• Technical SEO
+• Page titles
+• Meta descriptions
+• H1/H2/H3 structure
+• Internal linking
+• Canonical URLs
+• XML sitemap
+• Robots.txt
+• Indexability
+• Mobile SEO
+• Page speed
+• Core Web Vitals
+• Image SEO
+• Alt text
+• Structured data/schema
+• Local SEO
+• Melbourne relevance
+• Southbank relevance
+• Melbourne CBD relevance
+• Bridal makeup SEO
+• Indian bridal makeup SEO
+• Event makeup SEO
+• Mobile makeup SEO
+• Relevant service pages
+• Useful FAQs
+• Search-intent-focused content
+• Strong booking/enquiry CTAs
+• Google Search Console compatibility
+
+Do NOT keyword stuff.
+
+Do NOT create spammy suburb pages.
+
+Do NOT use fake reviews.
+
+Do NOT use black-hat SEO.
+
+I want legitimate SEO that can actually build long-term Google visibility.
+
+🚨 5. DO NOT JUST TELL ME IT IS FIXED
+
+This is where I am especially frustrated.
+
+I do NOT want you to say:
+
+“Done!”
+“SEO has been improved.”
+“Manual bookings have been added.”
+
+and leave it at that.
+
+I want you to ACTUALLY TEST IT.
+
+TEST THIS EXACTLY:
+
+1. Log into the admin dashboard.
+2. Add a completely new booking manually.
+3. Fill out all relevant client/booking/payment information.
+4. Save it.
+5. Refresh the page.
+6. Confirm the booking still exists.
+7. Edit the booking.
+8. Change the price.
+9. Confirm the new price persists.
+10. Check Total Revenue.
+11. Change the amount paid.
+12. Check the outstanding balance.
+13. Check the relevant dashboard statistics.
+14. Check the booking appears in the relevant booking/calendar views.
+15. Test the payment-link workflow.
+16. Confirm the data is actually stored in the database.
+17. Check that existing bookings were NOT broken.
+18. Check the website on mobile.
+19. Perform a complete SEO audit.
+20. Fix every issue you identify that is realistically fixable in the codebase.
+
+If something fails during these tests:
+
+FIX IT BEFORE YOU TELL ME THE TASK IS COMPLETE.
+
+I am seriously frustrated because I have explained these requirements already, especially the ability to manually add bookings, and it is still not working the way I need it to.
+
+Please do not give me another superficial update.
+
+Inspect the existing code → identify the actual problem → implement the fix → test the real functionality → verify the data persists → verify revenue updates → verify SEO implementation.
+
+I want this FIXED PROPERLY.
+
+The goal is not to make the dashboard or website LOOK better.
+
+The goal is to make THE GLAM BY ANKITA actually work as a real business website and booking system.
+
+Please treat this as a critical functionality and SEO fix, not a cosmetic update.
