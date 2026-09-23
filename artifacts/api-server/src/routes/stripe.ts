@@ -2,7 +2,7 @@ import { Router } from "express";
 import Stripe from "stripe";
 import nodemailer from "nodemailer";
 import { buildIcs } from "../lib/ics.js";
-import { db, bookings, coupons } from "@workspace/db";
+import { db, bookings, coupons, paymentLinks, paymentRecords, manualBookingItems } from "@workspace/db";
 import { eq } from "drizzle-orm";
 
 const router = Router();
@@ -37,6 +37,56 @@ router.get("/config", (req, res) => {
   res.json({ stripePublishableKey, testMode: isTest });
 });
 
+async function getActivePaymentLink(token: string) {
+  const rows = await db.select().from(paymentLinks).where(eq(paymentLinks.token, token)).limit(1);
+  if (!rows.length) return { error: "This payment link is invalid." as const };
+  const link = rows[0];
+  if (link.disabled === "true") return { error: "This payment link has been disabled." as const };
+  if (link.expiresAt && link.expiresAt <= new Date()) return { error: "This payment link has expired." as const };
+  const bookingRows = await db.select().from(bookings).where(eq(bookings.id, link.bookingId)).limit(1);
+  if (!bookingRows.length) return { error: "The booking for this payment link could not be found." as const };
+  const booking = bookingRows[0];
+  const items = await db.select().from(manualBookingItems).where(eq(manualBookingItems.bookingId, booking.id));
+  return { link, booking, items };
+}
+
+router.get("/payment-link", async (req, res) => {
+  const token = String(req.query.token || "");
+  if (!token) { res.status(400).json({ error: "Missing payment link token." }); return; }
+  try {
+    const result = await getActivePaymentLink(token);
+    if ("error" in result) { res.status(404).json({ error: result.error }); return; }
+    const { link, booking, items } = result;
+    const total = Number(booking.totalAud || 0);
+    res.json({
+      booking: {
+        clientName: booking.clientName || "",
+        clientEmail: booking.clientEmail || "",
+        service: booking.service || "",
+        bookingDate: booking.bookingDate || "",
+        bookingTime: booking.bookingTime || "",
+        location: booking.location || "",
+        numPeople: booking.numPeople || "",
+        totalAud: total,
+        amountPaid: Number(booking.amountPaid || 0),
+        balanceDue: Math.max(0, total - Number(booking.amountPaid || 0)),
+        notes: booking.adminNotes || "",
+      },
+      items: items.map((item) => ({ name: item.name, amount: Number(item.amount || 0) })),
+      payment: {
+        option: link.paymentOption,
+        amountDue: Number(link.amountDue || 0),
+        depositType: link.depositType,
+        depositValue: Number(link.depositValue || 0),
+        remainingPaymentMethod: link.remainingPaymentMethod,
+        expiresAt: link.expiresAt,
+      },
+    });
+  } catch {
+    res.status(500).json({ error: "Could not load this payment link." });
+  }
+});
+
 router.post("/create-payment-intent", async (req, res) => {
   const { testMode } = req.body as { testMode?: boolean };
   const secretKey = testMode
@@ -54,6 +104,59 @@ router.post("/create-payment-intent", async (req, res) => {
   }
 
   let bookingData: Record<string, unknown>;
+  let secureLink: Awaited<ReturnType<typeof getActivePaymentLink>> | null = null;
+  try {
+    secureLink = await getActivePaymentLink(token);
+    if ("error" in secureLink) {
+      if (token.startsWith("pl_")) {
+        res.status(404).json({ error: secureLink.error });
+        return;
+      }
+      secureLink = null;
+    }
+  } catch {
+    if (token.startsWith("pl_")) {
+      res.status(404).json({ error: "This payment link is unavailable." });
+      return;
+    }
+  }
+
+  if (secureLink && !("error" in secureLink)) {
+    const { link, booking } = secureLink;
+    const requestedPayment = req.body?.paymentChoice === "full" ? "full" : "due";
+    const bookingTotal = Number(booking.totalAud || 0);
+    const secureAmount = link.paymentOption === "full" || (link.paymentOption === "customer_choice" && requestedPayment === "full")
+      ? bookingTotal
+      : Number(link.amountDue || 0);
+    if (!Number.isFinite(secureAmount) || secureAmount <= 0) {
+      res.status(400).json({ error: "This payment link has no payable amount." });
+      return;
+    }
+    const amountCents = Math.round(secureAmount * 100);
+    if (amountCents < 50) { res.status(400).json({ error: "The minimum card payment is A$0.50." }); return; }
+    try {
+      const stripe = new Stripe(secretKey);
+      const paymentIntent = await stripe.paymentIntents.create({
+        amount: amountCents,
+        currency: "aud",
+        automatic_payment_methods: { enabled: true },
+        receipt_email: booking.clientEmail || undefined,
+        metadata: {
+          secure_link_token: token,
+          booking_id: String(booking.id),
+          client_name: booking.clientName || "",
+          client_email: booking.clientEmail || "",
+          payment_type: requestedPayment === "full" ? "full" : "deposit",
+        },
+      });
+      res.json({ client_secret: paymentIntent.client_secret, finalAud: secureAmount, paymentChoice: requestedPayment });
+    } catch (err) {
+      console.error("Secure Stripe PaymentIntent error:", err);
+      res.status(500).json({ error: "Could not create payment." });
+    }
+    return;
+  }
+
   try {
     bookingData = fromUrlSafeBase64(token);
   } catch {
@@ -134,10 +237,16 @@ router.post("/create-payment-intent", async (req, res) => {
 
 router.post("/confirm-payment", async (req, res) => {
   const { token, payment_intent_id, testMode, couponCode } = req.body as { token?: string; payment_intent_id?: string; testMode?: boolean; couponCode?: string };
+  if (!token) { res.status(400).json({ error: "Missing token." }); return; }
+
+  // Manual payment links are finalized only by the verified Stripe webhook.
+  // The browser confirmation callback cannot mark a booking paid by itself.
+  if (token.startsWith("pl_")) {
+    res.json({ ok: true, pendingWebhook: true, testMode: !!testMode });
+    return;
+  }
 
   res.json({ ok: true, testMode: !!testMode });
-
-  if (!token) return;
 
   let bookingData: Record<string, unknown>;
   try {

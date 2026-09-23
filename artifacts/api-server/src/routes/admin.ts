@@ -2,7 +2,16 @@ import { Router } from "express";
 import nodemailer from "nodemailer";
 import { randomUUID } from "crypto";
 import { fileURLToPath } from "url";
-import { db, adminTokens, bookings, coupons, type Booking } from "@workspace/db";
+import {
+  db,
+  adminTokens,
+  bookings,
+  coupons,
+  manualBookingItems,
+  paymentLinks,
+  paymentRecords,
+  type Booking,
+} from "@workspace/db";
 import { eq, desc } from "drizzle-orm";
 import multer from "multer";
 import path from "path";
@@ -228,6 +237,119 @@ async function validateToken(token: string): Promise<boolean> {
     return rows.length > 0 && rows[0].expiresAt > now;
   } catch {
     return false;
+  }
+}
+
+type ManualItemInput = { name?: unknown; amount?: unknown };
+
+function parseManualItems(raw: unknown): { name: string; amount: number }[] {
+  let value = raw;
+  if (typeof raw === "string") {
+    try { value = JSON.parse(raw); } catch { value = []; }
+  }
+  if (!Array.isArray(value)) return [];
+  return value
+    .map((item: ManualItemInput) => ({
+      name: cleanValue(item?.name, 160),
+      amount: Number(item?.amount),
+    }))
+    .filter((item) => item.name && Number.isFinite(item.amount) && item.amount >= 0);
+}
+
+function paymentStatusFor(total: number, paid: number, paymentOption = "deposit"): string {
+  if (paid <= 0) return "unpaid";
+  if (total > 0 && paid >= total - 0.005) return "paid_in_full";
+  return paymentOption === "deposit" ? "deposit_paid" : "balance_due";
+}
+
+async function refreshPaymentTotals(bookingId: number): Promise<{ total: number; paid: number; balance: number; status: string }> {
+  const bookingRows = await db.select().from(bookings).where(eq(bookings.id, bookingId)).limit(1);
+  if (!bookingRows.length) throw new Error("Booking not found");
+  const total = Number(bookingRows[0].totalAud || 0);
+  const records = await db.select().from(paymentRecords).where(eq(paymentRecords.bookingId, bookingId));
+  const paid = records.reduce((sum, record) => sum + Number(record.amount || 0), 0);
+  const balance = Math.max(0, total - paid);
+  const status = paymentStatusFor(total, paid, bookingRows[0].paymentType || "deposit");
+  await db.update(bookings).set({
+    amountPaid: paid.toFixed(2),
+    balanceDue: balance.toFixed(2),
+    paymentStatus: status,
+  }).where(eq(bookings.id, bookingId));
+  return { total, paid, balance, status };
+}
+
+async function manualBookingDetails(booking: Booking) {
+  const items = await db.select().from(manualBookingItems).where(eq(manualBookingItems.bookingId, booking.id));
+  const links = await db.select().from(paymentLinks).where(eq(paymentLinks.bookingId, booking.id));
+  const records = await db.select().from(paymentRecords).where(eq(paymentRecords.bookingId, booking.id));
+  return { booking, items, links, records };
+}
+
+function paymentLinkUrl(token: string): string {
+  return `${SITE_URL}/p?b=${encodeURIComponent(token)}`;
+}
+
+async function seedKrishnaBookings() {
+  const existingTrial = await db.select().from(bookings)
+    .where(eq(bookings.clientName, "Krishna"))
+    .catch(() => []);
+  const trial = existingTrial.find((booking) => booking.bookingDate === "2026-09-19" && booking.service === "Soft Glam");
+  if (!trial) {
+    const inserted = await db.insert(bookings).values({
+      clientName: "Krishna",
+      service: "Soft Glam",
+      bookingDate: "2026-09-19",
+      bookingTime: "08:00",
+      location: "Southbank Studio",
+      numPeople: "1",
+      totalAud: "75.00",
+      mainServicePrice: "75.00",
+      paymentMethod: "offline",
+      paymentType: "full",
+      status: "completed",
+      bookingStatus: "completed",
+      bookingType: "manual_historical",
+      manualBooking: "true",
+      paymentStatus: "paid_in_full",
+      amountPaid: "75.00",
+      balanceDue: "0.00",
+      adminNotes: "Bridal makeup trial booking.",
+    }).returning({ id: bookings.id });
+    const bookingId = inserted[0]?.id;
+    if (bookingId) {
+      await db.insert(manualBookingItems).values({ bookingId, name: "Soft Glam", amount: "75.00", sortOrder: 0 });
+      await db.insert(paymentRecords).values({ bookingId, amount: "75.00", method: "other", note: "Historical booking paid in full." });
+    }
+  }
+
+  const wedding = existingTrial.find((booking) => booking.bookingDate === "2026-10-18" && booking.service === "Bridal Makeup");
+  if (!wedding) {
+    const inserted = await db.insert(bookings).values({
+      clientName: "Krishna",
+      service: "Bridal Makeup",
+      bookingDate: "2026-10-18",
+      location: "Sage Hotel Melbourne Ringwood",
+      numPeople: "1",
+      totalAud: "210.00",
+      mainServicePrice: "180.00",
+      paymentMethod: "manual",
+      paymentType: "deposit",
+      status: "upcoming",
+      bookingStatus: "upcoming",
+      bookingType: "manual",
+      manualBooking: "true",
+      paymentStatus: "unpaid",
+      amountPaid: "0.00",
+      balanceDue: "210.00",
+      adminNotes: "Wedding day booking — bridal makeup + hair.",
+    }).returning({ id: bookings.id });
+    const bookingId = inserted[0]?.id;
+    if (bookingId) {
+      await db.insert(manualBookingItems).values([
+        { bookingId, name: "Bridal Makeup", amount: "180.00", sortOrder: 0 },
+        { bookingId, name: "Hair", amount: "30.00", sortOrder: 1 },
+      ]);
+    }
   }
 }
 
@@ -1343,17 +1465,52 @@ router.post("/admin/create-booking", async (req, res) => {
   const service = cleanValue(body.service, 200);
   const numberOfPeople = cleanValue(body.numberOfPeople, 20);
   const location = cleanValue(body.location, 500);
-  const priceRaw = cleanValue(body.price, 30);
-  const paymentType = body.paymentType === "full" ? "full" : "deposit";
+  const adminNotes = cleanValue(body.adminNotes, 1000);
+  const bookingStatus = cleanValue(body.bookingStatus || "upcoming", 40) || "upcoming";
+  const bookingType = cleanValue(body.bookingType || "manual", 60) || "manual";
   const createPaymentLink = body.createPaymentLink === true;
-  const price = priceRaw ? Number(priceRaw) : 0;
+  const legacyPriceRaw = cleanValue(body.price, 30);
+  const expandedPriceRaw = cleanValue(body.mainServicePrice, 30);
+  const mainPriceRaw = expandedPriceRaw || legacyPriceRaw;
+  const mainPrice = mainPriceRaw ? Number(mainPriceRaw) : 0;
+  const addOns = parseManualItems(body.addOns);
+  const total = mainPrice + addOns.reduce((sum, item) => sum + item.amount, 0);
+  const legacyForm = !expandedPriceRaw && body.addOns === undefined;
+  const paymentOption = body.paymentOption === "full" || body.paymentType === "full"
+    ? "full"
+    : body.paymentOption === "customer_choice" ? "customer_choice" : "deposit";
+  const depositType = body.depositType === "percent" ? "percent" : "fixed";
+  const requestedDeposit = Number(body.depositValue ?? body.depositAmount ?? (legacyForm ? mainPrice : 0));
+  const depositValue = Number.isFinite(requestedDeposit) ? requestedDeposit : 0;
+  const amountDue = paymentOption === "full"
+    ? total
+    : depositType === "percent"
+      ? total * Math.min(100, Math.max(0, depositValue)) / 100
+      : Math.min(total, Math.max(0, depositValue));
+  const remainingPaymentMethod = ["cash", "online", "cash_or_online"].includes(String(body.remainingPaymentMethod))
+    ? String(body.remainingPaymentMethod)
+    : "cash_or_online";
+  const expiresAtRaw = cleanValue(body.expiresAt, 40);
+  const expiresAt = expiresAtRaw ? new Date(expiresAtRaw) : null;
 
-  if (priceRaw && (!Number.isFinite(price) || price < 0)) {
-    res.status(400).json({ error: "Enter a valid price." });
+  if (mainPriceRaw && (!Number.isFinite(mainPrice) || mainPrice < 0)) {
+    res.status(400).json({ error: "Enter a valid main service price." });
     return;
   }
-  if (createPaymentLink && price < 0.5) {
-    res.status(400).json({ error: "A payment link needs a price of at least A$0.50." });
+  if (addOns.some((item) => item.amount < 0) || !Number.isFinite(total)) {
+    res.status(400).json({ error: "Enter valid add-on prices." });
+    return;
+  }
+  if (numberOfPeople && (!/^\d+$/.test(numberOfPeople) || Number(numberOfPeople) < 1)) {
+    res.status(400).json({ error: "Number of people must be a positive whole number." });
+    return;
+  }
+  if (createPaymentLink && (total < 0.5 || amountDue < 0.5)) {
+    res.status(400).json({ error: "A payment link needs a total and amount due of at least A$0.50." });
+    return;
+  }
+  if (expiresAt && Number.isNaN(expiresAt.getTime())) {
+    res.status(400).json({ error: "Enter a valid payment-link expiration date." });
     return;
   }
   if (clientEmail && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(clientEmail)) {
@@ -1373,17 +1530,6 @@ router.post("/admin/create-booking", async (req, res) => {
     Location: location,
   });
 
-  const paymentToken = createPaymentLink
-    ? toUrlSafeBase64({
-        confirmed_data: confirmedData,
-        total_aud: price,
-        payment_type: paymentType,
-        client_name: clientName,
-        client_email: clientEmail,
-        source: "manual_admin_booking",
-      })
-    : null;
-
   try {
     const inserted = await db.insert(bookings).values({
       clientName: clientName || null,
@@ -1394,21 +1540,255 @@ router.post("/admin/create-booking", async (req, res) => {
       bookingTime: time || null,
       location: location || null,
       numPeople: numberOfPeople || null,
-      totalAud: priceRaw ? String(price) : null,
+      totalAud: total > 0 ? total.toFixed(2) : null,
+      mainServicePrice: mainPrice > 0 ? mainPrice.toFixed(2) : null,
       paymentMethod: createPaymentLink ? "payment_link" : "manual",
-      paymentType,
-      status: createPaymentLink ? "awaiting_payment" : "confirmed",
-      paymentToken,
+      paymentType: paymentOption === "full" ? "full" : "deposit",
+      status: bookingStatus === "completed" ? "completed" : (createPaymentLink ? "awaiting_payment" : "confirmed"),
+      bookingStatus,
+      bookingType,
+      manualBooking: "true",
+      paymentStatus: "unpaid",
+      amountPaid: "0.00",
+      balanceDue: total.toFixed(2),
+      adminNotes: adminNotes || null,
     }).returning({ id: bookings.id });
 
+    const bookingId = inserted[0]?.id ?? null;
+    if (!bookingId) throw new Error("Booking was not created");
+    const itemRows = [
+      ...(service || mainPrice > 0 ? [{ bookingId, name: service || "Main service", amount: mainPrice.toFixed(2), sortOrder: 0 }] : []),
+      ...addOns.map((item, index) => ({ bookingId, name: item.name, amount: item.amount.toFixed(2), sortOrder: index + 1 })),
+    ];
+    if (itemRows.length) await db.insert(manualBookingItems).values(itemRows);
+
+    let paymentUrl: string | null = null;
+    let paymentLinkToken: string | null = null;
+    if (createPaymentLink) {
+      paymentLinkToken = `pl_${randomUUID().replace(/-/g, "")}`;
+      await db.insert(paymentLinks).values({
+        bookingId,
+        token: paymentLinkToken,
+        paymentOption,
+        depositType,
+        depositValue: depositType === "percent" ? String(Math.min(100, Math.max(0, depositValue))) : amountDue.toFixed(2),
+        amountDue: amountDue.toFixed(2),
+        remainingPaymentMethod,
+        expiresAt,
+      });
+      await db.update(bookings).set({ paymentToken: paymentLinkToken }).where(eq(bookings.id, bookingId));
+      paymentUrl = paymentLinkUrl(paymentLinkToken);
+    }
     res.json({
       ok: true,
-      bookingId: inserted[0]?.id ?? null,
-      paymentUrl: paymentToken ? `${SITE_URL}/p?b=${paymentToken}` : null,
+      bookingId,
+      totalAud: total,
+      amountDue,
+      balanceDue: total,
+      paymentUrl,
+      paymentLinkToken,
     });
   } catch (e) {
     console.error("Admin create-booking error:", e);
     res.status(500).json({ error: "Could not save the booking." });
+  }
+});
+
+// ── Manual booking management ─────────────────────────────────────
+router.get("/admin/manual-bookings", async (req, res) => {
+  const adminToken = req.query.token as string;
+  if (!(await validateToken(adminToken).catch(() => false))) {
+    res.status(403).json({ error: "Unauthorized" });
+    return;
+  }
+  try {
+    const rows = await db.select().from(bookings).where(eq(bookings.manualBooking, "true")).orderBy(desc(bookings.createdAt));
+    const details = await Promise.all(rows.map(manualBookingDetails));
+    res.json(details);
+  } catch {
+    res.status(500).json({ error: "Could not load manual bookings." });
+  }
+});
+
+router.get("/admin/manual-bookings/:id", async (req, res) => {
+  const adminToken = req.query.token as string;
+  if (!(await validateToken(adminToken).catch(() => false))) {
+    res.status(403).json({ error: "Unauthorized" });
+    return;
+  }
+  const id = Number(req.params.id);
+  if (!Number.isInteger(id)) { res.status(400).json({ error: "Invalid booking ID." }); return; }
+  try {
+    const rows = await db.select().from(bookings).where(eq(bookings.id, id)).limit(1);
+    if (!rows.length || rows[0].manualBooking !== "true") { res.status(404).json({ error: "Manual booking not found." }); return; }
+    res.json(await manualBookingDetails(rows[0]));
+  } catch {
+    res.status(500).json({ error: "Could not load the booking." });
+  }
+});
+
+router.put("/admin/manual-bookings/:id", async (req, res) => {
+  const adminToken = req.query.token as string;
+  if (!(await validateToken(adminToken).catch(() => false))) {
+    res.status(403).json({ error: "Unauthorized" });
+    return;
+  }
+  const id = Number(req.params.id);
+  if (!Number.isInteger(id)) { res.status(400).json({ error: "Invalid booking ID." }); return; }
+  try {
+    const currentRows = await db.select().from(bookings).where(eq(bookings.id, id)).limit(1);
+    if (!currentRows.length || currentRows[0].manualBooking !== "true") { res.status(404).json({ error: "Manual booking not found." }); return; }
+    const current = currentRows[0];
+    const body = req.body as Record<string, unknown>;
+    const firstName = cleanValue(body.firstName, 120);
+    const lastName = cleanValue(body.lastName, 120);
+    const clientName = [firstName, lastName].filter(Boolean).join(" ") || cleanValue(body.clientName ?? current.clientName, 240);
+    const clientEmail = cleanValue(body.email ?? current.clientEmail, 240);
+    const phoneNumber = cleanValue(body.phoneNumber ?? current.phoneNumber, 80);
+    const date = cleanValue(body.date ?? current.bookingDate, 30);
+    const time = cleanValue(body.time ?? current.bookingTime, 30);
+    const service = cleanValue(body.service ?? current.service, 200);
+    const numberOfPeople = cleanValue(body.numberOfPeople ?? current.numPeople, 20);
+    const location = cleanValue(body.location ?? current.location, 500);
+    const adminNotes = cleanValue(body.adminNotes ?? current.adminNotes, 1000);
+    const bookingStatus = cleanValue(body.bookingStatus ?? current.bookingStatus ?? "upcoming", 40);
+    const bookingType = cleanValue(body.bookingType ?? current.bookingType ?? "manual", 60);
+    const mainPrice = Number(body.mainServicePrice ?? current.mainServicePrice ?? current.totalAud ?? 0);
+    const addOns = body.addOns === undefined
+      ? await db.select().from(manualBookingItems).where(eq(manualBookingItems.bookingId, id)).then((items) => items.filter((item) => item.name !== service).map((item) => ({ name: item.name || "", amount: Number(item.amount) })))
+      : parseManualItems(body.addOns);
+    const total = mainPrice + addOns.reduce((sum, item) => sum + item.amount, 0);
+    if (!Number.isFinite(mainPrice) || mainPrice < 0 || !Number.isFinite(total)) { res.status(400).json({ error: "Enter valid prices." }); return; }
+    if (numberOfPeople && (!/^\d+$/.test(numberOfPeople) || Number(numberOfPeople) < 1)) { res.status(400).json({ error: "Number of people must be a positive whole number." }); return; }
+    if (clientEmail && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(clientEmail)) { res.status(400).json({ error: "Enter a valid email address." }); return; }
+
+    const activeLinks = await db.select().from(paymentLinks).where(eq(paymentLinks.bookingId, id));
+    const hasActiveLink = activeLinks.some((link) => link.disabled !== "true" && (!link.expiresAt || link.expiresAt > new Date()));
+    const totalChanged = Math.abs(total - Number(current.totalAud || 0)) > 0.005;
+    if (hasActiveLink && totalChanged && body.disableActiveLinks !== true && body.regenerateLink !== true) {
+      res.status(409).json({ error: "This booking has an active payment link. Disable or regenerate it before changing the total.", requiresLinkAction: true });
+      return;
+    }
+    if (body.disableActiveLinks === true || body.regenerateLink === true) {
+      await db.update(paymentLinks).set({ disabled: "true" }).where(eq(paymentLinks.bookingId, id));
+    }
+
+    const paymentType = body.paymentOption === "full" || body.paymentType === "full" ? "full" : (current.paymentType || "deposit");
+    await db.update(bookings).set({
+      clientName,
+      clientEmail: clientEmail || null,
+      phoneNumber: phoneNumber || null,
+      bookingDate: date || null,
+      bookingTime: time || null,
+      service: service || null,
+      numPeople: numberOfPeople || null,
+      location: location || null,
+      totalAud: total.toFixed(2),
+      mainServicePrice: mainPrice.toFixed(2),
+      paymentType,
+      status: bookingStatus === "completed" ? "completed" : current.status,
+      bookingStatus,
+      bookingType,
+      adminNotes: adminNotes || null,
+      balanceDue: Math.max(0, total - Number(current.amountPaid || 0)).toFixed(2),
+    }).where(eq(bookings.id, id));
+    await db.delete(manualBookingItems).where(eq(manualBookingItems.bookingId, id));
+    const itemRows = [
+      ...(service || mainPrice > 0 ? [{ bookingId: id, name: service || "Main service", amount: mainPrice.toFixed(2), sortOrder: 0 }] : []),
+      ...addOns.map((item, index) => ({ bookingId: id, name: item.name, amount: item.amount.toFixed(2), sortOrder: index + 1 })),
+    ];
+    if (itemRows.length) await db.insert(manualBookingItems).values(itemRows);
+    const totals = await refreshPaymentTotals(id);
+    res.json({ ok: true, ...totals, ...(body.regenerateLink === true ? { regenerateLink: true } : {}) });
+  } catch (e) {
+    console.error("Admin update manual booking error:", e);
+    res.status(500).json({ error: "Could not update the booking." });
+  }
+});
+
+async function createManualPaymentLink(bookingId: number, body: Record<string, unknown>) {
+  const bookingRows = await db.select().from(bookings).where(eq(bookings.id, bookingId)).limit(1);
+  if (!bookingRows.length || bookingRows[0].manualBooking !== "true") throw new Error("Manual booking not found.");
+  const booking = bookingRows[0];
+  const total = Number(booking.totalAud || 0);
+  const paymentOption = body.paymentOption === "full" ? "full" : body.paymentOption === "customer_choice" ? "customer_choice" : "deposit";
+  const depositType = body.depositType === "percent" ? "percent" : "fixed";
+  const rawDeposit = Number(body.depositValue ?? body.depositAmount ?? 0);
+  const depositValue = Number.isFinite(rawDeposit) ? Math.max(0, rawDeposit) : 0;
+  const amountDue = paymentOption === "full"
+    ? total
+    : depositType === "percent" ? total * Math.min(100, depositValue) / 100 : Math.min(total, depositValue);
+  if (total < 0.5 || amountDue < 0.5) throw new Error("The total and amount due must each be at least A$0.50.");
+  const expiresAt = body.expiresAt ? new Date(String(body.expiresAt)) : null;
+  if (expiresAt && Number.isNaN(expiresAt.getTime())) throw new Error("Invalid expiration date.");
+  await db.update(paymentLinks).set({ disabled: "true" }).where(eq(paymentLinks.bookingId, bookingId));
+  const token = `pl_${randomUUID().replace(/-/g, "")}`;
+  await db.insert(paymentLinks).values({
+    bookingId,
+    token,
+    paymentOption,
+    depositType,
+    depositValue: depositType === "percent" ? String(Math.min(100, depositValue)) : amountDue.toFixed(2),
+    amountDue: amountDue.toFixed(2),
+    remainingPaymentMethod: ["cash", "online", "cash_or_online"].includes(String(body.remainingPaymentMethod))
+      ? String(body.remainingPaymentMethod) : "cash_or_online",
+    expiresAt,
+  });
+  await db.update(bookings).set({
+    paymentToken: token,
+    paymentMethod: "payment_link",
+    paymentType: paymentOption === "full" ? "full" : "deposit",
+    status: "awaiting_payment",
+  }).where(eq(bookings.id, bookingId));
+  return { token, paymentUrl: paymentLinkUrl(token), total, amountDue, balanceDue: Math.max(0, total - Number(booking.amountPaid || 0)) };
+}
+
+router.post("/admin/manual-bookings/:id/payment-link", async (req, res) => {
+  const adminToken = req.query.token as string;
+  if (!(await validateToken(adminToken).catch(() => false))) { res.status(403).json({ error: "Unauthorized" }); return; }
+  try {
+    res.json({ ok: true, ...(await createManualPaymentLink(Number(req.params.id), req.body as Record<string, unknown>)) });
+  } catch (e) {
+    res.status(400).json({ error: e instanceof Error ? e.message : "Could not create payment link." });
+  }
+});
+
+router.post("/admin/manual-bookings/:id/disable-link", async (req, res) => {
+  const adminToken = req.query.token as string;
+  if (!(await validateToken(adminToken).catch(() => false))) { res.status(403).json({ error: "Unauthorized" }); return; }
+  const id = Number(req.params.id);
+  if (!Number.isInteger(id)) { res.status(400).json({ error: "Invalid booking ID." }); return; }
+  await db.update(paymentLinks).set({ disabled: "true" }).where(eq(paymentLinks.bookingId, id));
+  res.json({ ok: true });
+});
+
+router.post("/admin/manual-bookings/:id/record-payment", async (req, res) => {
+  const adminToken = req.query.token as string;
+  if (!(await validateToken(adminToken).catch(() => false))) { res.status(403).json({ error: "Unauthorized" }); return; }
+  const id = Number(req.params.id);
+  const amount = Number(req.body?.amount);
+  const method = ["cash", "online", "other"].includes(String(req.body?.method)) ? String(req.body.method) : "";
+  if (!Number.isInteger(id) || !Number.isFinite(amount) || amount <= 0 || !method) {
+    res.status(400).json({ error: "Enter a positive amount and choose Cash, Online, or Other." });
+    return;
+  }
+  try {
+    const bookingRows = await db.select().from(bookings).where(eq(bookings.id, id)).limit(1);
+    if (!bookingRows.length) { res.status(404).json({ error: "Booking not found." }); return; }
+    const currentPaid = Number(bookingRows[0].amountPaid || 0);
+    const total = Number(bookingRows[0].totalAud || 0);
+    if (amount > Math.max(0, total - currentPaid) + 0.005) { res.status(400).json({ error: "Payment cannot exceed the outstanding balance." }); return; }
+    await db.insert(paymentRecords).values({
+      bookingId: id,
+      amount: amount.toFixed(2),
+      method,
+      paidAt: req.body?.paidAt ? new Date(String(req.body.paidAt)) : new Date(),
+      note: cleanValue(req.body?.note, 500) || null,
+    });
+    const totals = await refreshPaymentTotals(id);
+    res.json({ ok: true, ...totals });
+  } catch {
+    res.status(500).json({ error: "Could not record payment." });
   }
 });
 
@@ -1991,6 +2371,7 @@ router.put("/admin/coupons/:id/toggle", async (req, res) => {
 export async function initAdminToken() {
   try {
     await getOrCreateToken();
+    await seedKrishnaBookings();
   } catch (e) {
     console.error("Admin token init error:", e);
   }

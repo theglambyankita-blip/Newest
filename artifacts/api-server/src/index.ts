@@ -26,6 +26,46 @@ async function runMigrations() {
       ALTER TABLE bookings ADD COLUMN IF NOT EXISTS payment_token TEXT;
       ALTER TABLE bookings ADD COLUMN IF NOT EXISTS client_message TEXT;
       ALTER TABLE bookings ADD COLUMN IF NOT EXISTS payment_type TEXT DEFAULT 'deposit';
+      ALTER TABLE bookings ADD COLUMN IF NOT EXISTS main_service_price NUMERIC(10,2);
+      ALTER TABLE bookings ADD COLUMN IF NOT EXISTS admin_notes TEXT;
+      ALTER TABLE bookings ADD COLUMN IF NOT EXISTS manual_booking TEXT DEFAULT 'false';
+      ALTER TABLE bookings ADD COLUMN IF NOT EXISTS booking_type TEXT DEFAULT 'website';
+      ALTER TABLE bookings ADD COLUMN IF NOT EXISTS booking_status TEXT DEFAULT 'upcoming';
+      ALTER TABLE bookings ADD COLUMN IF NOT EXISTS payment_status TEXT DEFAULT 'unpaid';
+      ALTER TABLE bookings ADD COLUMN IF NOT EXISTS amount_paid NUMERIC(10,2) DEFAULT 0;
+      ALTER TABLE bookings ADD COLUMN IF NOT EXISTS balance_due NUMERIC(10,2);
+      CREATE TABLE IF NOT EXISTS manual_booking_items (
+        id SERIAL PRIMARY KEY,
+        booking_id INTEGER NOT NULL,
+        name TEXT NOT NULL,
+        amount NUMERIC(10,2) NOT NULL,
+        sort_order INTEGER DEFAULT 0,
+        created_at TIMESTAMP DEFAULT NOW() NOT NULL
+      );
+      CREATE TABLE IF NOT EXISTS payment_links (
+        id SERIAL PRIMARY KEY,
+        booking_id INTEGER NOT NULL,
+        token TEXT NOT NULL UNIQUE,
+        payment_option TEXT NOT NULL DEFAULT 'deposit',
+        deposit_type TEXT DEFAULT 'fixed',
+        deposit_value NUMERIC(10,2),
+        amount_due NUMERIC(10,2) NOT NULL,
+        remaining_payment_method TEXT DEFAULT 'cash_or_online',
+        expires_at TIMESTAMP,
+        disabled TEXT NOT NULL DEFAULT 'false',
+        created_at TIMESTAMP DEFAULT NOW() NOT NULL,
+        last_used_at TIMESTAMP
+      );
+      CREATE TABLE IF NOT EXISTS payment_records (
+        id SERIAL PRIMARY KEY,
+        booking_id INTEGER NOT NULL,
+        amount NUMERIC(10,2) NOT NULL,
+        method TEXT NOT NULL,
+        paid_at TIMESTAMP DEFAULT NOW() NOT NULL,
+        note TEXT,
+        stripe_payment_intent_id TEXT,
+        created_at TIMESTAMP DEFAULT NOW() NOT NULL
+      );
       CREATE TABLE IF NOT EXISTS coupons (
         id SERIAL PRIMARY KEY,
         code TEXT NOT NULL UNIQUE,

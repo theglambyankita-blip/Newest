@@ -15,7 +15,7 @@ import router from "./routes";
 import { logger } from "./lib/logger";
 import { buildIcs } from "./lib/ics";
 import { initAdminToken } from "./routes/admin";
-import { db, bookings } from "@workspace/db";
+import { db, bookings, paymentLinks, paymentRecords } from "@workspace/db";
 import { eq } from "drizzle-orm";
 
 const SITE_URL = "https://www.theglambyankita.com";
@@ -57,6 +57,52 @@ app.post("/api/webhook", express.raw({ type: "application/json" }), async (req, 
 
   if (event.type === "payment_intent.succeeded") {
     const pi = event.data.object as Stripe.PaymentIntent;
+    const secureLinkToken = pi.metadata?.secure_link_token || "";
+
+    if (secureLinkToken) {
+      try {
+        const linkRows = await db.select().from(paymentLinks).where(eq(paymentLinks.token, secureLinkToken)).limit(1);
+        const bookingId = Number(pi.metadata?.booking_id || linkRows[0]?.bookingId);
+        if (!linkRows.length || !Number.isInteger(bookingId)) throw new Error("Secure payment link not found");
+        const bookingRows = await db.select().from(bookings).where(eq(bookings.id, bookingId)).limit(1);
+        if (!bookingRows.length) throw new Error("Booking not found for secure payment link");
+        const existingPayment = await db.select().from(paymentRecords).where(eq(paymentRecords.bookingId, bookingId));
+        if (!existingPayment.some((record) => record.stripePaymentIntentId === pi.id)) {
+          const total = Number(bookingRows[0].totalAud || 0);
+          const alreadyPaid = existingPayment.reduce((sum, record) => sum + Number(record.amount || 0), 0);
+          const paidAmount = pi.amount / 100;
+          if (paidAmount <= 0 || alreadyPaid + paidAmount > total + 0.005) {
+            throw new Error("Stripe payment exceeds the booking balance");
+          }
+          await db.insert(paymentRecords).values({
+            bookingId,
+            amount: paidAmount.toFixed(2),
+            method: "online",
+            stripePaymentIntentId: pi.id,
+            note: "Stripe payment confirmed by webhook.",
+          });
+          const newPaid = alreadyPaid + paidAmount;
+          await db.update(bookings).set({
+            paymentMethod: "card",
+            status: newPaid >= total - 0.005 ? "confirmed" : "awaiting_balance",
+            paymentStatus: newPaid >= total - 0.005 ? "paid_in_full" : "balance_due",
+            amountPaid: newPaid.toFixed(2),
+            balanceDue: Math.max(0, total - newPaid).toFixed(2),
+            stripePaymentIntentId: pi.id,
+          }).where(eq(bookings.id, bookingId));
+          await db.update(paymentLinks).set({ lastUsedAt: new Date() }).where(eq(paymentLinks.token, secureLinkToken));
+        }
+      } catch (e) {
+        console.error("Secure payment webhook error:", e);
+        res.status(500).json({ error: "Could not record payment." });
+        return;
+      }
+      // Manual payment links intentionally do not send customer email. The
+      // owner copies the link and can communicate with the client directly.
+      res.json({ received: true });
+      return;
+    }
+
     const clientName      = pi.metadata?.client_name      || "Client";
     const clientEmail     = pi.metadata?.client_email     || "";
     const amountAud       = (pi.amount / 100).toFixed(2);

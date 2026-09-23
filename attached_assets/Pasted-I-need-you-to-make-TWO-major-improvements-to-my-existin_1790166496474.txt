@@ -1,0 +1,588 @@
+I need you to make TWO major improvements to my existing THE GLAM BY ANKITA website.
+
+IMPORTANT: This is an EXISTING website with an EXISTING bookings admin dashboard.
+
+DO NOT rebuild the website from scratch.
+DO NOT replace the existing bookings dashboard.
+DO NOT remove or break any existing functionality.
+DO NOT create a fake/demo dashboard.
+Everything must be connected to the real existing database/data and must actually work.
+
+==================================================
+PART 1 — MASSIVELY IMPROVE SEO
+
+SEO is currently my MAIN source of clients.
+
+I am getting fewer clients through Google recently, so improving organic Google visibility and increasing Google-generated enquiries is one of the highest priorities for this website.
+
+The goal is to make THE GLAM BY ANKITA as competitive as possible for high-intent Melbourne makeup artist searches.
+
+For example, if someone searches Google for:
+
+• Melbourne Makeup Artist
+• Makeup Artist Melbourne
+• Best Makeup Artist Melbourne
+• Melbourne CBD Makeup Artist
+• Makeup Artist Melbourne CBD
+• Indian Makeup Artist Melbourne
+• Indian Makeup Artist in Melbourne
+• Bridal Makeup Artist Melbourne
+• Bridal Makeup Melbourne
+• Makeup Artist Southbank
+• Southbank Makeup Artist
+• Makeup Artist near Melbourne CBD
+• Makeup Artist near me
+• Mobile Makeup Artist Melbourne
+• Mobile Makeup Artist Southbank
+• Event Makeup Artist Melbourne
+• Party Makeup Artist Melbourne
+• Formal Makeup Artist Melbourne
+• Festival Makeup Artist Melbourne
+• Soft Glam Makeup Artist Melbourne
+• Full Glam Makeup Artist Melbourne
+• Indian Bridal Makeup Melbourne
+• Indian Wedding Makeup Artist Melbourne
+• Makeup Artist for Indian Wedding Melbourne
+• Melbourne Wedding Makeup Artist
+• Professional Makeup Artist Melbourne
+
+THE GLAM BY ANKITA should have the strongest possible SEO foundation and the best realistic chance of appearing extremely prominently in these searches.
+
+I understand Google rankings cannot be guaranteed, so DO NOT use black-hat SEO, keyword stuffing, fake reviews, hidden text, doorway pages or anything that could cause a Google penalty.
+
+Instead, properly optimise the website for real users AND search engines.
+
+⸻
+
+TECHNICAL SEO
+
+Audit the entire existing website and fix everything that could hurt SEO, including:
+
+• Page titles
+• Meta descriptions
+• H1/H2/H3 structure
+• Canonical URLs
+• Internal linking
+• Image alt text
+• Image filenames where appropriate
+• Heading hierarchy
+• URL structure
+• Mobile responsiveness
+• Page speed
+• Core Web Vitals
+• Crawlability
+• Indexability
+• Robots.txt
+• XML sitemap
+• Broken links
+• Redirects
+• Duplicate content
+• Structured data/schema
+• Open Graph metadata
+• Social metadata
+• Google-friendly HTML
+• Proper semantic HTML
+• Lazy loading where appropriate
+• Image optimisation
+• WebP/modern image formats where appropriate
+• Removal of unnecessary code that slows pages down
+
+Make sure important pages are actually indexable.
+
+Do NOT accidentally add noindex tags to important pages.
+
+⸻
+
+LOCAL SEO
+
+Because this is a Melbourne-based makeup artist business, make local SEO a HUGE priority.
+
+Optimise naturally around:
+
+Melbourne
+Melbourne CBD
+Southbank
+Port Melbourne
+South Melbourne
+Docklands
+Richmond
+South Yarra
+Albert Park
+St Kilda
+and other relevant nearby Melbourne areas where the business actually provides services.
+
+Do NOT create spammy location pages just to manipulate Google.
+
+Instead, create genuinely useful location/service content where appropriate.
+
+Clearly communicate:
+
+THE GLAM BY ANKITA
+Professional Makeup Artist
+Melbourne, Victoria
+Studio + Mobile Makeup Services
+
+Make sure the website’s business information is consistent everywhere.
+
+Implement appropriate LocalBusiness / BeautySalon / relevant professional-service schema where accurate.
+
+⸻
+
+SERVICE SEO
+
+Optimise individual services around real customer searches.
+
+Relevant services may include:
+
+• Bridal Makeup
+• Indian Bridal Makeup
+• Wedding Makeup
+• Event Makeup
+• Party Makeup
+• Formal Makeup
+• Festival Makeup
+• Soft Glam
+• Full Glam
+• Mobile Makeup
+• Studio Makeup
+• Makeup for Indian Weddings
+• Makeup for Events
+• Makeup for Photoshoots
+
+Each important service should have useful, original content rather than simply repeating keywords.
+
+Explain:
+
+• What the service includes
+• Who it is for
+• What type of look it creates
+• Where it is available
+• Studio/mobile options
+• Booking information
+• Relevant FAQs
+• Clear enquiry/booking CTA
+
+⸻
+
+CONTENT SEO
+
+Identify high-intent questions potential Melbourne makeup clients are actually searching for.
+
+Build useful FAQ/content sections around topics such as:
+
+• How much does a makeup artist cost in Melbourne?
+• How far in advance should I book a makeup artist?
+• What should I bring to my makeup appointment?
+• Do you offer mobile makeup in Melbourne?
+• Do you do Indian bridal makeup?
+• Do you travel for weddings?
+• What is included in bridal makeup?
+• What is the difference between soft glam and full glam?
+• How long does professional makeup take?
+• How should I prepare my skin before makeup?
+
+Only publish useful, genuinely relevant content.
+
+Do not keyword-stuff.
+
+⸻
+
+GOOGLE SEARCH APPEARANCE
+
+Make every important page have a compelling SEO title and meta description designed to increase qualified clicks.
+
+The website should clearly communicate what THE GLAM BY ANKITA does within the first few seconds.
+
+Make the copy natural and customer-friendly.
+
+Do not write robotic SEO copy.
+
+⸻
+
+STRUCTURED DATA
+
+Implement valid structured data where appropriate.
+
+Consider:
+
+• LocalBusiness
+• ProfessionalService
+• Service
+• FAQPage where eligible
+• BreadcrumbList
+• WebSite
+• Organization
+
+Only include information that is actually true and visible/relevant to the business.
+
+Validate the schema and make sure there are no obvious errors.
+
+⸻
+
+GOOGLE BUSINESS / LOCAL SEARCH
+
+Make the website technically ready to support Google Business Profile/local search visibility.
+
+Use consistent:
+
+Business name
+Location/service area
+Contact details
+Website
+Services
+Business description
+
+Do not invent business information.
+
+⸻
+
+SEO PERFORMANCE
+
+Before finishing:
+
+AUDIT the entire website.
+
+Find the biggest SEO problems.
+
+Fix them.
+
+Then audit it again.
+
+Do not simply tell me what is wrong.
+
+ACTUALLY IMPLEMENT THE fixes in the website.
+
+==================================================
+PART 2 — EXISTING BOOKINGS ADMIN DASHBOARD
+
+IMPORTANT:
+
+I ALREADY HAVE A BOOKINGS ADMIN DASHBOARD.
+
+KEEP IT.
+
+DO NOT DELETE IT.
+DO NOT REPLACE IT.
+DO NOT MAKE A SECOND DASHBOARD.
+DO NOT BREAK THE CURRENT DASHBOARD.
+
+Instead, upgrade the existing dashboard so I have COMPLETE CONTROL over bookings.
+
+The business owner must be able to manually create bookings even when the customer did NOT book through the website.
+
+⸻
+
+MANUALLY ADD BOOKINGS
+
+Add a clear:
+
+“+ Add Booking”
+
+button/function to the existing admin dashboard.
+
+I need to be able to manually enter a complete booking myself.
+
+The manual booking should allow me to fill out ALL relevant information, including whatever booking fields already exist in the system, plus anything necessary for proper payment/revenue tracking.
+
+For example:
+
+• Client name
+• Client email
+• Client phone
+• Booking date
+• Booking time
+• Service
+• Makeup type
+• Location
+• Studio/mobile
+• Number of people
+• Event type
+• Total booking price
+• Deposit amount
+• Amount paid
+• Remaining balance
+• Payment status
+• Booking status
+• Notes
+• Special requests
+• Internal admin notes
+• Any other existing booking fields
+
+Do NOT hard-code a limited number of fields if the existing system already supports more.
+
+I need the ability to fully customise the booking.
+
+⸻
+
+EDIT BOOKINGS
+
+Every manually created booking MUST remain fully editable.
+
+I need to be able to:
+
+• Edit client information
+• Change date/time
+• Change service
+• Change price
+• Change deposit
+• Change amount paid
+• Change payment status
+• Change booking status
+• Change notes
+• Update any other booking information
+
+Changes must save permanently to the real database.
+
+Refreshing the page MUST NOT lose the changes.
+
+⸻
+
+PAYMENT LINKS
+
+I need to be able to send payment links myself from the admin dashboard.
+
+Do NOT force every payment to originate from the website’s public booking form.
+
+For a manually added booking, I should be able to:
+
+1. Create the booking
+2. Enter the total price
+3. Enter the deposit/payment amount required
+4. Generate or send the appropriate payment link
+5. Send it to the client
+6. Track whether it has been paid
+
+Use the existing payment infrastructure if one already exists.
+
+If the existing payment system supports payment links, integrate the manual booking workflow with it.
+
+Do NOT create fake payment links or pretend a payment was successful.
+
+Payment status must reflect REAL payment data where the payment provider supports this.
+
+⸻
+
+REVENUE MUST ACTUALLY WORK
+
+THIS IS EXTREMELY IMPORTANT.
+
+The dashboard’s revenue numbers MUST update automatically when I create or edit a booking.
+
+I do NOT want a visual-only dashboard.
+
+I want the actual booking data to drive the dashboard statistics.
+
+For example, if I manually add:
+
+Total booking = $500
+Amount paid = $200
+Remaining balance = $300
+
+the dashboard should correctly calculate and display the relevant revenue/payment figures based on the system’s existing definitions.
+
+If I edit the booking from $500 to $600, the dashboard MUST automatically recalculate.
+
+If I change the amount paid from $200 to $300, the relevant paid/revenue figures MUST update.
+
+If I delete/cancel a booking, the relevant statistics MUST update according to the existing booking-status rules.
+
+If a payment is successfully received through the payment system, the booking and revenue information MUST update accordingly.
+
+EVERYTHING MUST BE CONNECTED.
+
+Do NOT hard-code dashboard numbers.
+
+Do NOT use fake placeholder revenue.
+
+Do NOT make separate disconnected calculations.
+
+Use one reliable source of truth for booking/payment data.
+
+⸻
+
+DASHBOARD STATISTICS
+
+Make sure the existing dashboard statistics correctly reflect the actual booking database.
+
+Depending on what the existing dashboard already contains, ensure statistics such as:
+
+• Total Revenue
+• Revenue/Paid Amount
+• Outstanding Balance
+• Total Bookings
+• Upcoming Bookings
+• Completed Bookings
+• Pending Bookings
+• Cancelled Bookings
+• Payment Status
+
+are calculated from REAL booking data.
+
+If the dashboard already has additional statistics, preserve them and make sure they update correctly too.
+
+⸻
+
+BOOKING LIST / CALENDAR
+
+Any manually added booking must appear everywhere a normal booking appears.
+
+For example:
+
+• Booking list
+• Calendar
+• Dashboard totals
+• Revenue calculations
+• Upcoming bookings
+• Client records
+• Payment tracking
+• Relevant filters/search
+
+A manually created booking must NOT be treated as a separate type of booking that gets ignored by the rest of the system.
+
+⸻
+
+SEARCH + FILTERS
+
+Make sure I can find manually created bookings easily.
+
+Support the existing dashboard’s search/filter functionality and ensure it works with manual bookings.
+
+Useful filters may include:
+
+• Date
+• Client
+• Booking status
+• Payment status
+• Service
+• Upcoming/past
+• Paid/unpaid/partially paid
+
+Preserve any existing filters.
+
+⸻
+
+DATA INTEGRITY
+
+This needs to be production-ready.
+
+Every booking action should correctly interact with the database.
+
+Test:
+
+1. Create manual booking
+2. Refresh page
+3. Confirm booking remains
+4. Edit booking
+5. Refresh page
+6. Confirm edits remain
+7. Check calendar
+8. Check booking list
+9. Check revenue
+10. Change total price
+11. Check revenue again
+12. Change amount paid
+13. Check balance
+14. Generate/send payment link
+15. Record/receive payment where supported
+16. Check payment status
+17. Check revenue again
+18. Cancel/delete booking if supported
+19. Confirm dashboard updates correctly
+
+I WANT THIS ACTUALLY TESTED.
+
+Do not just visually inspect the interface.
+
+Test the underlying functionality and data flow.
+
+==================================================
+MOST IMPORTANT REQUIREMENT
+
+THE WEBSITE MUST NOT LOOK LIKE IT WORKS.
+
+IT MUST ACTUALLY WORK.
+
+When I manually create a booking, that booking must become real data in the existing system.
+
+When I edit it, the database must update.
+
+When I change its price, the relevant revenue calculations must update.
+
+When I change payment information, the relevant totals must update.
+
+When I add a booking, it must appear throughout the dashboard.
+
+When I refresh the website, everything must still be there.
+
+When a payment is received through the connected payment system, the appropriate booking/payment data must update.
+
+NO MOCK DATA.
+NO FAKE BUTTONS.
+NO PLACEHOLDER FUNCTIONALITY.
+NO FRONT-END-ONLY CALCULATIONS.
+NO DISCONNECTED DASHBOARD.
+
+==================================================
+DO NOT BREAK EXISTING FEATURES
+
+Before changing anything:
+
+1. Inspect the current codebase.
+2. Inspect the current bookings dashboard.
+3. Identify the current database/schema.
+4. Identify how bookings are currently created.
+5. Identify how payments are currently handled.
+6. Identify how revenue is currently calculated.
+7. Identify the existing authentication/admin protection.
+8. Identify all current dashboard functionality.
+
+Then make the smallest safe changes necessary to add these features.
+
+Preserve the existing design and branding.
+
+Do not unnecessarily redesign the website.
+
+Do not remove existing bookings.
+
+Do not delete existing customer data.
+
+Do not change existing booking behaviour unless required for these improvements.
+
+==================================================
+FINAL QA CHECK
+
+Before telling me the work is complete:
+
+• Run/build the application
+• Check for errors
+• Test the manual booking workflow
+• Test editing
+• Test database persistence
+• Test payment-link workflow
+• Test revenue calculations
+• Test outstanding balances
+• Test dashboard statistics
+• Test calendar/list integration
+• Test mobile responsiveness
+• Run an SEO audit
+• Check metadata
+• Check sitemap
+• Check robots.txt
+• Check structured data
+• Check internal links
+• Check important pages for indexability
+• Check for broken links
+• Check page performance
+
+If something doesn’t work, FIX IT before finishing.
+
+Do not tell me “this should work.”
+
+VERIFY THAT IT WORKS.
+
+The two biggest priorities are:
+
+1. MAKE THE GLAM BY ANKITA AS STRONG AS POSSIBLE FOR HIGH-INTENT MELBOURNE MAKEUP ARTIST GOOGLE SEARCHES AND INCREASE THE CHANCE OF GENERATING MORE GOOGLE CLIENTS.
+2. MAKE THE EXISTING BOOKINGS DASHBOARD A FULLY FUNCTIONAL MANUAL BOOKING + PAYMENT + REVENUE SYSTEM WHERE EVERY CHANGE ACTUALLY UPDATES THE REAL DATA.
+
+I care much more about REAL FUNCTIONALITY than simply making the interface look good.
