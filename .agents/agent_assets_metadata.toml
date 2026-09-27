@@ -1,5 +1,4 @@
 uploads = []
-outputs = []
 
 [[generated]]
 id = "7qAMQS-jzjg-yYNKw3qWw"
@@ -24,3 +23,31 @@ id = "dqFjXFkmiXAyk8aduI7RD"
 uri = "file://artifacts/mockup-sandbox/public/images/bold-gold-hero.png"
 type = "image"
 title = "Confident woman, warm lighting, rich espresso tones"
+
+[[outputs]]
+id = "1Pc3wSrSAr60CgEgDB5Kl"
+uri = "file://reports/seo-search-audit.html"
+type = "html"
+title = "100-phrase search visibility audit"
+description = "All 100 phrases, returned results and links, plus verified live-site technical findings. Search-tool results—not Google ranking measurements."
+logical_id = "98e97a6d-af9d-47d5-b574-5aa65c64f84b"
+content_hash = "sha256:b5eb29b96fb8adbd8287b3044c3bd25c12d1b7790f83f04fa5afc49518e2a33a"
+size = 242180
+mtime_ms = 1790484457507
+storage_uri = "gcs://replit-rams-assets-reed/rams/assets/repl:28f1275b-d65b-4269-863d-c1121354e8d3/98e97a6d-af9d-47d5-b574-5aa65c64f84b/528f4715-7289-458e-8718-b789f5613d56"
+storage_version_token = "1790484560687561"
+content_type = "text/html"
+
+[[outputs]]
+id = "2YWQ8FU35lAHK_lRS3Ue3"
+uri = "file://reports/seo-search-audit.csv"
+type = "table"
+title = "Search audit spreadsheet"
+description = "Download all 100 query records and their returned source links as CSV."
+logical_id = "113870dd-946c-4332-9447-ccf6be401c32"
+content_hash = "sha256:e16dec746c65d9e4ec654c7e3db9aee179bf9d08d174cd4a8e92d95278d424ed"
+size = 147317
+mtime_ms = 1790484457241
+storage_uri = "gcs://replit-rams-assets-reed/rams/assets/repl:28f1275b-d65b-4269-863d-c1121354e8d3/113870dd-946c-4332-9447-ccf6be401c32/5f8b853e-bba0-4a04-b133-2a749c91d200"
+storage_version_token = "1790484561239400"
+content_type = "text/csv"

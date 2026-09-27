@@ -34,6 +34,27 @@ export default defineConfig({
             next(error);
           }
         });
+        // Vite's default SPA fallback serves the homepage for arbitrary clean URLs.
+        // Mirror the explicit production routes while leaving assets and Vite internals alone.
+        server.middlewares.use(async (req, res, next) => {
+          const pathname = new URL(req.url || "/", "http://localhost").pathname;
+          if (req.method !== "GET" || !req.headers.accept?.includes("text/html") ||
+              pathname === "/" || pathname === "/index.html" ||
+              pathname.startsWith("/api/") || pathname === "/api" ||
+              pathname.startsWith("/@") || pathname.startsWith("/__") ||
+              /\.[^/]+$/.test(pathname) ||
+              /^\/(?:about|services|gallery|contact)\/?$/.test(pathname) ||
+              /^\/(?:p|r|account|sign-in|sign-up)\/?$/.test(pathname) ||
+              /^\/p\/[a-f0-9]{64}$/.test(pathname) ||
+              /^\/sign-(?:in|up)\/.+/.test(pathname)) return next();
+          try {
+            res.statusCode = 404;
+            res.setHeader("Content-Type", "text/html; charset=utf-8");
+            res.end(await readFile(path.resolve(__dirname, "public/404.html"), "utf8"));
+          } catch (error) {
+            next(error);
+          }
+        });
       },
     },
   ],
