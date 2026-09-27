@@ -455,6 +455,32 @@
     /* PAGES */
     .page { display: none; }
     .page.active { display: block; contain: layout style; }
+    .seo-landing { max-width: 1440px; margin: 0 auto; }
+    .seo-breadcrumb { display: flex; flex-wrap: wrap; gap: 0.55rem; align-items: center; margin: 0 auto 1.5rem; max-width: 1120px; color: var(--text-light); font-size: 0.82rem; }
+    .seo-breadcrumb a, .seo-inline-link { color: var(--gold-dark); font-weight: 700; text-underline-offset: 3px; }
+    .seo-hero { display: grid; grid-template-columns: minmax(0, 1.7fr) minmax(230px, 0.8fr); gap: 2rem; align-items: center; max-width: 1120px; margin: 0 auto; padding: clamp(1.5rem, 4vw, 3.5rem); border: 1px solid rgba(201,169,110,0.24); border-radius: 12px; background: linear-gradient(135deg, #fffaf7 0%, #fdf0ee 58%, #f7e9d0 100%); }
+    .seo-hero h1 { font-family: 'Playfair Display', serif; font-size: clamp(2.35rem, 5vw, 4rem); line-height: 1.1; color: var(--text-dark); margin: 0 0 1rem; }
+    .seo-lead { max-width: 700px; color: var(--text-mid); font-size: 1.05rem; line-height: 1.85; }
+    .seo-actions { display: flex; flex-wrap: wrap; gap: 0.8rem; margin-top: 1.5rem; }
+    .seo-actions a { display: inline-flex; align-items: center; justify-content: center; text-decoration: none; }
+    .seo-price-card { padding: 1.5rem; background: rgba(255,255,255,0.82); border: 1px solid rgba(201,169,110,0.3); border-radius: 8px; }
+    .seo-price-card h2 { font-family: 'Playfair Display', serif; font-size: 1.25rem; margin: 0 0 0.8rem; color: var(--text-dark); }
+    .seo-price-card p { color: var(--text-mid); font-size: 0.9rem; line-height: 1.7; margin: 0.4rem 0; }
+    .seo-detail-section { max-width: 1120px; margin: 0 auto; padding: 3rem 0 0; }
+    .seo-detail-section > h2 { font-family: 'Playfair Display', serif; font-size: clamp(1.65rem, 3vw, 2.2rem); color: var(--text-dark); margin: 0 0 0.8rem; }
+    .seo-detail-section > p { max-width: 850px; color: var(--text-mid); font-size: 0.96rem; line-height: 1.85; margin: 0 0 1rem; }
+    .seo-info-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 1rem; margin-top: 1.2rem; }
+    .seo-info-card { padding: 1.25rem; background: var(--white); border: 1px solid rgba(201,169,110,0.25); border-radius: 7px; }
+    .seo-info-card h3 { font-family: 'Playfair Display', serif; font-size: 1.08rem; color: var(--text-dark); margin: 0 0 0.5rem; }
+    .seo-info-card p, .seo-info-card li { color: var(--text-mid); font-size: 0.88rem; line-height: 1.75; }
+    .seo-info-card ul { padding-left: 1.15rem; margin: 0.4rem 0 0; }
+    .seo-related-links { display: flex; flex-wrap: wrap; gap: 0.7rem 1.2rem; margin-top: 1rem; }
+    .seo-related-links a { color: var(--gold-dark); font-weight: 700; text-underline-offset: 3px; }
+    .svc-card .seo-card-link { display: inline-block; margin-top: 0.8rem; color: var(--gold-dark); font-size: 0.82rem; font-weight: 700; text-underline-offset: 3px; }
+    @media (max-width: 700px) {
+      .seo-hero { grid-template-columns: 1fr; gap: 1.25rem; }
+      .seo-detail-section { padding-top: 2.4rem; }
+    }
 
     /* CINEMATIC ANIMATIONS */
     [data-anim] { opacity: 0; will-change: opacity, transform; transition: opacity 0.8s cubic-bezier(0.16,1,0.3,1), transform 0.8s cubic-bezier(0.16,1,0.3,1); }
@@ -1609,8 +1635,8 @@
       <button class="stab" onclick="showServiceTab('creative',this)">Creative</button>
     </div>
     <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(270px,1fr));gap:1.25rem;background:transparent;" data-stagger id="servicesGrid">
-      <div class="svc-card hover-lift" data-cat="glam"><div class="svc-emoji">💄</div><h3 class="svc-name">Soft Glam</h3><p class="svc-desc">Your skin, elevated. A luminous, polished finish that enhances your natural beauty — think dewy, radiant, and effortlessly put-together.</p><p class="svc-price">$120</p><span class="svc-tag">Glam</span></div>
-      <div class="svc-card hover-lift" data-cat="glam"><div class="svc-emoji">✨</div><h3 class="svc-name">Full Glam</h3><p class="svc-desc">Turn heads and own the room. Sultry eyes, a flawless base, and lash-forward drama — made for moments that deserve to be remembered.</p><p class="svc-price">$150</p><span class="svc-tag">Glam</span></div>
+      <div class="svc-card hover-lift" data-cat="glam"><div class="svc-emoji">💄</div><h3 class="svc-name">Soft Glam</h3><p class="svc-desc">Your skin, elevated. A luminous, polished finish that enhances your natural beauty — think dewy, radiant, and effortlessly put-together.</p><p class="svc-price">$120</p><span class="svc-tag">Glam</span><a class="seo-card-link" href="/glam-makeup-melbourne" onclick="event.preventDefault();showPage('glam-makeup-melbourne',null)">Compare soft and full glam</a></div>
+      <div class="svc-card hover-lift" data-cat="glam"><div class="svc-emoji">✨</div><h3 class="svc-name">Full Glam</h3><p class="svc-desc">Turn heads and own the room. Sultry eyes, a flawless base, and lash-forward drama — made for moments that deserve to be remembered.</p><p class="svc-price">$150</p><span class="svc-tag">Glam</span><a class="seo-card-link" href="/glam-makeup-melbourne" onclick="event.preventDefault();showPage('glam-makeup-melbourne',null)">Explore Melbourne glam options</a></div>
       <div class="svc-card hover-lift" data-cat="glam"><div class="svc-emoji">🎉</div><h3 class="svc-name">Party Glam</h3><p class="svc-desc">Wear the night. Bold, fun, and celebration-ready — whether it's a birthday bash, dinner date, or a night you'll want to remember forever.</p><p class="svc-price">$120</p><span class="svc-tag">Glam</span></div>
       <div class="svc-card hover-lift" data-cat="glam"><div class="svc-emoji">🎓</div><h3 class="svc-name">Formal Makeup</h3><p class="svc-desc">Sophisticated and enduring. Polished long-wear makeup that keeps you camera-ready from the ceremony through to the very last moment.</p><p class="svc-price">$120</p><span class="svc-tag">Glam</span></div>
       <div class="svc-card hover-lift" data-cat="bridal" id="bridal-makeup-service">
@@ -1639,10 +1665,11 @@
             <p>Full-glam bridal styling with a fuller-coverage matte base, sculpted contouring and precise definition. Bold elongated liner, warm smoky or cut-crease eyes and dramatic lashes bring emphasis to the eyes.</p>
             <p>Pair the look with defined nude, mauve or classic red lips, with the intensity tailored to your preferences.</p>
           </details>
-        </div>
+         </div>
+         <a class="seo-card-link" href="/bridal-makeup-melbourne" onclick="event.preventDefault();showPage('bridal-makeup-melbourne',null)">Explore bridal makeup in Melbourne</a>
       </div>
       <div class="svc-card hover-lift" data-cat="bridal"><div class="svc-emoji">🌸</div><h3 class="svc-name">Bridal Party Makeup</h3><p class="svc-desc">A harmonious, beautiful wedding party. Individually tailored looks for your bridesmaids and loved ones — all in seamless sync with your bridal vision.</p><p class="svc-price">$120 <span style="font-size:0.75rem;font-weight:500;color:var(--text-light);">per person</span></p><span class="svc-tag">Bridal</span></div>
-      <div class="svc-card hover-lift" data-cat="creative"><div class="svc-emoji">🎨</div><h3 class="svc-name">Editorial Makeup</h3><p class="svc-desc">Where artistry meets intention. Striking makeup crafted for the lens — fashion campaigns, magazine spreads, and creative direction that demands attention.</p><p class="svc-price">From $140</p><span class="svc-tag">Creative</span></div>
+      <div class="svc-card hover-lift" data-cat="creative"><div class="svc-emoji">🎨</div><h3 class="svc-name">Editorial Makeup</h3><p class="svc-desc">Where artistry meets intention. Striking makeup crafted for the lens — fashion campaigns, magazine spreads, and creative direction that demands attention.</p><p class="svc-price">From $140</p><span class="svc-tag">Creative</span><a class="seo-card-link" href="/editorial-makeup-melbourne" onclick="event.preventDefault();showPage('editorial-makeup-melbourne',null)">Plan an editorial makeup enquiry</a></div>
       <div class="svc-card hover-lift" data-cat="creative"><div class="svc-emoji">🎭</div><h3 class="svc-name">Festival &amp; Cultural Makeup</h3><p class="svc-desc">Vivid, expressive, and deeply personal. From cultural ceremonies to festival moments — makeup that honours your story and makes every look unforgettable.</p><p class="svc-price">From $120</p><span class="svc-tag">Creative</span></div>
     </div>
 
@@ -1703,6 +1730,161 @@
     </div>
 
   </div>
+</div>
+
+<!-- SERVICE LANDING: BRIDAL MAKEUP MELBOURNE -->
+<div class="page" id="page-bridal-makeup-melbourne">
+  <article class="section seo-landing">
+    <nav class="seo-breadcrumb" aria-label="Breadcrumb">
+      <a href="/" onclick="event.preventDefault();showPage('home',null)">Home</a><span aria-hidden="true">/</span>
+      <a href="/services" onclick="event.preventDefault();showPage('services',null)">Services</a><span aria-hidden="true">/</span>
+      <span aria-current="page">Bridal makeup</span>
+    </nav>
+    <header class="seo-hero">
+      <div>
+        <p class="eyebrow">Wedding makeup · Southbank, Melbourne</p>
+        <h1>Bridal Makeup in Melbourne</h1>
+        <p class="seo-lead">Ankita creates bridal makeup shaped around your ceremony, outfit and preferred finish. Explore Western, South Asian, East Asian and Middle Eastern-inspired looks, then share your date and vision to discuss the right appointment.</p>
+        <div class="seo-actions">
+          <a class="btn-primary mag-btn" href="/contact" onclick="event.preventDefault();showPage('contact',null)">Enquire about your wedding date</a>
+          <a class="btn-secondary" href="/gallery" onclick="event.preventDefault();showPage('gallery',null)">View the makeup portfolio</a>
+        </div>
+      </div>
+      <aside class="seo-price-card" aria-label="Bridal makeup prices">
+        <h2>Bridal makeup pricing</h2>
+        <p><strong>Bridal Makeup:</strong> $180 AUD</p>
+        <p><strong>Bridal Party Makeup:</strong> $120 AUD per person</p>
+        <p>Appointments are available at the Southbank studio near Melbourne CBD. Mobile travel can be requested and is confirmed by date and location.</p>
+      </aside>
+    </header>
+    <section class="seo-detail-section" aria-labelledby="bridal-style-heading">
+      <h2 id="bridal-style-heading">Choose a bridal finish that feels like you</h2>
+      <p>These are reference points, not fixed packages. Your finish, colour and level of definition can be discussed around your outfit, jewellery, ceremony and personal preferences.</p>
+      <div class="seo-info-grid">
+        <div class="seo-info-card"><h3>Western bridal</h3><p>Consider soft-focus skin with a satin or softly radiant finish, neutral or rose-toned eyes, and a lip colour that works with your gown and chosen level of definition.</p></div>
+        <div class="seo-info-card"><h3>South Asian bridal</h3><p>For Indian, Pakistani, Bangladeshi and Sri Lankan bridal inspirations, discuss your ceremony, richly coloured outfit and jewellery. Gold or bronze eyes, kajal and a bolder lip are possible directions.</p></div>
+        <div class="seo-info-card"><h3>East Asian bridal</h3><p>Options include a luminous, glass-skin direction with soft colour or more defined, reflective eye makeup. Share references so the contrast and finish can be tailored to your preference.</p></div>
+        <div class="seo-info-card"><h3>Middle Eastern-inspired bridal</h3><p>If you prefer a more defined look, discuss sculpted tones, elongated liner, smoky eyes or a cut crease, with the overall intensity adjusted to your comfort.</p></div>
+      </div>
+    </section>
+    <section class="seo-detail-section" aria-labelledby="bridal-enquiry-heading">
+      <h2 id="bridal-enquiry-heading">What to include in your bridal enquiry</h2>
+      <p>A few details help Ankita understand the look and appointment you have in mind. You do not need a finished plan before getting in touch.</p>
+      <div class="seo-info-grid">
+        <div class="seo-info-card"><h3>Your date and location</h3><p>Include your wedding date, ceremony or preparation location, and whether you are asking about the Southbank studio or mobile makeup.</p></div>
+        <div class="seo-info-card"><h3>Your look references</h3><p>Share outfit and jewellery colours, inspiration images, and whether you prefer natural-looking definition, a luminous finish or a more dramatic eye.</p></div>
+        <div class="seo-info-card"><h3>Your wedding party</h3><p>If others need makeup, include the number of people and the looks you have in mind. Bridal Party Makeup is listed at $120 AUD per person; group timing and logistics can be discussed.</p></div>
+      </div>
+      <p style="margin-top:1.2rem;">For mobile requests, include the full venue address or postcode. Travel depends on the date and location and is not confirmed until Ankita responds.</p>
+      <div class="seo-related-links" aria-label="Related pages">
+        <a href="/services" onclick="event.preventDefault();showPage('services',null)">See all makeup services and prices</a>
+        <a href="/glam-makeup-melbourne" onclick="event.preventDefault();showPage('glam-makeup-melbourne',null)">Compare glam makeup options</a>
+        <a href="/contact" onclick="event.preventDefault();showPage('contact',null)">Send a bridal enquiry</a>
+      </div>
+    </section>
+  </article>
+</div>
+
+<!-- SERVICE LANDING: GLAM MAKEUP MELBOURNE -->
+<div class="page" id="page-glam-makeup-melbourne">
+  <article class="section seo-landing">
+    <nav class="seo-breadcrumb" aria-label="Breadcrumb">
+      <a href="/" onclick="event.preventDefault();showPage('home',null)">Home</a><span aria-hidden="true">/</span>
+      <a href="/services" onclick="event.preventDefault();showPage('services',null)">Services</a><span aria-hidden="true">/</span>
+      <span aria-current="page">Glam makeup</span>
+    </nav>
+    <header class="seo-hero">
+      <div>
+        <p class="eyebrow">Soft glam · Full glam · Occasion makeup</p>
+        <h1>Glam Makeup in Melbourne</h1>
+        <p class="seo-lead">Choose a lighter, luminous soft-glam finish or a more defined full-glam look for your event. Ankita also offers party and formal makeup at her Southbank studio near Melbourne CBD, with mobile requests considered subject to confirmation.</p>
+        <div class="seo-actions">
+          <a class="btn-primary mag-btn" href="/contact" onclick="event.preventDefault();showPage('contact',null)">Enquire about an appointment</a>
+          <a class="btn-secondary" href="/gallery" onclick="event.preventDefault();showPage('gallery',null)">View glam and occasion looks</a>
+        </div>
+      </div>
+      <aside class="seo-price-card" aria-label="Glam makeup prices">
+        <h2>Glam &amp; occasion prices</h2>
+        <p><strong>Soft Glam:</strong> $120 AUD</p>
+        <p><strong>Full Glam:</strong> $150 AUD</p>
+        <p><strong>Party Glam:</strong> $120 AUD</p>
+        <p><strong>Formal Makeup:</strong> $120 AUD</p>
+        <p>Luxury skin preparation and premium false lashes where required are included with every service.</p>
+      </aside>
+    </header>
+    <section class="seo-detail-section" aria-labelledby="glam-choose-heading">
+      <h2 id="glam-choose-heading">Which Melbourne glam makeup service should you choose?</h2>
+      <p>Start with the occasion and the finish you want in person and in photos. If you are between two options, include your references in the enquiry and ask which service best fits your brief.</p>
+      <div class="seo-info-grid">
+        <div class="seo-info-card"><h3>Soft Glam · $120 AUD</h3><p>A lighter, luminous and polished direction that enhances your features without a heavily dramatic finish. A useful choice for daytime events, photos and occasions where you want a more natural-looking result.</p></div>
+        <div class="seo-info-card"><h3>Full Glam · $150 AUD</h3><p>A more defined option, with fuller coverage, shaped features and stronger eye or lash emphasis. Consider it for evening events, parties or a bolder photographic brief.</p></div>
+        <div class="seo-info-card"><h3>Party Glam · $120 AUD</h3><p>Makeup for birthdays, dinners, celebrations and nights out. Share the event, outfit and intensity you prefer so the look can be planned around your occasion.</p></div>
+        <div class="seo-info-card"><h3>Formal Makeup · $120 AUD</h3><p>For school formals, graduations and other formal events. Bring dress colours and reference images to help set the balance between elegant, soft and more defined.</p></div>
+      </div>
+    </section>
+    <section class="seo-detail-section" aria-labelledby="glam-planning-heading">
+      <h2 id="glam-planning-heading">Plan your glam appointment</h2>
+      <div class="seo-info-grid">
+        <div class="seo-info-card"><h3>Think about the setting</h3><p>Tell Ankita whether the event is during the day or evening, and whether you are looking for an everyday-polished, party-ready or camera-conscious finish.</p></div>
+        <div class="seo-info-card"><h3>Bring your references</h3><p>Outfit colours, inspiration photos and notes about the eye, base and lip finish you like make it easier to discuss your preferred level of glam.</p></div>
+        <div class="seo-info-card"><h3>Choose where to get ready</h3><p>The Southbank studio is near Melbourne CBD. You can request mobile makeup at a hotel, home or venue; include the address and date so travel availability can be confirmed.</p></div>
+      </div>
+      <div class="seo-related-links" aria-label="Related pages">
+        <a href="/services" onclick="event.preventDefault();showPage('services',null)">See the full services list</a>
+        <a href="/bridal-makeup-melbourne" onclick="event.preventDefault();showPage('bridal-makeup-melbourne',null)">Explore bridal makeup</a>
+        <a href="/editorial-makeup-melbourne" onclick="event.preventDefault();showPage('editorial-makeup-melbourne',null)">Explore editorial makeup</a>
+        <a href="/contact" onclick="event.preventDefault();showPage('contact',null)">Enquire about glam makeup</a>
+      </div>
+    </section>
+  </article>
+</div>
+
+<!-- SERVICE LANDING: EDITORIAL MAKEUP MELBOURNE -->
+<div class="page" id="page-editorial-makeup-melbourne">
+  <article class="section seo-landing">
+    <nav class="seo-breadcrumb" aria-label="Breadcrumb">
+      <a href="/" onclick="event.preventDefault();showPage('home',null)">Home</a><span aria-hidden="true">/</span>
+      <a href="/services" onclick="event.preventDefault();showPage('services',null)">Services</a><span aria-hidden="true">/</span>
+      <span aria-current="page">Editorial makeup</span>
+    </nav>
+    <header class="seo-hero">
+      <div>
+        <p class="eyebrow">Fashion · Campaigns · Photoshoots</p>
+        <h1>Editorial Makeup Artist in Melbourne</h1>
+        <p class="seo-lead">Ankita offers editorial makeup for fashion, campaign, magazine and creative photoshoot briefs. Start with the visual direction and how the makeup will be photographed; TFP (trade-for-print) collaborations with photographers and models are welcome to enquire.</p>
+        <div class="seo-actions">
+          <a class="btn-primary mag-btn" href="/contact" onclick="event.preventDefault();showPage('contact',null)">Share your creative brief</a>
+          <a class="btn-secondary" href="/gallery" onclick="event.preventDefault();showPage('gallery',null)">Explore the portfolio</a>
+        </div>
+      </div>
+      <aside class="seo-price-card" aria-label="Editorial makeup pricing and location">
+        <h2>Editorial appointments</h2>
+        <p><strong>Editorial Makeup:</strong> from $140 AUD</p>
+        <p>Based at the Southbank studio near Melbourne CBD. Mobile location requests can be discussed and are subject to confirmation.</p>
+        <p>Photographers, models, brands and creative teams can submit a project enquiry.</p>
+      </aside>
+    </header>
+    <section class="seo-detail-section" aria-labelledby="editorial-brief-heading">
+      <h2 id="editorial-brief-heading">Build a useful makeup brief for your shoot</h2>
+      <p>Editorial makeup is planned around the image and creative direction, rather than a standard event look. A focused brief helps Ankita understand the visual requirements before discussing the appointment.</p>
+      <div class="seo-info-grid">
+        <div class="seo-info-card"><h3>Describe the project</h3><p>Share whether it is a fashion story, campaign, magazine-style shoot or another creative project, along with the shoot date and location.</p></div>
+        <div class="seo-info-card"><h3>Show the visual direction</h3><p>Include mood boards or reference images, wardrobe and colour notes, and whether the makeup should read as subtle, graphic, polished or more expressive on camera.</p></div>
+        <div class="seo-info-card"><h3>Explain the photography</h3><p>Let Ankita know about the intended lighting, framing and any close-up images. These details help clarify how much definition and finish the brief calls for.</p></div>
+        <div class="seo-info-card"><h3>Include the people involved</h3><p>For a team booking, mention the number of models or looks, schedule, venue and key contacts so timing and logistics can be discussed.</p></div>
+      </div>
+    </section>
+    <section class="seo-detail-section" aria-labelledby="editorial-collab-heading">
+      <h2 id="editorial-collab-heading">Editorial and TFP collaborations</h2>
+      <p>Photographers and models can enquire about TFP (trade-for-print) collaborations. Share the concept, proposed date, location, team and intended use of the images. Each proposal can then be discussed directly; availability and project details are not assumed until confirmed.</p>
+      <div class="seo-related-links" aria-label="Related pages">
+        <a href="/gallery" onclick="event.preventDefault();showPage('gallery',null)">See makeup work in the portfolio</a>
+        <a href="/services" onclick="event.preventDefault();showPage('services',null)">Compare services and prices</a>
+        <a href="/glam-makeup-melbourne" onclick="event.preventDefault();showPage('glam-makeup-melbourne',null)">Explore occasion glam</a>
+        <a href="/contact" onclick="event.preventDefault();showPage('contact',null)">Send a project enquiry</a>
+      </div>
+    </section>
+  </article>
 </div>
 
 <!-- GALLERY PAGE -->
