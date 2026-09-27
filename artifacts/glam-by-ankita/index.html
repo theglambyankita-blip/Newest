@@ -1569,6 +1569,7 @@
   <div class="cta-band" data-anim="up">
     <p style="font-family:'Playfair Display',serif;font-size:1.25rem;font-style:italic;color:rgba(255,255,255,0.9);margin-bottom:1.5rem;font-weight:400;letter-spacing:0.02em;" data-anim="up">Ready to look and feel your absolute best?</p>
     <button class="mag-btn" style="background:var(--white);color:var(--gold-dark);border:none;font-family:'Nunito',sans-serif;font-weight:700;font-size:1rem;padding:0.9rem 2.5rem;border-radius:4px;cursor:pointer;transition:transform 0.2s,box-shadow 0.2s;" onclick="showPage('contact',null)" data-anim="up" data-delay="100" onmouseover="this.style.transform='translateY(-2px)';this.style.boxShadow='0 8px 24px rgba(0,0,0,0.15)'" onmouseout="this.style.transform='';this.style.boxShadow=''">Book your session ✦</button>
+    <a class="destination-home-cta" href="/destination-weddings#destination-wedding-quote" onclick="event.preventDefault();openDestinationQuote()" data-anim="up" data-delay="150">Planning a destination wedding? Get a quote</a>
   </div>
 </div>
 
@@ -2815,16 +2816,15 @@
     }
   }
 
-  function openDestinationWeddingEnquiry() {
-    const destinationService = document.querySelector('#svc-checkboxes input[data-quote-required="true"]');
-    if (destinationService) {
-      destinationService.checked = true;
-      updatePriceSummary();
-    }
-    showPage('contact', null);
+  function openDestinationQuote() {
+    showPage('destination-weddings', null);
     setTimeout(() => {
-      const form = document.getElementById('form-container');
-      if (form) form.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      const quoteForm = document.getElementById('destination-wedding-quote');
+      if (quoteForm) {
+        quoteForm.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        const firstName = document.getElementById('destination-first-name');
+        if (firstName) firstName.focus({ preventScroll: true });
+      }
     }, 120);
   }
 
