@@ -38,6 +38,12 @@ export function renderRouteHtml(html, route, metadata = getRouteSeo(html)) {
   if (!metadata[route]) throw new Error(`Unknown public route: ${route}`);
   const { title, description } = metadata[route];
   const url = siteOrigin + (route === "home" ? "/" : `/${route}`);
+  const servicePageRoutes = new Set([
+    "bridal-makeup-melbourne",
+    "glam-makeup-melbourne",
+    "editorial-makeup-melbourne",
+  ]);
+  const navRoute = servicePageRoutes.has(route) ? "services" : route;
 
   html = replaceOnce(html, /<title>[^<]*<\/title>/, `<title>${escapeHtml(title)}</title>`, "title");
   for (const [name, value] of [
@@ -68,9 +74,59 @@ export function renderRouteHtml(html, route, metadata = getRouteSeo(html)) {
   if (route !== "home") {
     html = replaceOnce(html, new RegExp(`(<div class="page)(" id="page-${route}")`), "$1 active$2", `${route} active page`);
     html = replaceOnce(html, /(<a class=")active(" href="\/" onclick="event\.preventDefault\(\);showPage\('home',this\);closeMobileNav\(\)">)/, "$1$2", "home active navigation");
-    html = replaceOnce(html, new RegExp(`(<a)( href="/${route}" onclick="event\\.preventDefault\\(\\);showPage\\('${route}',this\\);closeMobileNav\\(\\)">)`), "$1 class=\"active\"$2", `${route} active navigation`);
+    html = replaceOnce(html, new RegExp(`(<a)( href="/${navRoute}" onclick="event\\.preventDefault\\(\\);showPage\\('${navRoute}',this\\);closeMobileNav\\(\\)">)`), "$1 class=\"active\"$2", `${navRoute} active navigation`);
   } else {
     html = replaceOnce(html, /(<div class="page)(" id="page-home")/, "$1 active$2", "home active page");
   }
+
+  // The shared HTML shell also contains homepage FAQ schema; it must not be
+  // advertised as page-specific content on the other initial routes.
+  if (route !== "home") {
+    const jsonLdPattern = /(<script type="application\/ld\+json">)([\s\S]*?)(<\/script>)/;
+    const jsonLd = html.match(jsonLdPattern);
+    if (!jsonLd) throw new Error("Could not find JSON-LD script in index.html");
+    const schemas = JSON.parse(jsonLd[2]);
+    const pageSchemas = Array.isArray(schemas)
+      ? schemas.filter((schema) => schema["@type"] !== "FAQPage")
+      : schemas;
+    html = replaceOnce(
+      html,
+      jsonLdPattern,
+      `$1${JSON.stringify(pageSchemas).replace(/</g, "\\u003c")}$3`,
+      "JSON-LD script",
+    );
+  }
+
+  if (servicePageRoutes.has(route)) {
+    const serviceNames = {
+      "bridal-makeup-melbourne": "Bridal Makeup",
+      "glam-makeup-melbourne": "Glam Makeup",
+      "editorial-makeup-melbourne": "Editorial Makeup",
+    };
+    const breadcrumb = {
+      "@context": "https://schema.org",
+      "@type": "BreadcrumbList",
+      "itemListElement": [
+        { "@type": "ListItem", "position": 1, "name": "Home", "item": `${siteOrigin}/` },
+        { "@type": "ListItem", "position": 2, "name": "Services", "item": `${siteOrigin}/services` },
+        { "@type": "ListItem", "position": 3, "name": serviceNames[route], "item": url },
+      ],
+    };
+    const service = {
+      "@context": "https://schema.org",
+      "@type": "Service",
+      "name": serviceNames[route],
+      "serviceType": serviceNames[route],
+      "description",
+      "url",
+      "provider": { "@id": `${siteOrigin}/#business` },
+      "areaServed": { "@type": "City", "name": "Melbourne" },
+    };
+    const pageSchema = [breadcrumb, service]
+      .map((schema) => `<script type="application/ld+json">${JSON.stringify(schema).replace(/</g, "\\u003c")}</script>`)
+      .join("\n  ");
+    html = replaceOnce(html, /<\/head>/, `${pageSchema}\n</head>`, "head close");
+  }
+
   return html;
 }
