@@ -15,6 +15,44 @@ function escapeHtml(value) {
   return value.replace(/&/g, "&amp;").replace(/"/g, "&quot;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
 }
 
+function textFromMarkup(markup) {
+  const entities = {
+    amp: "&",
+    lt: "<",
+    gt: ">",
+    quot: "\"",
+    "#39": "'",
+    apos: "'",
+    nbsp: " ",
+  };
+  return markup
+    .replace(/<br\s*\/?>/gi, " ")
+    .replace(/<[^>]*>/g, " ")
+    .replace(/&(?:amp|lt|gt|quot|#39|apos|nbsp);/gi, (entity) =>
+      entities[entity.slice(1, -1).toLowerCase()] ?? entity)
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+function getVisibleFaqs(html) {
+  const pattern = /<div class="faq-item">\s*<button class="faq-q"[^>]*>([\s\S]*?)<span class="faq-q-icon">[\s\S]*?<\/button>\s*<div class="faq-a">\s*<p>([\s\S]*?)<\/p>\s*<\/div>\s*<\/div>/g;
+  const faqs = [...html.matchAll(pattern)].map((match) => ({
+    "@type": "Question",
+    name: textFromMarkup(match[1]),
+    acceptedAnswer: {
+      "@type": "Answer",
+      text: textFromMarkup(match[2]),
+    },
+  }));
+  if (!faqs.length || faqs.some((faq) => !faq.name || !faq.acceptedAnswer.text)) {
+    throw new Error("Could not extract complete visible FAQ content");
+  }
+  if (new Set(faqs.map((faq) => faq.name)).size !== faqs.length) {
+    throw new Error("Visible FAQ questions must be unique");
+  }
+  return faqs;
+}
+
 export function getRouteSeo(html) {
   const pages = html.match(/const validPages = \[([^\]]+)\];/);
   const seo = html.match(/const pageSeo = \{([\s\S]*?)\n  \};/);
@@ -79,24 +117,30 @@ export function renderRouteHtml(html, route, metadata = getRouteSeo(html)) {
     html = replaceOnce(html, /(<div class="page)(" id="page-home")/, "$1 active$2", "home active page");
   }
 
-  // The shared HTML shell also contains homepage FAQ schema; it must not be
-  // advertised as page-specific content on the other initial routes.
-  if (route !== "home") {
-    const jsonLdPattern = /(<script type="application\/ld\+json">)([\s\S]*?)(<\/script>)/;
-    const jsonLd = html.match(jsonLdPattern);
-    if (!jsonLd) throw new Error("Could not find JSON-LD script in index.html");
-    const schemas = JSON.parse(jsonLd[2]);
-    const pageSchemas = Array.isArray(schemas)
-      ? schemas.filter((schema) => schema["@type"] !== "FAQPage")
-      : schemas;
-    html = replaceOnce(
-      html,
-      jsonLdPattern,
-      (match, openTag, schemaJson, closeTag) =>
-        `${openTag}${JSON.stringify(pageSchemas).replace(/</g, "\\u003c")}${closeTag}`,
-      "JSON-LD script",
-    );
+  // Keep FAQ structured data in sync with visible FAQ copy on home only.
+  const jsonLdPattern = /(<script type="application\/ld\+json">)([\s\S]*?)(<\/script>)/;
+  const jsonLd = html.match(jsonLdPattern);
+  if (!jsonLd) throw new Error("Could not find JSON-LD script in index.html");
+  const schemas = JSON.parse(jsonLd[2]);
+  if (!Array.isArray(schemas)) throw new Error("Expected JSON-LD schema array");
+  let faqSchemaFound = false;
+  const pageSchemas = route === "home"
+    ? schemas.map((schema) => {
+      if (schema["@type"] !== "FAQPage") return schema;
+      faqSchemaFound = true;
+      return { ...schema, mainEntity: getVisibleFaqs(html) };
+    })
+    : schemas.filter((schema) => schema["@type"] !== "FAQPage");
+  if (route === "home" && !faqSchemaFound) {
+    throw new Error("Could not find FAQPage schema to synchronize with visible FAQs");
   }
+  html = replaceOnce(
+    html,
+    jsonLdPattern,
+    (match, openTag, schemaJson, closeTag) =>
+      `${openTag}${JSON.stringify(pageSchemas).replace(/</g, "\\u003c")}${closeTag}`,
+    "JSON-LD script",
+  );
 
   if (servicePageRoutes.has(route)) {
     const serviceNames = {
