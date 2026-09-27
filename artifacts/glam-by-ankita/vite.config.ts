@@ -38,7 +38,7 @@ export default defineConfig({
         // Mirror the explicit production routes while leaving assets and Vite internals alone.
         server.middlewares.use(async (req, res, next) => {
           const pathname = new URL(req.url || "/", "http://localhost").pathname;
-          if (req.method !== "GET" || !req.headers.accept?.includes("text/html") ||
+          if (req.method !== "GET" ||
               pathname === "/" || pathname === "/index.html" ||
               pathname.startsWith("/api/") || pathname === "/api" ||
               pathname.startsWith("/@") || pathname.startsWith("/__") ||
@@ -66,8 +66,7 @@ export default defineConfig({
             res.end();
             return;
           }
-          if (!req.headers.accept?.includes("text/html") ||
-              pathname === "/" || pathname === "/index.html" ||
+          if (pathname === "/" || pathname === "/index.html" ||
               pathname.startsWith("/api/") || pathname === "/api" ||
               pathname.startsWith("/@") || pathname.startsWith("/__") ||
               /\.[^/]+$/.test(pathname) ||
