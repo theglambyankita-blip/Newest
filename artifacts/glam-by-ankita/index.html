@@ -639,6 +639,11 @@
     .svc-desc { font-size: 0.85rem; line-height: 1.8; color: var(--text-light); }
     .svc-tag { display: inline-block; margin-top: 0.8rem; font-size: 0.7rem; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; color: var(--gold); }
     .svc-price { font-family: 'Playfair Display', serif; font-size: 1.1rem; font-weight: 700; color: var(--text-dark); margin-top: 0.9rem; margin-bottom: 0; }
+    .bridal-styles { position: relative; z-index: 2; margin-top: 1rem; }
+    .bridal-styles details { border-top: 1px solid var(--blush); padding: 0.65rem 0; }
+    .bridal-styles summary { cursor: pointer; color: var(--text-mid); font-size: 0.85rem; font-weight: 700; }
+    .bridal-styles summary:focus-visible { outline: 2px solid var(--gold-dark); outline-offset: 4px; }
+    .bridal-styles p { font-size: 0.82rem; line-height: 1.75; color: var(--text-mid); margin-top: 0.6rem; }
 
 
     /* FEATURED WORK */
@@ -1608,7 +1613,34 @@
       <div class="svc-card hover-lift" data-cat="glam"><div class="svc-emoji">✨</div><h3 class="svc-name">Full Glam</h3><p class="svc-desc">Turn heads and own the room. Sultry eyes, a flawless base, and lash-forward drama — made for moments that deserve to be remembered.</p><p class="svc-price">$150</p><span class="svc-tag">Glam</span></div>
       <div class="svc-card hover-lift" data-cat="glam"><div class="svc-emoji">🎉</div><h3 class="svc-name">Party Glam</h3><p class="svc-desc">Wear the night. Bold, fun, and celebration-ready — whether it's a birthday bash, dinner date, or a night you'll want to remember forever.</p><p class="svc-price">$120</p><span class="svc-tag">Glam</span></div>
       <div class="svc-card hover-lift" data-cat="glam"><div class="svc-emoji">🎓</div><h3 class="svc-name">Formal Makeup</h3><p class="svc-desc">Sophisticated and enduring. Polished long-wear makeup that keeps you camera-ready from the ceremony through to the very last moment.</p><p class="svc-price">$120</p><span class="svc-tag">Glam</span></div>
-      <div class="svc-card hover-lift" data-cat="bridal"><div class="svc-emoji">👰</div><h3 class="svc-name">Bridal Makeup</h3><p class="svc-desc">Your most iconic look. Meticulously crafted bridal artistry designed to carry you through every moment of your day — and photograph beautifully doing it.</p><p class="svc-price">$180</p><span class="svc-tag">Bridal</span></div>
+      <div class="svc-card hover-lift" data-cat="bridal" id="bridal-makeup-service">
+        <div class="svc-emoji">👰</div><h3 class="svc-name">Bridal Makeup</h3>
+        <p class="svc-desc">Your most iconic look. Meticulously crafted bridal artistry designed to carry you through every moment of your day — and photograph beautifully doing it.</p>
+        <p class="svc-price">$180</p><span class="svc-tag">Bridal</span>
+        <div class="bridal-styles">
+          <p>Explore bridal styles below. These are starting points, not rules—your finish, colours and level of glam are tailored to your preferences, outfit and ceremony.</p>
+          <details>
+            <summary>Western Bridal Makeup</summary>
+            <p>Soft-focus skin with a satin, matte or softly radiant finish, complemented by neutral or rose-toned eyes, wispy lashes and softly shaped brows. Nude, dusty pink or rose lips create a refined look for white or ivory gowns.</p>
+            <p>Choose a natural, barely-there finish or Western glam with sculpted definition, winged eyeliner and a classic red lip.</p>
+          </details>
+          <details>
+            <summary>South Asian Bridal Makeup</summary>
+            <p>Looks inspired by Indian, Pakistani, Bangladeshi and Sri Lankan bridal traditions, tailored to your ceremony, richly coloured outfits and jewellery. Options include a fuller-coverage matte or demi-matte base, gold or bronze eyes, kajal, smoky liner and voluminous lashes.</p>
+            <p>Choose bold definition with red, maroon or plum lips, or soft-glam fusion with defined eyes, luminous skin and glossy nude lips.</p>
+          </details>
+          <details>
+            <summary>East Asian Bridal Makeup</summary>
+            <p><strong>Korean bridal / glass skin:</strong> A hydrated, luminous finish with soft brows, peach or pink eyeshadow, minimal contouring and softly graduated lip colour.</p>
+            <p><strong>Chinese bridal &amp; Douyin-inspired:</strong> A polished matte base with precise highlights, defined eyes, elongated liner and reflective shimmer on the lids and beneath the eyes. Adjust the contrast and radiance to your preferred look.</p>
+          </details>
+          <details>
+            <summary>Middle Eastern / Arabic Bridal Makeup</summary>
+            <p>Full-glam bridal styling with a fuller-coverage matte base, sculpted contouring and precise definition. Bold elongated liner, warm smoky or cut-crease eyes and dramatic lashes bring emphasis to the eyes.</p>
+            <p>Pair the look with defined nude, mauve or classic red lips, with the intensity tailored to your preferences.</p>
+          </details>
+        </div>
+      </div>
       <div class="svc-card hover-lift" data-cat="bridal"><div class="svc-emoji">🌸</div><h3 class="svc-name">Bridal Party Makeup</h3><p class="svc-desc">A harmonious, beautiful wedding party. Individually tailored looks for your bridesmaids and loved ones — all in seamless sync with your bridal vision.</p><p class="svc-price">$120 <span style="font-size:0.75rem;font-weight:500;color:var(--text-light);">per person</span></p><span class="svc-tag">Bridal</span></div>
       <div class="svc-card hover-lift" data-cat="creative"><div class="svc-emoji">🎨</div><h3 class="svc-name">Editorial Makeup</h3><p class="svc-desc">Where artistry meets intention. Striking makeup crafted for the lens — fashion campaigns, magazine spreads, and creative direction that demands attention.</p><p class="svc-price">From $140</p><span class="svc-tag">Creative</span></div>
       <div class="svc-card hover-lift" data-cat="creative"><div class="svc-emoji">🎭</div><h3 class="svc-name">Festival &amp; Cultural Makeup</h3><p class="svc-desc">Vivid, expressive, and deeply personal. From cultural ceremonies to festival moments — makeup that honours your story and makes every look unforgettable.</p><p class="svc-price">From $120</p><span class="svc-tag">Creative</span></div>
