@@ -70,7 +70,7 @@ export default defineConfig({
               pathname.startsWith("/api/") || pathname === "/api" ||
               pathname.startsWith("/@") || pathname.startsWith("/__") ||
               /\.[^/]+$/.test(pathname) ||
-              /^\/(?:about|services|gallery|contact|bridal-makeup-melbourne|glam-makeup-melbourne|editorial-makeup-melbourne)\/?$/.test(pathname) ||
+              /^\/(?:about|services|gallery|contact|bridal-makeup-melbourne|glam-makeup-melbourne|editorial-makeup-melbourne|destination-weddings)\/?$/.test(pathname) ||
               /^\/(?:p|r|account|sign-in|sign-up)\/?$/.test(pathname) ||
               /^\/p\/[a-f0-9]{64}$/.test(pathname) ||
               /^\/sign-(?:in|up)\/.+/.test(pathname)) return next();
