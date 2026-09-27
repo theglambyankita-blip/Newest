@@ -92,7 +92,8 @@ export function renderRouteHtml(html, route, metadata = getRouteSeo(html)) {
     html = replaceOnce(
       html,
       jsonLdPattern,
-      `$1${JSON.stringify(pageSchemas).replace(/</g, "\\u003c")}$3`,
+      (match, openTag, schemaJson, closeTag) =>
+        `${openTag}${JSON.stringify(pageSchemas).replace(/</g, "\\u003c")}${closeTag}`,
       "JSON-LD script",
     );
   }
@@ -117,8 +118,8 @@ export function renderRouteHtml(html, route, metadata = getRouteSeo(html)) {
       "@type": "Service",
       "name": serviceNames[route],
       "serviceType": serviceNames[route],
-      "description",
-      "url",
+      description,
+      url,
       "provider": { "@id": `${siteOrigin}/#business` },
       "areaServed": { "@type": "City", "name": "Melbourne" },
     };
