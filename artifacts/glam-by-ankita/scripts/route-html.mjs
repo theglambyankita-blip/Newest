@@ -80,6 +80,7 @@ export function renderRouteHtml(html, route, metadata = getRouteSeo(html)) {
     "bridal-makeup-melbourne",
     "glam-makeup-melbourne",
     "editorial-makeup-melbourne",
+    "destination-weddings",
   ]);
   const navRoute = servicePageRoutes.has(route) ? "services" : route;
 
@@ -147,6 +148,7 @@ export function renderRouteHtml(html, route, metadata = getRouteSeo(html)) {
       "bridal-makeup-melbourne": "Bridal Makeup",
       "glam-makeup-melbourne": "Glam Makeup",
       "editorial-makeup-melbourne": "Editorial Makeup",
+      "destination-weddings": "Destination Weddings",
     };
     const breadcrumb = {
       "@context": "https://schema.org",

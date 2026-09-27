@@ -10,7 +10,8 @@
   },
   "redirects": [
     { "source": "/melbourne-cbd-makeup-artist", "destination": "/services", "permanent": true },
-    { "source": "/melbourne-cbd-makeup-artist/", "destination": "/services", "permanent": true }
+    { "source": "/melbourne-cbd-makeup-artist/", "destination": "/services", "permanent": true },
+    { "source": "/destination-weddings/", "destination": "/destination-weddings", "permanent": true }
   ],
   "rewrites": [
     { "source": "/r", "destination": "/api/r" },
@@ -29,6 +30,7 @@
     { "source": "/glam-makeup-melbourne/", "destination": "/glam-makeup-melbourne/index.html" },
     { "source": "/editorial-makeup-melbourne", "destination": "/editorial-makeup-melbourne/index.html" },
     { "source": "/editorial-makeup-melbourne/", "destination": "/editorial-makeup-melbourne/index.html" },
+    { "source": "/destination-weddings", "destination": "/destination-weddings/index.html" },
     { "source": "/p", "destination": "/index.html" },
     { "source": "/p/:token([a-f0-9]{64})", "destination": "/index.html" },
     { "source": "/account", "destination": "/index.html" },
