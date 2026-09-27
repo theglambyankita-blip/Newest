@@ -63,6 +63,30 @@ from = "/contact/"
 to = "/contact/index.html"
 
 [[services.production.rewrites]]
+from = "/bridal-makeup-melbourne"
+to = "/bridal-makeup-melbourne/index.html"
+
+[[services.production.rewrites]]
+from = "/bridal-makeup-melbourne/"
+to = "/bridal-makeup-melbourne/index.html"
+
+[[services.production.rewrites]]
+from = "/glam-makeup-melbourne"
+to = "/glam-makeup-melbourne/index.html"
+
+[[services.production.rewrites]]
+from = "/glam-makeup-melbourne/"
+to = "/glam-makeup-melbourne/index.html"
+
+[[services.production.rewrites]]
+from = "/editorial-makeup-melbourne"
+to = "/editorial-makeup-melbourne/index.html"
+
+[[services.production.rewrites]]
+from = "/editorial-makeup-melbourne/"
+to = "/editorial-makeup-melbourne/index.html"
+
+[[services.production.rewrites]]
 from = "/*"
 to = "/index.html"
 
