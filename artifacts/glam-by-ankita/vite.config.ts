@@ -56,6 +56,34 @@ export default defineConfig({
           }
         });
       },
+      configurePreviewServer(server) {
+        server.middlewares.use(async (req, res, next) => {
+          const pathname = new URL(req.url || "/", "http://localhost").pathname;
+          if (req.method !== "GET") return next();
+          if (pathname === "/melbourne-cbd-makeup-artist" || pathname === "/melbourne-cbd-makeup-artist/") {
+            res.statusCode = 308;
+            res.setHeader("Location", "/services");
+            res.end();
+            return;
+          }
+          if (!req.headers.accept?.includes("text/html") ||
+              pathname === "/" || pathname === "/index.html" ||
+              pathname.startsWith("/api/") || pathname === "/api" ||
+              pathname.startsWith("/@") || pathname.startsWith("/__") ||
+              /\.[^/]+$/.test(pathname) ||
+              /^\/(?:about|services|gallery|contact|bridal-makeup-melbourne|glam-makeup-melbourne|editorial-makeup-melbourne)\/?$/.test(pathname) ||
+              /^\/(?:p|r|account|sign-in|sign-up)\/?$/.test(pathname) ||
+              /^\/p\/[a-f0-9]{64}$/.test(pathname) ||
+              /^\/sign-(?:in|up)\/.+/.test(pathname)) return next();
+          try {
+            res.statusCode = 404;
+            res.setHeader("Content-Type", "text/html; charset=utf-8");
+            res.end(await readFile(path.resolve(__dirname, "public/404.html"), "utf8"));
+          } catch (error) {
+            next(error);
+          }
+        });
+      },
     },
   ],
   resolve: {
