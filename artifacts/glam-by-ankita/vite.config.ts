@@ -17,6 +17,12 @@ export default defineConfig({
         server.middlewares.use(async (req, res, next) => {
           const route = (req.url || "").split("?")[0].replace(/^\/|\/$/g, "");
           if (req.method !== "GET" || !route || route.includes("/")) return next();
+          if (route === "melbourne-cbd-makeup-artist") {
+            res.statusCode = 308;
+            res.setHeader("Location", "/services");
+            res.end();
+            return;
+          }
           try {
             const source = await readFile(path.resolve(__dirname, "index.html"), "utf8");
             const metadata = getRouteSeo(source);

@@ -1,4 +1,8 @@
 {
+  "redirects": [
+    { "source": "/melbourne-cbd-makeup-artist", "destination": "/services", "permanent": true },
+    { "source": "/melbourne-cbd-makeup-artist/", "destination": "/services", "permanent": true }
+  ],
   "rewrites": [
     { "source": "/about", "destination": "/about/index.html" },
     { "source": "/about/", "destination": "/about/index.html" },
@@ -6,8 +10,6 @@
     { "source": "/services/", "destination": "/services/index.html" },
     { "source": "/gallery", "destination": "/gallery/index.html" },
     { "source": "/gallery/", "destination": "/gallery/index.html" },
-    { "source": "/melbourne-cbd-makeup-artist", "destination": "/melbourne-cbd-makeup-artist/index.html" },
-    { "source": "/melbourne-cbd-makeup-artist/", "destination": "/melbourne-cbd-makeup-artist/index.html" },
     { "source": "/contact", "destination": "/contact/index.html" },
     { "source": "/contact/", "destination": "/contact/index.html" },
     {

@@ -26,7 +26,7 @@ export function getRouteSeo(html) {
   }
   const metadata = {};
   for (const route of routes) {
-    const key = route === "melbourne-cbd-makeup-artist" ? "'melbourne-cbd-makeup-artist'" : route;
+    const key = /^[a-zA-Z_$][\w$]*$/.test(route) ? route : `'${route}'`;
     const entry = seo[1].match(new RegExp(`(?:^|\\n)\\s*${key}:\\s*\\{\\s*title:\\s*'([^']+)',\\s*description:\\s*'([^']+)'\\s*\\}`, "u"));
     if (!entry) throw new Error(`Missing pageSeo metadata for ${route}`);
     metadata[route] = { title: entry[1], description: entry[2] };

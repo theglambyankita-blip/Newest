@@ -28,3 +28,14 @@ for (const route of Object.keys(metadata)) {
   await writeFile(output, renderRouteHtml(built, route, metadata));
   console.log(`Generated ${path.relative(root, output)}`);
 }
+
+// Legacy URL remains a redirect only; it is not a public page or sitemap route.
+const legacyRedirect = path.join(root, "dist/melbourne-cbd-makeup-artist/index.html");
+await mkdir(path.dirname(legacyRedirect), { recursive: true });
+await writeFile(legacyRedirect, `<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><title>Redirecting to Makeup Services</title>
+<meta name="robots" content="noindex"><meta http-equiv="refresh" content="0;url=/services">
+<link rel="canonical" href="${siteOrigin}/services"></head>
+<body><p>This page has moved to <a href="/services">Makeup Services</a>.</p>
+<script>location.replace('/services' + location.search + location.hash)</script></body></html>`);
+console.log(`Generated ${path.relative(root, legacyRedirect)} (legacy redirect)`);

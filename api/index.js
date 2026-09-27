@@ -533,6 +533,54 @@ async function ensureAdminTables() {
   try { await db.query('ALTER TABLE bookings ADD COLUMN IF NOT EXISTS booking_id TEXT'); } catch {}
 }
 
+// Extend the existing bookings table without changing or replacing its data.
+async function ensureManualBookingColumns() {
+  const db = getPool();
+  await db.query(`CREATE TABLE IF NOT EXISTS bookings (id SERIAL PRIMARY KEY, client_name TEXT, client_email TEXT, service TEXT, booking_date TEXT, booking_time TEXT, location TEXT, num_people TEXT, total_aud NUMERIC(10,2), payment_method TEXT, status TEXT DEFAULT 'confirmed', stripe_payment_intent_id TEXT, booking_id TEXT, created_at TIMESTAMPTZ DEFAULT NOW())`);
+  await db.query('ALTER TABLE bookings ADD COLUMN IF NOT EXISTS booking_id TEXT');
+  await db.query('ALTER TABLE bookings ADD COLUMN IF NOT EXISTS client_phone TEXT');
+  await db.query('ALTER TABLE bookings ADD COLUMN IF NOT EXISTS source TEXT');
+}
+
+// Save only. Manual bookings must never trigger checkout, emails, or payment records.
+app.post('/admin/bookings/manual', async (req, res) => {
+  if (!await validateAdminToken(req.query.token)) return res.status(403).json({ error:'Unauthorized' });
+  const data = req.body || {};
+  const text = (key, max) => typeof data[key] === 'string' ? data[key].trim().slice(0, max + 1) : '';
+  const name = text('name', 200), email = text('email', 254), phone = text('phone', 60);
+  const date = text('date', 10), time = text('time', 5), service = text('service', 200);
+  const people = text('people', 10), location = text('location', 500);
+  const price = data.price;
+  if (!name || name.length > 200 || !service || service.length > 200)
+    return res.status(400).json({ error:'Name and service are required (maximum 200 characters each).' });
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(date) || !Number.isFinite(Date.parse(date + 'T00:00:00Z')) || new Date(date + 'T00:00:00Z').toISOString().slice(0,10) !== date)
+    return res.status(400).json({ error:'Enter a valid booking date.' });
+  if (!/^([01]\d|2[0-3]):[0-5]\d$/.test(time))
+    return res.status(400).json({ error:'Enter a valid booking time.' });
+  if (email.length > 254 || (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)))
+    return res.status(400).json({ error:'Enter a valid email address or leave it blank.' });
+  if (phone.length > 60 || location.length > 500)
+    return res.status(400).json({ error:'Phone or location is too long.' });
+  if (people && (!/^[1-9]\d*$/.test(people) || Number(people) > 999))
+    return res.status(400).json({ error:'People must be a whole number between 1 and 999.' });
+  const amount = price === '' || price === null || price === undefined ? null : Number(price);
+  if (amount !== null && (typeof price !== 'string' && typeof price !== 'number' || !/^\d+(?:\.\d{1,2})?$/.test(String(price).trim()) || !Number.isFinite(amount) || amount > 99999999.99))
+    return res.status(400).json({ error:'Price must be a non-negative AUD amount with up to two decimal places, or blank.' });
+  try {
+    await ensureManualBookingColumns();
+    const bookingId = generateBookingId();
+    const { rows } = await getPool().query(
+      `INSERT INTO bookings (client_name,client_email,client_phone,booking_date,booking_time,service,num_people,location,total_aud,payment_method,status,source,booking_id)
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,'manual','confirmed','manual',$10) RETURNING id,booking_id`,
+      [name,email || null,phone || null,date,time,service,people || null,location || null,amount,bookingId]
+    );
+    res.status(201).json({ ok:true, id:rows[0].id, booking_id:rows[0].booking_id });
+  } catch (e) {
+    console.error('Manual booking save error:', e);
+    res.status(500).json({ error:'Could not save booking. Please try again.' });
+  }
+});
+
 async function saveAdminToken(token) {
   const db = getPool();
   const expiresAt = new Date(); expiresAt.setMonth(expiresAt.getMonth()+3);
@@ -594,14 +642,14 @@ app.get('/admin', async (req, res) => {
   const upcoming = allBookings.filter(b=>b.booking_date&&b.booking_date>=today);
   const totalRevenue = allBookings.filter(b=>b.payment_method==='card'&&b.total_aud).reduce((s,b)=>s+Number(b.total_aud||0),0);
   const thisMonthPrefix = today.slice(0,7);
-  const thisMonthRevenue = allBookings.filter(b=>b.booking_date&&b.booking_date.startsWith(thisMonthPrefix)&&b.total_aud).reduce((s,b)=>s+Number(b.total_aud||0),0);
+  const thisMonthRevenue = allBookings.filter(b=>b.payment_method==='card'&&b.booking_date&&b.booking_date.startsWith(thisMonthPrefix)&&b.total_aud).reduce((s,b)=>s+Number(b.total_aud||0),0);
 
   const view = (req.query.view||'all').toLowerCase();
   const displayed = view==='upcoming'?upcoming:view==='past'?allBookings.filter(b=>!b.booking_date||b.booking_date<today):view==='card'?allBookings.filter(b=>b.payment_method==='card'):allBookings;
 
   const bookingRows = displayed.map((b,i)=>{
-    const badge = b.payment_method==='cash'?`<span style="background:#f0e8c8;color:#8a6a00;padding:2px 8px;border-radius:20px;font-size:0.75rem;font-weight:700;">Cash</span>`:`<span style="background:#e8f4e8;color:#2c6e3f;padding:2px 8px;border-radius:20px;font-size:0.75rem;font-weight:700;">Card</span>`;
-    return `<tr style="border-bottom:1px solid #f0ddd6;cursor:pointer;" onclick="this.nextElementSibling.style.display=this.nextElementSibling.style.display==='none'?'table-row':'none'"><td style="padding:10px 12px;font-weight:600;">${esc(b.client_name||'—')}</td><td style="padding:10px 12px;font-size:0.85rem;">${esc(b.client_email||'—')}</td><td style="padding:10px 12px;font-size:0.85rem;">${esc(b.service||'—')}</td><td style="padding:10px 12px;font-size:0.85rem;white-space:nowrap;">${esc(b.booking_date||'—')}${b.booking_time?` ${esc(b.booking_time)}`:''}</td><td style="padding:10px 12px;font-size:0.85rem;">${b.total_aud?`A$${Number(b.total_aud).toFixed(2)}`:'—'}</td><td style="padding:10px 12px;">${badge}</td></tr><tr style="display:none;background:#fdf8f4;"><td colspan="6" style="padding:12px 20px;font-size:0.83rem;color:#4a2e22;">${b.location?`<strong>Location:</strong> ${esc(b.location)} &nbsp;`:''} ${b.num_people?`<strong>People:</strong> ${esc(b.num_people)} &nbsp;`:''} ${b.booking_id?`<strong>Ref:</strong> <code>${esc(b.booking_id)}</code> &nbsp;`:''}</td></tr>`;
+    const badge = b.source==='manual'||b.payment_method==='manual'?`<span style="background:#fdf0ee;color:#6b3d2e;padding:2px 8px;border-radius:20px;font-size:0.75rem;font-weight:700;">Manual</span>`:b.payment_method==='cash'?`<span style="background:#f0e8c8;color:#8a6a00;padding:2px 8px;border-radius:20px;font-size:0.75rem;font-weight:700;">Cash</span>`:`<span style="background:#e8f4e8;color:#2c6e3f;padding:2px 8px;border-radius:20px;font-size:0.75rem;font-weight:700;">Card</span>`;
+    return `<tr style="border-bottom:1px solid #f0ddd6;cursor:pointer;" onclick="this.nextElementSibling.style.display=this.nextElementSibling.style.display==='none'?'table-row':'none'"><td style="padding:10px 12px;font-weight:600;">${esc(b.client_name||'—')}</td><td style="padding:10px 12px;font-size:0.85rem;">${esc(b.client_email||'—')}</td><td style="padding:10px 12px;font-size:0.85rem;">${esc(b.service||'—')}</td><td style="padding:10px 12px;font-size:0.85rem;white-space:nowrap;">${esc(b.booking_date||'—')}${b.booking_time?` ${esc(b.booking_time)}`:''}</td><td style="padding:10px 12px;font-size:0.85rem;">${b.total_aud!=null?`A$${Number(b.total_aud).toFixed(2)}`:'—'}</td><td style="padding:10px 12px;">${badge}</td></tr><tr style="display:none;background:#fdf8f4;"><td colspan="6" style="padding:12px 20px;font-size:0.83rem;color:#4a2e22;">${b.client_phone?`<strong>Phone:</strong> ${esc(b.client_phone)} &nbsp;`:''} ${b.location?`<strong>Location:</strong> ${esc(b.location)} &nbsp;`:''} ${b.num_people?`<strong>People:</strong> ${esc(b.num_people)} &nbsp;`:''} ${b.booking_id?`<strong>Ref:</strong> <code>${esc(b.booking_id)}</code> &nbsp;`:''} ${b.status?`<strong>Status:</strong> ${esc(b.status)}`:''}</td></tr>`;
   }).join('');
 
   const baseUrl = `/api/admin?token=${encodeURIComponent(token)}`;
@@ -775,6 +823,27 @@ app.get('/admin', async (req, res) => {
 <div class="content">
   <div class="section"><div class="section-title">📋 Bookings (${displayed.length})</div>
     <div class="toolbar">${tabBtn('all','All ('+allBookings.length+')')}${tabBtn('upcoming','Upcoming ('+upcoming.length+')')}${tabBtn('past','Past')}${tabBtn('card','Card payments')}</div>
+    <button class="btn" type="button" onclick="toggleManualBooking()" id="manual-toggle" style="margin-bottom:14px;">＋ Add Manual Booking</button>
+    <div class="card" id="manual-booking-card" style="display:none;padding:20px 24px;margin-bottom:16px;">
+      <h3 style="font-size:1rem;color:#6b3d2e;margin:0 0 8px;">Add Manual Booking</h3>
+      <p style="font-size:0.82rem;color:#6b3d2e;margin:0 0 18px;">Save to bookings only. No payment is charged and no email is sent. Price is optional and is not recorded as paid revenue.</p>
+      <form id="manual-booking-form" onsubmit="saveManualBooking(event)">
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:0 14px;">
+          <div class="field"><label for="mb-name">Client name *</label><input id="mb-name" name="name" type="text" maxlength="200" required></div>
+          <div class="field"><label for="mb-email">Email</label><input id="mb-email" name="email" type="email" maxlength="254"></div>
+          <div class="field"><label for="mb-phone">Phone</label><input id="mb-phone" name="phone" type="tel" maxlength="60"></div>
+          <div class="field"><label for="mb-date">Date *</label><input id="mb-date" name="date" type="date" required></div>
+          <div class="field"><label for="mb-time">Time *</label><input id="mb-time" name="time" type="time" required></div>
+          <div class="field"><label for="mb-service">Service *</label><input id="mb-service" name="service" type="text" maxlength="200" required></div>
+          <div class="field"><label for="mb-people">Number of people</label><input id="mb-people" name="people" type="number" min="1" max="999" step="1"></div>
+          <div class="field"><label for="mb-location">Location / address</label><input id="mb-location" name="location" type="text" maxlength="500"></div>
+          <div class="field"><label for="mb-price">Price (AUD, optional)</label><input id="mb-price" name="price" type="number" min="0" max="99999999.99" step="0.01"></div>
+        </div>
+        <div class="alert alert-error" id="manual-error" role="alert"></div>
+        <button class="btn" type="submit" id="manual-save">Save Booking ✦</button>
+        <button type="button" onclick="toggleManualBooking()" style="padding:12px;border:0;background:transparent;color:#6b3d2e;cursor:pointer;">Cancel</button>
+      </form>
+    </div>
     <div class="card"><div class="table-wrap"><table><thead><tr><th>Client</th><th>Email</th><th>Service</th><th>Date & Time</th><th>Amount</th><th>Payment</th></tr></thead><tbody>${bookingRows}</tbody></table></div></div>
   </div>
   <div class="section"><div class="section-title">✉️ Send Email to Client</div>
@@ -807,6 +876,37 @@ var _galPhotos=[];
 var _galEditFilename='';
 var _galEditPos='center center';
 var _galUploadPos='center center';
+
+function toggleManualBooking(){
+  var card=document.getElementById('manual-booking-card');
+  var show=card.style.display==='none';
+  card.style.display=show?'block':'none';
+  document.getElementById('manual-toggle').setAttribute('aria-expanded',String(show));
+  if(show)document.getElementById('mb-name').focus();
+}
+async function saveManualBooking(e){
+  e.preventDefault();
+  var form=document.getElementById('manual-booking-form');
+  var btn=document.getElementById('manual-save');
+  var err=document.getElementById('manual-error');
+  err.style.display='none';
+  var data=Object.fromEntries(new FormData(form).entries());
+  btn.disabled=true;
+  btn.textContent='Saving…';
+  try{
+    var response=await fetch('/api/admin/bookings/manual?token='+encodeURIComponent(TOKEN),{
+      method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(data)
+    });
+    var result=await response.json();
+    if(!response.ok)throw new Error(result.error||'Could not save booking.');
+    window.location.href='/api/admin?token='+encodeURIComponent(TOKEN);
+  }catch(error){
+    err.textContent=error.message||'Could not save booking. Please try again.';
+    err.style.display='block';
+    btn.disabled=false;
+    btn.textContent='Save Booking ✦';
+  }
+}
 
 // ── Shared position tool ──────────────────────────────────────────
 function galSetPos(e,box,imgId,dotId,valId,isUpload){
