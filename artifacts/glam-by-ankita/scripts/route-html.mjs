@@ -167,7 +167,12 @@ export function renderRouteHtml(html, route, metadata = getRouteSeo(html)) {
       description,
       url,
       "provider": { "@id": `${siteOrigin}/#business` },
-      "areaServed": { "@type": "City", "name": "Melbourne" },
+      "areaServed": route === "destination-weddings"
+        ? [
+          "Interstate wedding destinations in Australia, subject to travel confirmation",
+          "International wedding destinations, subject to travel confirmation",
+        ]
+        : { "@type": "City", "name": "Melbourne" },
     };
     const pageSchema = [breadcrumb, service]
       .map((schema) => `<script type="application/ld+json">${JSON.stringify(schema).replace(/</g, "\\u003c")}</script>`)
