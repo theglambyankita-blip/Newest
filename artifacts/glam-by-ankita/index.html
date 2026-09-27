@@ -459,8 +459,7 @@
     .seo-related-links { display: flex; flex-wrap: wrap; gap: 0.7rem 1.2rem; margin-top: 1rem; }
     .seo-related-links a { color: var(--gold-dark); font-weight: 700; text-underline-offset: 3px; }
     .svc-card .seo-card-link { display: block; width: fit-content; margin-top: 0.8rem; color: var(--gold-dark); font-size: 0.82rem; font-weight: 700; text-underline-offset: 3px; }
-    .destination-quote-section { scroll-margin-top: 7rem; }
-    .destination-quote-panel { max-width: 900px; margin: 1.5rem auto 0; padding: clamp(1.25rem, 4vw, 2.5rem); background: var(--white); border: 1px solid rgba(201,169,110,0.3); border-radius: 12px; box-shadow: 0 14px 40px rgba(44,24,16,0.08); }
+    .destination-quote-panel { max-width: 900px; margin: 1.5rem auto 0; padding: clamp(1.25rem, 4vw, 2.5rem); background: var(--white); border: 1px solid rgba(201,169,110,0.3); border-radius: 12px; box-shadow: 0 14px 40px rgba(44,24,16,0.08); scroll-margin-top: 7rem; }
     .destination-quote-panel h2 { margin: 0 0 0.8rem; color: var(--text-dark); font-family: 'Playfair Display', serif; font-size: clamp(1.65rem, 3vw, 2.2rem); }
     .destination-quote-panel .frow { align-items: start; }
     .destination-quote-panel .fgroup input, .destination-quote-panel .fgroup select, .destination-quote-panel .fgroup textarea { width: 100%; }
@@ -1934,8 +1933,8 @@
         <a href="/services" onclick="event.preventDefault();showPage('services',null)">See all makeup services</a>
       </div>
     </section>
-    <section class="seo-detail-section destination-quote-section" id="destination-wedding-quote" aria-labelledby="destination-quote-heading">
-      <div class="destination-quote-panel">
+    <section class="seo-detail-section destination-quote-section" aria-labelledby="destination-quote-heading">
+      <div class="destination-quote-panel" id="destination-wedding-quote">
         <p class="eyebrow">Destination wedding enquiry</p>
         <h2 id="destination-quote-heading">Request a destination wedding quote</h2>
         <p class="body-text" style="max-width:760px;margin:0 0 1.2rem;">Share your wedding location, date and makeup plans. Ankita will confirm availability and discuss the makeup service and travel costs for your specific celebration.</p>
