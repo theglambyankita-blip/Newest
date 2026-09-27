@@ -475,6 +475,9 @@
       .seo-detail-section { padding-top: 2.4rem; }
       .destination-quote-panel { padding: 1.1rem; }
     }
+    @media (max-width: 600px) {
+      body:has(#page-destination-weddings.active) #scroll-top-btn { display: none; }
+    }
 
     /* CINEMATIC ANIMATIONS */
     [data-anim] { opacity: 0; will-change: opacity, transform; transition: opacity 0.8s cubic-bezier(0.16,1,0.3,1), transform 0.8s cubic-bezier(0.16,1,0.3,1); }
@@ -1929,7 +1932,6 @@
       <div class="seo-related-links" aria-label="Related pages">
         <a href="/bridal-makeup-melbourne" onclick="event.preventDefault();showPage('bridal-makeup-melbourne',null)">Explore bridal makeup in Melbourne</a>
         <a href="/services" onclick="event.preventDefault();showPage('services',null)">See all makeup services</a>
-        <a href="#destination-wedding-quote">Get a destination wedding quote</a>
       </div>
     </section>
     <section class="seo-detail-section destination-quote-section" id="destination-wedding-quote" aria-labelledby="destination-quote-heading">
