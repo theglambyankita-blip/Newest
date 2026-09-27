@@ -4317,6 +4317,59 @@
     }
   }
 
+  async function submitDestinationQuote(event) {
+    event.preventDefault();
+    const form = document.getElementById('destination-quote-form');
+    const status = document.getElementById('destination-quote-status');
+    const button = document.getElementById('destination-quote-submit');
+    const files = document.getElementById('destination-files').files;
+    if (files.length > 5) {
+      status.hidden = false;
+      status.className = 'destination-quote-status error';
+      status.textContent = 'Please attach no more than 5 reference files.';
+      return;
+    }
+    if ([...files].some(file => file.size > 10 * 1024 * 1024)) {
+      status.hidden = false;
+      status.className = 'destination-quote-status error';
+      status.textContent = 'Each reference file must be 10 MB or smaller.';
+      return;
+    }
+
+    const originalText = button.textContent;
+    button.disabled = true;
+    button.textContent = 'Sending your enquiry…';
+    status.hidden = true;
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 20000);
+    try {
+      const formData = new FormData(form);
+      if (!files.length) formData.delete('files');
+      const response = await fetch('/api/send-email', {
+        method: 'POST',
+        body: formData,
+        signal: controller.signal,
+      });
+      const result = await response.json().catch(() => ({}));
+      if (!response.ok) throw new Error(result.error || 'Could not send your enquiry.');
+      form.reset();
+      status.hidden = false;
+      status.className = 'destination-quote-status success';
+      status.textContent = 'Thank you — your destination wedding quote request has been sent. Ankita will be in touch within 24–48 hours.';
+      status.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    } catch (error) {
+      status.hidden = false;
+      status.className = 'destination-quote-status error';
+      status.textContent = error instanceof Error && error.name === 'AbortError'
+        ? 'The request timed out. Please try again.'
+        : (error instanceof Error ? error.message : 'Could not send your enquiry. Please try again.');
+    } finally {
+      clearTimeout(timeout);
+      button.disabled = false;
+      button.textContent = originalText;
+    }
+  }
+
   // BACK TO FORM
   function backToForm() {
     document.getElementById('form-success-screen').classList.remove('show');
