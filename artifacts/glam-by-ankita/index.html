@@ -2247,7 +2247,8 @@
 <script>
 
   // PAGE NAVIGATION
-  const validPages = ['home','about','services','gallery','contact'];
+  const validPages = ['home','about','services','gallery','contact','bridal-makeup-melbourne','glam-makeup-melbourne','editorial-makeup-melbourne'];
+  const servicePageRoutes = ['bridal-makeup-melbourne','glam-makeup-melbourne','editorial-makeup-melbourne'];
   const pageSeo = {
     home: {
       title: 'Melbourne Makeup Artist | Bridal, Glam & Editorial | Ankita',
@@ -2268,6 +2269,18 @@
     contact: {
       title: 'Book a Melbourne CBD Makeup Artist | The Glam',
       description: 'Enquire about Western and South Asian bridal, glam, editorial, party, formal and cultural makeup in Southbank near Melbourne CBD. Mobile requests welcome.'
+    },
+    'bridal-makeup-melbourne': {
+      title: 'Bridal Makeup Melbourne | The Glam by Ankita',
+      description: 'Bridal makeup in Southbank, Melbourne, with Western, South Asian, East Asian and Middle Eastern-inspired looks. Bridal makeup $180 AUD; enquire about your date.'
+    },
+    'glam-makeup-melbourne': {
+      title: 'Soft & Full Glam Makeup Melbourne | Ankita',
+      description: 'Book soft glam, full glam, party or formal makeup with Melbourne artist Ankita. Southbank studio appointments; mobile makeup by availability.'
+    },
+    'editorial-makeup-melbourne': {
+      title: 'Editorial Makeup Artist Melbourne | The Glam by Ankita',
+      description: 'Editorial, photoshoot and creative makeup in Melbourne by Ankita Awasthi. Editorial makeup from $140 AUD; TFP collaborations welcome.'
     }
   };
 
@@ -2489,6 +2502,7 @@
     if (btn) { btn.classList.add('active'); }
     else {
       const map = {home:0,about:1,services:2,gallery:3,contact:4};
+      if (servicePageRoutes.includes(pageId)) map[pageId] = map.services;
       const btns = document.querySelectorAll('.sitenav-tabs a');
       if (btns[map[pageId]]) btns[map[pageId]].classList.add('active');
     }
