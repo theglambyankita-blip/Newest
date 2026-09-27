@@ -1,0 +1,101 @@
+Update The Glam By Ankita website by adding a new “Destination Weddings” service ONLY inside the existing SERVICES tab.
+
+IMPORTANT:
+Do NOT add a large Destination Weddings section, banner, card or promotional section to the homepage/main page.
+
+The destination wedding service should live within the existing Services section and match the current luxury visual design, typography, spacing, colours and overall branding of The Glam By Ankita.
+
+DESTINATION WEDDINGS SERVICE
+
+Create a dedicated service option/page under Services called:
+
+“Destination Weddings”
+
+The service should explain that The Glam By Ankita offers professional bridal and wedding makeup for interstate and international destination weddings.
+
+Use elegant, warm and simple wording. Avoid overly complicated or corporate language.
+
+Suggested copy:
+
+“Destination Weddings
+
+Your wedding can take you anywhere — and we can come with you.
+
+The Glam By Ankita offers destination bridal makeup services across Australia and internationally. Whether you’re planning a wedding interstate or celebrating somewhere overseas, we can create your bridal look for your special destination.
+
+Travel-related expenses are quoted separately from the makeup service fee and may include flights, accommodation, airport transfers, local transportation and other necessary travel expenses.
+
+Every destination wedding is different, so your travel costs will be calculated based on your wedding location, dates and individual travel requirements.
+
+For destination wedding bookings, please enquire with your wedding details and we’ll provide a personalised quote.”
+
+Add a CTA:
+
+“Enquire About Your Destination Wedding”
+
+Connect this CTA to the EXISTING enquiry/booking system. Do not create a separate booking system.
+
+PRICING RULES:
+• Do not create a fixed destination travel fee.
+• Do not invent flight, hotel or transportation prices.
+• Do not automatically add travel expenses to the makeup price.
+• Clearly keep travel expenses separate from the makeup service fee.
+• Make it clear that travel costs are discussed and quoted with the client before the booking is confirmed.
+
+SEO REQUIREMENTS
+
+Optimise this Destination Weddings service page for relevant searches without keyword stuffing.
+
+Primary SEO keywords:
+• destination wedding makeup artist
+• destination bridal makeup artist
+• destination wedding makeup artist Melbourne
+• Melbourne destination wedding makeup artist
+
+Secondary keywords:
+• destination bridal makeup
+• destination wedding makeup
+• interstate wedding makeup artist
+• international wedding makeup artist
+• bridal makeup artist Melbourne
+• wedding makeup artist Melbourne
+• destination makeup artist Australia
+• bridal makeup for destination weddings
+• makeup artist for destination wedding
+
+SEO TITLE:
+Destination Wedding Makeup Artist Melbourne | The Glam By Ankita
+
+META DESCRIPTION:
+Destination wedding makeup artist from Melbourne offering bridal makeup for interstate and international weddings. Enquire with The Glam By Ankita for a personalised destination wedding quote.
+
+URL/SLUG:
+Use a clean SEO-friendly URL such as:
+/services/destination-weddings
+Only use this if it fits the website’s existing URL structure.
+
+ON-PAGE SEO:
+• Use “Destination Weddings” as the H1.
+• Naturally include “destination wedding makeup artist” in the opening paragraph.
+• Include Melbourne naturally because The Glam By Ankita is Melbourne-based.
+• Mention interstate and international destination weddings naturally.
+• Add descriptive image ALT text if destination wedding imagery is used, for example:
+“Destination wedding bridal makeup by The Glam By Ankita”
+• Add appropriate internal links back to the Bridal Makeup service and Contact/Enquiry page.
+• Keep the copy natural and readable for real clients.
+
+TECHNICAL SEO:
+• Add the SEO title and meta description specifically to this service page.
+• Ensure the page is indexable by search engines.
+• Add appropriate canonical URL.
+• Add relevant structured data/schema where appropriate, without creating inaccurate information.
+• Make sure the page has a clean heading hierarchy.
+• Ensure it loads properly and is fully responsive on mobile.
+• Do not duplicate the same SEO copy across the homepage and Services page.
+
+DESIGN:
+The page should feel premium, elegant, feminine and editorial, matching The Glam By Ankita’s existing brand identity.
+
+Do not redesign the entire website.
+
+Only add and optimise this Destination Weddings service within the Services area and make sure it integrates seamlessly with the existing website.
