@@ -12,9 +12,19 @@
     { "source": "/gallery/", "destination": "/gallery/index.html" },
     { "source": "/contact", "destination": "/contact/index.html" },
     { "source": "/contact/", "destination": "/contact/index.html" },
-    {
-      "source": "/((?!.*\\.).*)",
-      "destination": "/index.html"
-    }
+    { "source": "/bridal-makeup-melbourne", "destination": "/bridal-makeup-melbourne/index.html" },
+    { "source": "/bridal-makeup-melbourne/", "destination": "/bridal-makeup-melbourne/index.html" },
+    { "source": "/glam-makeup-melbourne", "destination": "/glam-makeup-melbourne/index.html" },
+    { "source": "/glam-makeup-melbourne/", "destination": "/glam-makeup-melbourne/index.html" },
+    { "source": "/editorial-makeup-melbourne", "destination": "/editorial-makeup-melbourne/index.html" },
+    { "source": "/editorial-makeup-melbourne/", "destination": "/editorial-makeup-melbourne/index.html" },
+    { "source": "/sign-in", "destination": "/index.html" },
+    { "source": "/sign-in/:path*", "destination": "/index.html" },
+    { "source": "/sign-up", "destination": "/index.html" },
+    { "source": "/sign-up/:path*", "destination": "/index.html" },
+    { "source": "/account", "destination": "/index.html" },
+    { "source": "/r", "destination": "/index.html" },
+    { "source": "/p", "destination": "/index.html" },
+    { "source": "/p/([a-f0-9]{64})", "destination": "/index.html" }
   ]
 }
