@@ -459,9 +459,20 @@
     .seo-related-links { display: flex; flex-wrap: wrap; gap: 0.7rem 1.2rem; margin-top: 1rem; }
     .seo-related-links a { color: var(--gold-dark); font-weight: 700; text-underline-offset: 3px; }
     .svc-card .seo-card-link { display: block; width: fit-content; margin-top: 0.8rem; color: var(--gold-dark); font-size: 0.82rem; font-weight: 700; text-underline-offset: 3px; }
+    .destination-quote-section { scroll-margin-top: 7rem; }
+    .destination-quote-panel { max-width: 900px; margin: 1.5rem auto 0; padding: clamp(1.25rem, 4vw, 2.5rem); background: var(--white); border: 1px solid rgba(201,169,110,0.3); border-radius: 12px; box-shadow: 0 14px 40px rgba(44,24,16,0.08); }
+    .destination-quote-panel .frow { align-items: start; }
+    .destination-quote-panel .fgroup input, .destination-quote-panel .fgroup select, .destination-quote-panel .fgroup textarea { width: 100%; }
+    .destination-quote-note { margin: 0 0 1.4rem; padding: 0.9rem 1rem; background: var(--cream-warm); border-left: 3px solid var(--gold); color: var(--text-mid); font-size: 0.85rem; line-height: 1.7; }
+    .destination-quote-status { margin-top: 1rem; padding: 0.9rem 1rem; border-radius: 7px; font-size: 0.9rem; line-height: 1.6; }
+    .destination-quote-status.success { color: #245b35; background: #eff8f0; border: 1px solid #b9d9c0; }
+    .destination-quote-status.error { color: #8a2525; background: #fff2f0; border: 1px solid #ebc2bd; }
+    .destination-home-cta { display: inline-flex; align-items: center; justify-content: center; margin: 0.35rem 0.5rem; padding: 0.85rem 1.4rem; border: 1px solid rgba(255,255,255,0.75); border-radius: 4px; color: #fff; font-family: 'Nunito', sans-serif; font-size: 0.9rem; font-weight: 700; text-decoration: none; transition: background 0.2s, transform 0.2s; }
+    .destination-home-cta:hover { background: rgba(255,255,255,0.12); transform: translateY(-2px); }
     @media (max-width: 700px) {
       .seo-hero { grid-template-columns: 1fr; gap: 1.25rem; }
       .seo-detail-section { padding-top: 2.4rem; }
+      .destination-quote-panel { padding: 1.1rem; }
     }
 
     /* CINEMATIC ANIMATIONS */
@@ -1884,7 +1895,7 @@
         <h1>Destination Weddings</h1>
         <p class="seo-lead">As a Melbourne-based destination wedding makeup artist, Ankita provides bridal and wedding makeup for interstate and international destination weddings. Share your wedding location, dates and makeup plans to discuss the service and travel requirements for your celebration.</p>
         <div class="seo-actions">
-          <a class="btn-primary mag-btn" href="/contact" onclick="event.preventDefault();openDestinationWeddingEnquiry()">Enquire About Your Destination Wedding</a>
+          <a class="btn-primary mag-btn" href="#destination-wedding-quote">Get a Destination Wedding Quote</a>
           <a class="btn-secondary" href="/bridal-makeup-melbourne" onclick="event.preventDefault();showPage('bridal-makeup-melbourne',null)">Explore bridal makeup in Melbourne</a>
         </div>
       </div>
@@ -1916,7 +1927,71 @@
       <div class="seo-related-links" aria-label="Related pages">
         <a href="/bridal-makeup-melbourne" onclick="event.preventDefault();showPage('bridal-makeup-melbourne',null)">Explore bridal makeup in Melbourne</a>
         <a href="/services" onclick="event.preventDefault();showPage('services',null)">See all makeup services</a>
-        <a href="/contact" onclick="event.preventDefault();openDestinationWeddingEnquiry()">Enquire about your wedding plans</a>
+        <a href="#destination-wedding-quote">Get a destination wedding quote</a>
+      </div>
+    </section>
+    <section class="seo-detail-section destination-quote-section" id="destination-wedding-quote" aria-labelledby="destination-quote-heading">
+      <div class="destination-quote-panel">
+        <p class="eyebrow">Destination wedding enquiry</p>
+        <h2 id="destination-quote-heading">Request a destination wedding quote</h2>
+        <p class="body-text" style="max-width:760px;margin:0 0 1.2rem;">Share your wedding location, date and makeup plans. Ankita will confirm availability and discuss the makeup service and travel costs for your specific celebration.</p>
+        <p class="destination-quote-note">Travel expenses are separate from the makeup service fee. Any required flights, accommodation, transfers and local travel are quoted for your destination and dates before a booking is confirmed.</p>
+        <form id="destination-quote-form" onsubmit="submitDestinationQuote(event)" enctype="multipart/form-data">
+          <input type="hidden" name="type" value="booking">
+          <input type="hidden" name="services" value="Destination Wedding Makeup">
+          <input type="hidden" name="location" value="Destination wedding">
+          <input type="hidden" name="referral" value="Destination Weddings page">
+          <input type="hidden" name="owner_email" value="nishankn.ankita@gmail.com">
+          <input type="hidden" name="from_email" value="theglambyankita@gmail.com">
+          <div class="frow">
+            <div class="fgroup"><label for="destination-first-name">First name *</label><input id="destination-first-name" name="first_name" type="text" autocomplete="given-name" maxlength="100" required></div>
+            <div class="fgroup"><label for="destination-last-name">Last name *</label><input id="destination-last-name" name="last_name" type="text" autocomplete="family-name" maxlength="100" required></div>
+          </div>
+          <div class="frow">
+            <div class="fgroup"><label for="destination-email">Email *</label><input id="destination-email" name="client_email" type="email" autocomplete="email" maxlength="254" required></div>
+            <div class="fgroup"><label for="destination-phone">Phone, including country code *</label><input id="destination-phone" name="phone" type="tel" autocomplete="tel" placeholder="+61 400 000 000" maxlength="40" required></div>
+          </div>
+          <div class="frow">
+            <div class="fgroup"><label for="destination-date">Wedding date *</label><input id="destination-date" name="preferred_date" type="date" required></div>
+            <div class="fgroup"><label for="destination-location">Wedding destination — city and country *</label><input id="destination-location" name="destination" type="text" placeholder="e.g. Queenstown, New Zealand" maxlength="180" required></div>
+          </div>
+          <div class="frow">
+            <div class="fgroup"><label for="destination-venue">Getting-ready venue or address</label><input id="destination-venue" name="preparation_venue" type="text" placeholder="Hotel, venue or address (if known)" maxlength="240"></div>
+            <div class="fgroup"><label for="destination-ready-by">What time should makeup be finished?</label><input id="destination-ready-by" name="ready_by" type="time"><span class="form-note">Use the local time at the wedding destination.</span></div>
+          </div>
+          <div class="frow">
+            <div class="fgroup"><label for="destination-makeup-for">Who needs makeup? *</label>
+              <select id="destination-makeup-for" name="makeup_for" required>
+                <option value="">Select...</option>
+                <option>Bride</option>
+                <option>Bride and wedding party</option>
+                <option>Wedding party only</option>
+                <option>Other wedding guests</option>
+              </select>
+            </div>
+            <div class="fgroup"><label for="destination-people">Approximate number of people *</label>
+              <select id="destination-people" name="num_people" required>
+                <option value="">Select...</option>
+                <option>Bride only</option>
+                <option>2 people</option>
+                <option>3 people</option>
+                <option>4 people</option>
+                <option>5+ people</option>
+              </select>
+            </div>
+          </div>
+          <div class="fgroup"><label for="destination-vision">Tell us about the makeup you have in mind</label><textarea id="destination-vision" name="vision" maxlength="4000" placeholder="Share your preferred bridal look, ceremony or cultural details, schedule, and anything else that will help plan your enquiry."></textarea></div>
+          <div class="fgroup">
+            <label for="destination-files">Inspiration photos or references (optional)</label>
+            <input id="destination-files" name="files" type="file" multiple accept=".jpg,.jpeg,.png,.pdf">
+            <span class="form-note">JPG, PNG or PDF · Up to 5 files, 10 MB each</span>
+          </div>
+          <div class="form-submit-row">
+            <button id="destination-quote-submit" type="submit">Request my quote</button>
+            <p class="form-note">Ankita will reply within 24–48 hours.</p>
+          </div>
+          <p id="destination-quote-status" class="destination-quote-status" role="status" aria-live="polite" hidden></p>
+        </form>
       </div>
     </section>
   </article>
