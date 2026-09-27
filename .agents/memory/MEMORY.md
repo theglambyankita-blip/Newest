@@ -5,3 +5,5 @@
 - [Gallery GALLERY_DIR path fix](glam-gallery-dir.md) — process.cwd() resolves to artifacts/api-server/ (wrong); must use import.meta.url to reliably reach the gallery folder.
 - [Supabase → Replit DB fallback](db-supabase-fallback.md) — DATABASE_URL secret pointed to deleted Supabase; lib/db/src/index.ts now falls back to PG* env vars when URL contains "supabase.co".
 - [Legacy booking schema migrations](legacy-booking-migrations.md) — older databases may miss columns already represented in the Drizzle schema; keep startup ALTER migrations idempotent.
+- [Search indexing boundaries](glam-search-indexing.md) — verify initial route HTML and distinguish published fixes from confirmed Google indexing or rankings.
+- [Rendered dashboard scripts](glam-admin-script-validation.md) — compile emitted browser JavaScript; TypeScript cannot catch quoting failures inside server HTML templates.

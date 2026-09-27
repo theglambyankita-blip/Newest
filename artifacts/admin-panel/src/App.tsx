@@ -1,19 +1,31 @@
 import { useEffect, useState } from "react";
 
 export default function App() {
-  const [status, setStatus] = useState<"loading" | "error">("loading");
+  const [status, setStatus] = useState<"loading" | "unauthorized" | "error">("loading");
+  const [errorMessage, setErrorMessage] = useState("");
 
   useEffect(() => {
-    fetch("/api/admin-token")
-      .then((r) => r.json())
+    fetch("/api/admin-token", { credentials: "same-origin", cache: "no-store" })
+      .then(async (r) => {
+        const data = await r.json();
+        if (!r.ok) {
+          setErrorMessage(data.error || "Could not open the admin dashboard.");
+          setStatus(r.status === 401 || r.status === 403 ? "unauthorized" : "error");
+          return null;
+        }
+        return data;
+      })
       .then((data) => {
-        if (data.token) {
+        if (data?.token) {
           window.location.replace(`/api/admin?token=${encodeURIComponent(data.token)}`);
-        } else {
+        } else if (data) {
           setStatus("error");
         }
       })
-      .catch(() => setStatus("error"));
+      .catch(() => {
+        setErrorMessage("Could not connect to the API server.");
+        setStatus("error");
+      });
   }, []);
 
   return (
@@ -27,11 +39,15 @@ export default function App() {
           </>
         ) : (
           <>
-            <p style={{ ...styles.label, color: "#c0392b" }}>
-              Could not load the admin dashboard. Please check that the API server is running.
-            </p>
-            <button style={styles.retryBtn} onClick={() => { setStatus("loading"); window.location.reload(); }}>
-              Retry
+            <p style={{ ...styles.label, color: "#c0392b" }}>{errorMessage || "Could not load the admin dashboard."}</p>
+            {status === "unauthorized" && (
+              <>
+                <p style={styles.label}>Sign in with the owner's verified email on the main website, then return here. Alternatively, open your private admin dashboard link from your email.</p>
+                <a href="/sign-in" style={styles.retryBtn} data-testid="link-owner-sign-in">Sign in on the website</a>
+              </>
+            )}
+            <button style={styles.retryBtn} data-testid="button-retry-dashboard" onClick={() => { setStatus("loading"); window.location.reload(); }}>
+              Try again
             </button>
           </>
         )}

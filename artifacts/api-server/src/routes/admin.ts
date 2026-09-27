@@ -1,4 +1,5 @@
 import { Router } from "express";
+import { getAuth, clerkClient } from "@clerk/express";
 import nodemailer from "nodemailer";
 import { randomUUID } from "crypto";
 import { fileURLToPath } from "url";
@@ -353,13 +354,29 @@ async function seedKrishnaBookings() {
   }
 }
 
-// ── GET /api/admin-token — returns current valid token for the admin panel redirect ──
+// Only the verified owner may retrieve an admin link. Existing emailed links
+// continue to work without a Clerk session.
 router.get("/admin-token", async (req, res) => {
+  const { userId } = getAuth(req);
+  if (!userId) {
+    res.status(401).json({ error: "Sign in as the dashboard owner, or use your private emailed admin link." });
+    return;
+  }
   try {
+    const user = await clerkClient.users.getUser(userId);
+    const ownerEmail = user.emailAddresses.some(
+      (address) => address.verification?.status === "verified"
+        && address.emailAddress.toLowerCase() === ADMIN_EMAIL.toLowerCase(),
+    );
+    if (!ownerEmail) {
+      res.status(403).json({ error: "Only the dashboard owner can access this page." });
+      return;
+    }
     const token = await getOrCreateToken();
+    res.setHeader("Cache-Control", "no-store");
     res.json({ token });
   } catch (e) {
-    res.status(500).json({ error: "Could not retrieve admin token." });
+    res.status(500).json({ error: "Could not verify dashboard access. Try your private emailed admin link." });
   }
 });
 
@@ -560,6 +577,8 @@ input[type=radio]{width:auto;padding:0;accent-color:#9e7c4a;}
 textarea{resize:vertical;min-height:140px;}
 .btn{display:inline-block;padding:13px 28px;background:linear-gradient(135deg,#c9a96e,#9e7c4a);color:#fff;border:none;border-radius:8px;font-size:0.95rem;font-weight:700;cursor:pointer;font-family:inherit;}
 .btn:disabled{opacity:0.5;cursor:not-allowed;}
+.manual-action{display:inline-block;background:#fff;color:#6b3d2e;border:2px solid #fff;border-radius:8px;padding:12px 22px;font-size:1rem;font-weight:800;text-decoration:none;box-shadow:0 4px 15px rgba(44,24,16,.18);}
+.manual-action:hover,.manual-action:focus-visible{background:#fdf0ee;outline:2px solid #6b3d2e;outline-offset:2px;}
 @media(max-width:640px){.booking-grid{grid-template-columns:1fr;}}
 #no-results{display:none;padding:18px;color:#aaa;text-align:center;font-size:0.9rem;}
 </style>
@@ -572,6 +591,7 @@ textarea{resize:vertical;min-height:140px;}
 <div class="header">
   <h1>&#10022; Admin Dashboard</h1>
   <p>Manage bookings, gallery and promo codes.</p>
+  <a class="manual-action" href="#manual-bookings" data-testid="button-add-manual-booking" style="margin-top:16px;">&#10010; Add Manual Booking</a>
   <div class="stats">
     <a class="stat ${view==='all'?'active':''}" href="${viewUrl('all')}"><div class="stat-val">${allBookings.length}</div><div class="stat-lbl">Total Bookings</div></a>
     <a class="stat ${view==='upcoming'?'active':''}" href="${viewUrl('upcoming')}"><div class="stat-val">${upcoming.length}</div><div class="stat-lbl">Upcoming</div></a>
@@ -582,9 +602,13 @@ textarea{resize:vertical;min-height:140px;}
   </div>
 </div>
 <div class="content">
-  <div class="section">
-    <div class="section-title">&#10022; Add Direct Booking</div>
+  <div class="section" id="manual-bookings">
+    <div class="section-title" style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;">
+      <span>&#10022; Manual Bookings</span>
+      <a class="btn" href="#manual-booking-form" data-testid="button-open-manual-booking" style="font-size:0.84rem;padding:9px 16px;">&#10010; Add Manual Booking</a>
+    </div>
     <div class="card" style="padding:20px 24px;">
+      <h2 id="manual-booking-form" style="font-size:1.05rem;color:#6b3d2e;margin-bottom:8px;">Add Manual Booking</h2>
       <p style="font-size:0.84rem;color:#6b3d2e;line-height:1.55;margin:0 0 16px;">For clients who contact you directly. Leave any field blank and it will stay private rather than appearing on the client's payment page.</p>
       <div id="booking-success" style="display:none;background:#f0fff4;border:1px solid #a8e6b8;color:#2c6e3f;padding:12px 16px;border-radius:6px;margin-bottom:16px;font-size:0.88rem;"></div>
       <div id="booking-error" style="display:none;background:#fff0f0;border:1px solid #f5c0c0;color:#c0392b;padding:12px 16px;border-radius:6px;margin-bottom:16px;font-size:0.88rem;"></div>
@@ -611,8 +635,8 @@ textarea{resize:vertical;min-height:140px;}
         <div class="field"><label>Amount to pay now (A$)</label><input type="number" id="bk-price" min="0.50" step="0.01" placeholder="150.00"></div>
       </div>
       <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-top:4px;">
-        <button class="btn" id="bk-save-btn" onclick="saveDirectBooking(false)">Save Booking</button>
-        <button class="btn" id="bk-link-btn" style="background:linear-gradient(135deg,#6f8f72,#3f6b4b);" onclick="saveDirectBooking(true)">Save &amp; Create Payment Link</button>
+        <button class="btn" id="bk-save-btn" data-testid="button-save-manual-booking" onclick="saveDirectBooking(false)">Save Manual Booking</button>
+        <button class="btn" id="bk-link-btn" data-testid="button-save-and-create-payment-link" style="background:linear-gradient(135deg,#6f8f72,#3f6b4b);" onclick="saveDirectBooking(true)">Save &amp; Create Payment Link</button>
         <span id="booking-link-output" style="font-size:0.83rem;word-break:break-all;"></span>
       </div>
     </div>
@@ -1102,9 +1126,16 @@ async function saveDirectBooking(withPaymentLink){
     }
     ['bk-first-name','bk-last-name','bk-email','bk-phone','bk-date','bk-time','bk-service','bk-people','bk-location','bk-price'].forEach(function(id){document.getElementById(id).value='';});
     document.querySelector('input[name="bk-payment-type"][value="deposit"]').checked=true;
-    setTimeout(function(){window.location.reload();},withPaymentLink?2500:1200);
+    if(withPaymentLink){
+      var refresh=document.createElement('button');refresh.type='button';refresh.textContent='Refresh bookings';
+      refresh.style.cssText='margin-left:8px;border:1px solid #c9a96e;border-radius:5px;background:#fff;color:#9e7c4a;padding:4px 8px;cursor:pointer;';
+      refresh.onclick=function(){window.location.reload();};
+      output.appendChild(refresh);
+    }else{
+      setTimeout(function(){window.location.reload();},1200);
+    }
   }catch(e){err.textContent=e.message||'Could not save booking.';err.style.display='block';}
-  saveBtn.disabled=false;linkBtn.disabled=false;saveBtn.textContent='Save Booking';linkBtn.textContent='Save & Create Payment Link';
+  saveBtn.disabled=false;linkBtn.disabled=false;saveBtn.textContent='Save Manual Booking';linkBtn.textContent='Save & Create Payment Link';
 }
 function prefillEmail(email){document.getElementById('e-to').value=email;document.getElementById('e-to').scrollIntoView({behavior:'smooth'});}
 function exportCSV(){
@@ -1291,11 +1322,11 @@ function renderHomepageFeaturedManager(){
     var fn=escHtml(p.filename);
     var imgUrl=escHtml(p.url||('/gallery/'+p.filename));
     var pos=escHtml(p.objectPosition||p.object_position||'center center');
-    return '<div draggable="true" ondragstart="homepageDragStart(event,\''+fn+'\')" ondragover="homepageDragOver(event)" ondrop="homepageDrop(event,\''+fn+'\')" style="position:relative;min-width:0;border:1.5px solid #c9a96e;border-radius:8px;overflow:hidden;background:#f5e8e0;cursor:grab;">'+
+    return '<div draggable="true" data-fn="'+fn+'" ondragstart="homepageDragStart(event,this.dataset.fn)" ondragover="homepageDragOver(event)" ondrop="homepageDrop(event,this.dataset.fn)" style="position:relative;min-width:0;border:1.5px solid #c9a96e;border-radius:8px;overflow:hidden;background:#f5e8e0;cursor:grab;">'+
       '<div style="position:absolute;top:5px;left:5px;z-index:2;background:rgba(158,124,74,0.95);border-radius:4px;padding:2px 7px;font-size:0.66rem;color:#fff;font-weight:700;pointer-events:none;">'+(idx+1)+'</div>'+
       '<img src="'+imgUrl+'" style="width:100%;aspect-ratio:4/3;object-fit:cover;object-position:'+pos+';display:block;pointer-events:none;" alt="'+escHtml(p.title||'Homepage featured photo')+'">'+
       '<div style="padding:7px 8px;font-size:0.72rem;color:#6b3d2e;font-weight:700;min-height:34px;">'+escHtml(p.title||'Untitled photo')+'</div>'+
-      '<button type="button" onclick="homepageRemove(\''+fn+'\')" style="width:100%;padding:6px;border:0;border-top:1px solid #f0ddd8;background:#fff;color:#c0392b;font-size:0.75rem;font-weight:700;cursor:pointer;font-family:inherit;">Remove</button>'+
+      '<button type="button" data-fn="'+fn+'" onclick="homepageRemove(this.dataset.fn)" style="width:100%;padding:6px;border:0;border-top:1px solid #f0ddd8;background:#fff;color:#c0392b;font-size:0.75rem;font-weight:700;cursor:pointer;font-family:inherit;">Remove</button>'+
       '</div>';
   }).join('');
   if(!_homepageFeaturedFilenames.length){
@@ -1312,7 +1343,7 @@ function renderHomepageFeaturedManager(){
     return '<div style="border:1px solid #e8c4bc;border-radius:8px;overflow:hidden;background:#fff;">'+
       '<img src="'+imgUrl+'" style="width:100%;aspect-ratio:1;object-fit:cover;object-position:'+pos+';display:block;" alt="'+escHtml(p.title||'Gallery photo')+'">'+
       '<div style="padding:6px 7px;font-size:0.7rem;color:#6b3d2e;font-weight:600;min-height:30px;">'+escHtml(p.title||'Untitled photo')+'</div>'+
-      '<button type="button" onclick="homepageAdd(\''+fn+'\')"'+disabled+' style="width:100%;padding:6px;border:0;border-top:1px solid #f0ddd8;background:#fff9f5;color:#9e7c4a;font-size:0.72rem;font-weight:700;cursor:pointer;font-family:inherit;">Add to homepage</button>'+
+      '<button type="button" data-fn="'+fn+'" onclick="homepageAdd(this.dataset.fn)"'+disabled+' style="width:100%;padding:6px;border:0;border-top:1px solid #f0ddd8;background:#fff9f5;color:#9e7c4a;font-size:0.72rem;font-weight:700;cursor:pointer;font-family:inherit;">Add to homepage</button>'+
       '</div>';
   }).join(''):'<p style="grid-column:1/-1;color:#9e7c4a;font-size:0.82rem;padding:8px 0;">All gallery photos are selected.</p>';
   if(_homepageFeaturedFilenames.length===3){
