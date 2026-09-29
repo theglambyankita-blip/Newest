@@ -1,0 +1,23 @@
+Please completely optimize my entire website's SEO code across all routes so I can rank first for local searches in Melbourne. Modify the codebase to execute these specific optimizations:
+    1    Optimize Home Page Meta:
+    ◦    Set the main HTML <title> tag on the home page to:
+The Glam by Ankita | Bridal & Special Occasion Makeup Artist Melbourne
+    ◦    Set the <meta name="description"> tag on the home page to:
+Melbourne makeup artist based in Southbank near CBD. The Glam by Ankita specializes in luxury bridal, editorial, and special occasion glam.
+    2    Optimize Services Page (/services):
+    ◦    Set the page <title> tag to: Professional Makeup Services Melbourne | The Glam by Ankita
+    ◦    Ensure the primary <h1> heading text at the very top reads clearly as: Professional Makeup Services in Melbourne
+    ◦    Ensure header and footer links pointing to the /services route use the standalone text 'Services' or 'Makeup Services' to encourage Google sitelinks. Include this route with a high priority in our XML sitemap.
+    3    Optimize About Page (/about):
+    ◦    Set the page <title> tag to: About Ankita Awasthi | Certified Melbourne Makeup Artist
+    ◦    Set its <meta name="description"> to: Meet Ankita Awasthi, founder of The Glam by Ankita. Certified via the Elite Hair and Makeup Academy, specializing in luxury bridal & glam in Melbourne.
+    4    Optimize Gallery Page (/gallery):
+    ◦    Set the page <title> tag to: The Glam by Ankita | Makeup Portfolio & Gallery
+    ◦    Set its <meta name="description"> to: Explore the official makeup portfolio of The Glam by Ankita. View our real client transformations, bridal trials, soft glam, and editorial looks in Melbourne.
+    5    Optimize Contact Page (/contact):
+    ◦    Set the page <title> tag to: Book The Glam by Ankita | Melbourne Makeup Appointment
+    ◦    Set its <meta name="description"> to: Ready to book your bridal or event glam session? Contact The Glam by Ankita to secure your appointment at our Southbank studio or request mobile travel.
+    6    Enhance the Existing Footer Component:
+    ◦    Without breaking my existing structure, navigation, or social links, gracefully weave this precise text description into our global footer block:
+'The Glam by Ankita — Luxury Bridal & Special Occasion Makeup Artist based in Southbank, VIC 3006, servicing Melbourne CBD and surrounding areas.'
+Please apply these targeted updates across the respective project files, commit all changes cleanly to GitHub, and let the pipeline deploy the optimized site to Vercel.
