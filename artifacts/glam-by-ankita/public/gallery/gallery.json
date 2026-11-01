@@ -1,5 +1,49 @@
 [
   {
+    "filename": "soft-khaleeji-glam.jpeg",
+    "url": "/gallery/soft-khaleeji-glam.jpeg",
+    "title": "Soft Khaleeji Glam",
+    "category": "glam",
+    "categories": ["glam"],
+    "desc": "Luminous rose shimmer, crisp winged liner, softly sculpted cheeks and a glossy rose lip",
+    "uploadedAt": "2026-11-01T00:00:00.000Z",
+    "featured": false,
+    "objectPosition": "center 35%"
+  },
+  {
+    "filename": "indian-festive-look.jpeg",
+    "url": "/gallery/indian-festive-look.jpeg",
+    "title": "Indian Festive Look",
+    "category": "festival",
+    "categories": ["festival", "glam"],
+    "desc": "Rose-toned eyes, rich berry lips and statement gold jewellery for festive celebrations",
+    "uploadedAt": "2026-10-31T23:59:00.000Z",
+    "featured": false,
+    "objectPosition": "center 30%"
+  },
+  {
+    "filename": "formal-awards-night-glam.jpeg",
+    "url": "/gallery/formal-awards-night-glam.jpeg",
+    "title": "Formal Awards Night Glam",
+    "category": "glam",
+    "categories": ["glam"],
+    "desc": "Soft mauve shimmer, fluttery lashes and a refined rosy lip for an elegant evening",
+    "uploadedAt": "2026-10-31T23:58:00.000Z",
+    "featured": false,
+    "objectPosition": "center 35%"
+  },
+  {
+    "filename": "runway-ready-look.jpeg",
+    "url": "/gallery/runway-ready-look.jpeg",
+    "title": "Runway Ready Look",
+    "category": "editorial",
+    "categories": ["editorial", "glam"],
+    "desc": "Sculpted eyes, sleek styling and a clean nude lip — modern editorial runway makeup",
+    "uploadedAt": "2026-10-31T23:57:00.000Z",
+    "featured": false,
+    "objectPosition": "center 35%"
+  },
+  {
     "filename": "glam-city.webp",
     "url": "/gallery/glam-city.webp",
     "title": "Full Glam with a Statement Red Lip",
