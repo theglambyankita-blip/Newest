@@ -1249,6 +1249,9 @@
     .allure-announcement small { color:#80685e; font-size:.7rem; letter-spacing:.04em; }
     .allure-announcement a { color:#8b2a3a; font-size:.68rem; font-weight:800; letter-spacing:.1em; text-decoration:none; border-bottom:1px solid rgba(139,42,58,.45); padding-bottom:.2rem; }
     .allure-announcement a:hover { color:#5b302f; }
+    .booking-modern .allure-booking-service { border-color:rgba(158,124,74,.55); background:linear-gradient(120deg,#fffaf3,#f7ead7); }
+    .booking-modern .allure-booking-service > span { color:var(--text-dark); font-weight:800; }
+    .booking-modern .allure-booking-service > span small { font-weight:800; }
     .allure-section { padding:clamp(3.5rem,7vw,6.5rem) clamp(1.2rem,6vw,6rem); }
     .allure-looks-section { background:#fffaf6; }
     .allure-section-heading { max-width:680px; margin:0 auto 2.6rem; text-align:center; }
@@ -1303,7 +1306,10 @@
       .allure-offer-line { margin:1.2rem 0 1rem; }
       .allure-reel-column { gap:.45rem; }
       .allure-reel-frame { width:min(68vw,300px); border-width:5px; }
-      .allure-announcement { flex-direction:column; gap:.35rem; padding:.8rem 1rem; }
+      .allure-announcement { display:grid; grid-template-columns:minmax(0,1fr) auto; gap:.2rem .75rem; padding:.7rem 1rem; }
+      .allure-announcement strong { grid-column:1; text-align:left; font-size:.82rem; }
+      .allure-announcement span { grid-column:1; text-align:left; font-size:.68rem; }
+      .allure-announcement a { grid-column:2; grid-row:1/3; align-self:center; max-width:92px; font-size:.58rem; line-height:1.45; text-align:center; }
       .allure-look-grid { grid-template-columns:1fr; max-width:480px; }
       .allure-look-photo { aspect-ratio:4/4.3; }
       .allure-look-content p { min-height:0; }
@@ -1418,8 +1424,7 @@
 
   <div class="allure-announcement" role="note">
     <strong>THE HOLIDAY EDIT HAS ARRIVED</strong>
-    <span>THREE SIGNATURE LOOKS. ONE UNFORGETTABLE EDIT.</span>
-    <small>Available for a limited time only.</small>
+    <span>Three signature looks. One unforgettable edit. <small>Limited edition · A$180</small></span>
     <a href="/allure-edit" onclick="event.preventDefault();showPage('allure-edit',null)">DISCOVER THE ALLURE EDIT</a>
   </div>
 
@@ -2356,6 +2361,7 @@
             </div>
             <div class="fgroup"><label>Services Required *</label>
               <div class="check-grid" id="svc-checkboxes">
+                <label class="check-item allure-booking-service" id="svc-allure-label"><input type="checkbox" class="svc-cb" id="svc-allure-check" data-price="180" onchange="toggleAllureLook(this);updatePriceSummary()"><span>THE ALLURE EDIT <small style="display:block;font-size:0.72rem;color:var(--gold-dark);letter-spacing:.08em;">LIMITED EDITION · A$180</small></span></label>
                 <label class="check-item"><input type="checkbox" class="svc-cb" data-price="120" onchange="updatePriceSummary()"><span>💄 Soft Glam <small style="display:block;font-size:0.75rem;color:var(--text-light);">$120</small></span></label>
                 <label class="check-item"><input type="checkbox" class="svc-cb" data-price="150" onchange="updatePriceSummary()"><span>✨ Full Glam <small style="display:block;font-size:0.75rem;color:var(--text-light);">$150</small></span></label>
                 <label class="check-item"><input type="checkbox" class="svc-cb" data-price="120" onchange="updatePriceSummary()"><span>🎉 Party Glam <small style="display:block;font-size:0.75rem;color:var(--text-light);">$120</small></span></label>
@@ -2365,6 +2371,16 @@
                 <label class="check-item"><input type="checkbox" class="svc-cb" data-price="140" data-from="true" onchange="updatePriceSummary()"><span>🎨 Editorial <small style="display:block;font-size:0.75rem;color:var(--text-light);">From $140</small></span></label>
                 <label class="check-item"><input type="checkbox" class="svc-cb" data-price="120" data-from="true" onchange="updatePriceSummary()"><span>🎭 Festival &amp; Cultural <small style="display:block;font-size:0.75rem;color:var(--text-light);">From $120</small></span></label>
                 <label class="check-item" id="svc-other-label"><input type="checkbox" id="svc-other-check" onchange="toggleOtherService(this);updatePriceSummary()"><span>Other</span></label>
+              </div>
+              <div class="fgroup" id="allure-look-group" style="display:none;margin:.75rem 0 0 1.5rem;">
+                <label for="allure-look-select">Choose your Allure Edit look *</label>
+                <select id="allure-look-select" disabled>
+                  <option value="">Select a signature look</option>
+                  <option value="The Siren">The Siren</option>
+                  <option value="The Icon">The Icon</option>
+                  <option value="The Muse">The Muse</option>
+                </select>
+                <small style="display:block;margin-top:.35rem;color:var(--text-light);">Required when The Allure Edit is selected.</small>
               </div>
               <input type="text" id="svc-other-text" placeholder="Please specify your service..." style="display:none;margin-top:0.6rem;width:100%;padding:0.7rem 1rem;border:1.5px solid var(--blush-deep);border-radius:6px;font-size:0.95rem;font-family:inherit;">
             </div>
@@ -2752,18 +2768,18 @@
   }
   function bookAllureEdit(look) {
     showPage('contact', null);
-    const choice = look ? ' — ' + look : '';
-    const otherCheckbox = document.getElementById('svc-other-check');
-    const otherText = document.getElementById('svc-other-text');
-    if (otherCheckbox && otherText) {
-      otherCheckbox.checked = true;
-      toggleOtherService(otherCheckbox);
-      otherText.value = 'The Allure Edit' + choice;
+    const allureCheckbox = document.getElementById('svc-allure-check');
+    const lookSelect = document.getElementById('allure-look-select');
+    if (allureCheckbox) {
+      allureCheckbox.checked = true;
+      toggleAllureLook(allureCheckbox);
     }
+    if (lookSelect) lookSelect.value = look || '';
     const vision = document.getElementById('book-vision');
     if (vision) {
       const note = 'Enquiry: The Allure Edit (A$180)' + (look ? '; preferred signature look: ' + look : '') + '.';
-      if (!vision.value.includes('Enquiry: The Allure Edit')) vision.value = vision.value ? note + '\n' + vision.value : note;
+      const remainingNotes = vision.value.split('\n').filter(line => !line.startsWith('Enquiry: The Allure Edit'));
+      vision.value = [note, ...remainingNotes].filter(Boolean).join('\n');
     }
     const location = document.getElementById('book-location');
     if (location) location.value = 'Come to the studio located in Southbank';
@@ -4314,6 +4330,10 @@
   function getBookingData() {
     const checkedBoxes = [...document.querySelectorAll('#tab-book input[type=checkbox]:checked')];
     const services = checkedBoxes.map(c => {
+      if (c.id === 'svc-allure-check') {
+        const look = document.getElementById('allure-look-select')?.value;
+        return 'THE ALLURE EDIT — LIMITED EDITION (A$180)' + (look ? ' — ' + look : '');
+      }
       const label = c.closest('.check-item').querySelector('span').textContent;
       if (label === 'Other') {
         const spec = document.getElementById('svc-other-text').value.trim();
@@ -4448,6 +4468,18 @@
     if (!cb.checked) txt.value = '';
   }
 
+  function toggleAllureLook(cb) {
+    const group = document.getElementById('allure-look-group');
+    const select = document.getElementById('allure-look-select');
+    const isSelected = Boolean(cb && cb.checked);
+    if (group) group.style.display = isSelected ? 'block' : 'none';
+    if (select) {
+      select.disabled = !isSelected;
+      select.required = isSelected;
+      if (!isSelected) select.value = '';
+    }
+  }
+
   function toggleMobileLocation(sel) {
     const group = document.getElementById('mobile-location-group');
     const input = document.getElementById('book-mobile-location');
@@ -4509,6 +4541,13 @@
       : ['name', 'client_email', 'collab_type'];
 
     const emailErrorId = isBooking ? 'book-email-error' : 'collab-email-error';
+    const allureSelected = isBooking && document.getElementById('svc-allure-check')?.checked;
+    const allureLook = document.getElementById('allure-look-select');
+    if (allureSelected && !allureLook?.value) {
+      showToast('Please choose a signature look for The Allure Edit.');
+      allureLook?.focus();
+      return;
+    }
     if (!validate(data, required, emailErrorId)) return;
 
     const btn = document.getElementById(btnId);

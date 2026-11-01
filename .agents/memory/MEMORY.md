@@ -8,3 +8,4 @@
 - [Search indexing boundaries](glam-search-indexing.md) — verify initial route HTML and distinguish published fixes from confirmed Google indexing or rankings.
 - [Rendered dashboard scripts](glam-admin-script-validation.md) — compile emitted browser JavaScript; TypeScript cannot catch quoting failures inside server HTML templates.
 - [Campaign Reel playback](campaign-reel-playback.md) — use a local H.264/AAC video when a Reel must play in-site; Instagram embeds may be blocked in preview.
+- [Allure Edit placement](glam-allure-edit.md) — keep the homepage campaign presence to a compact top announcement; reserve the full campaign for its own tab.
