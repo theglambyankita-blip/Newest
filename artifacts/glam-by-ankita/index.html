@@ -2827,8 +2827,13 @@
     const twitterDescription = document.querySelector('meta[name="twitter:description"]');
     const ogImage = document.querySelector('meta[property="og:image"]');
     const ogImageSecure = document.querySelector('meta[property="og:image:secure_url"]');
+    const ogImageAlt = document.querySelector('meta[property="og:image:alt"]');
     const twitterImage = document.querySelector('meta[name="twitter:image"]');
+    const twitterImageAlt = document.querySelector('meta[name="twitter:image:alt"]');
     const campaignImage = pageId === 'allure-edit' ? '/allure-edit-poster.jpg' : '/opengraph.jpg';
+    const campaignAlt = pageId === 'allure-edit'
+      ? 'The Allure Edit holiday campaign film featuring three signature makeup looks'
+      : 'The Glam by Ankita, Melbourne makeup artistry';
     const canonical = document.querySelector('link[rel="canonical"]');
     if (description) description.setAttribute('content', seo.description);
     if (ogTitle) ogTitle.setAttribute('content', seo.title);
@@ -2838,7 +2843,9 @@
     if (twitterDescription) twitterDescription.setAttribute('content', seo.description);
     if (ogImage) ogImage.setAttribute('content', window.location.origin + campaignImage);
     if (ogImageSecure) ogImageSecure.setAttribute('content', window.location.origin + campaignImage);
+    if (ogImageAlt) ogImageAlt.setAttribute('content', campaignAlt);
     if (twitterImage) twitterImage.setAttribute('content', window.location.origin + campaignImage);
+    if (twitterImageAlt) twitterImageAlt.setAttribute('content', campaignAlt);
     if (canonical) canonical.setAttribute('href', pageUrl);
   }
 

@@ -96,9 +96,20 @@ export function renderRouteHtml(html, route, metadata = getRouteSeo(html)) {
     ["og:title", title],
     ["og:description", description],
     ["og:url", url],
+    ["og:image:alt", route === "allure-edit"
+      ? "The Allure Edit holiday campaign film featuring three signature makeup looks"
+      : "The Glam by Ankita, Melbourne makeup artistry"],
   ]) {
     html = replaceOnce(html, new RegExp(`<meta property="${property}" content="[^"]*">`), `<meta property="${property}" content="${escapeHtml(value)}">`, property);
   }
+  html = replaceOnce(
+    html,
+    /<meta name="twitter:image:alt" content="[^"]*">/,
+    `<meta name="twitter:image:alt" content="${escapeHtml(route === "allure-edit"
+      ? "The Allure Edit holiday campaign film featuring three signature makeup looks"
+      : "The Glam by Ankita, Melbourne makeup artistry")}">`,
+    "twitter:image:alt",
+  );
   const shareImage = route === "allure-edit"
     ? `${siteOrigin}/allure-edit-poster.jpg`
     : `${siteOrigin}/opengraph.jpg`;
