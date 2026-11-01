@@ -99,6 +99,16 @@ export function renderRouteHtml(html, route, metadata = getRouteSeo(html)) {
   ]) {
     html = replaceOnce(html, new RegExp(`<meta property="${property}" content="[^"]*">`), `<meta property="${property}" content="${escapeHtml(value)}">`, property);
   }
+  const shareImage = route === "allure-edit"
+    ? `${siteOrigin}/allure-edit-poster.jpg`
+    : `${siteOrigin}/opengraph.jpg`;
+  for (const [selector, value] of [
+    ['<meta property="og:image" content="', shareImage],
+    ['<meta property="og:image:secure_url" content="', shareImage],
+    ['<meta name="twitter:image" content="', shareImage],
+  ]) {
+    html = replaceOnce(html, new RegExp(`${selector.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}[^"]*">`), `${selector}${escapeHtml(value)}">`, selector);
+  }
   for (const [rel, extra] of [
     ["canonical", ""],
     ["alternate", ' hreflang="en-AU"'],

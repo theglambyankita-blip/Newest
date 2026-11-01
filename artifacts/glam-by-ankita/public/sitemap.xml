@@ -22,6 +22,28 @@
     </image:image>
   </url>
   <url>
+    <loc>https://www.theglambyankita.com/allure-edit</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+    <image:image>
+      <image:loc>https://www.theglambyankita.com/allure-edit-poster.jpg</image:loc>
+      <image:title>The Allure Edit — The Glam by Ankita</image:title>
+      <image:caption>Limited-edition holiday makeup campaign in Melbourne</image:caption>
+    </image:image>
+    <image:image>
+      <image:loc>https://www.theglambyankita.com/allure-siren.jpg</image:loc>
+      <image:title>The Siren — The Allure Edit</image:title>
+    </image:image>
+    <image:image>
+      <image:loc>https://www.theglambyankita.com/allure-icon.jpg</image:loc>
+      <image:title>The Icon — The Allure Edit</image:title>
+    </image:image>
+    <image:image>
+      <image:loc>https://www.theglambyankita.com/allure-muse.jpg</image:loc>
+      <image:title>The Muse — The Allure Edit</image:title>
+    </image:image>
+  </url>
+  <url>
     <loc>https://www.theglambyankita.com/services</loc>
     <lastmod>2026-09-29</lastmod>
     <changefreq>monthly</changefreq>
