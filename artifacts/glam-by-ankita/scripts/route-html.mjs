@@ -123,7 +123,11 @@ export function renderRouteHtml(html, route, metadata = getRouteSeo(html)) {
   if (route !== "home") {
     html = replaceOnce(html, new RegExp(`(<div class="page)(" id="page-${route}")`), "$1 active$2", `${route} active page`);
     html = replaceOnce(html, /(<a class=")active(" href="\/" onclick="event\.preventDefault\(\);showPage\('home',this\);closeMobileNav\(\)">)/, "$1$2", "home active navigation");
-    html = replaceOnce(html, new RegExp(`(<a)( href="/${navRoute}" onclick="event\\.preventDefault\\(\\);showPage\\('${navRoute}',this\\);closeMobileNav\\(\\)">)`), "$1 class=\"active\"$2", `${navRoute} active navigation`);
+    if (route === "allure-edit") {
+      html = replaceOnce(html, /(<a class="allure-nav-link)(" href="\/allure-edit" onclick="event\.preventDefault\(\);showPage\('allure-edit',this\);closeMobileNav\(\)">)/, "$1 active$2", "allure-edit active navigation");
+    } else {
+      html = replaceOnce(html, new RegExp(`(<a)( href="/${navRoute}" onclick="event\\.preventDefault\\(\\);showPage\\('${navRoute}',this\\);closeMobileNav\\(\\)">)`), "$1 class=\"active\"$2", `${navRoute} active navigation`);
+    }
   } else {
     html = replaceOnce(html, /(<div class="page)(" id="page-home")/, "$1 active$2", "home active page");
   }
