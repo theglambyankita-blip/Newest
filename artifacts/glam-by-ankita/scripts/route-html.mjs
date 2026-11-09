@@ -96,23 +96,29 @@ export function renderRouteHtml(html, route, metadata = getRouteSeo(html)) {
     ["og:title", title],
     ["og:description", description],
     ["og:url", url],
-    ["og:image:alt", route === "allure-edit"
-      ? "The Allure Edit holiday campaign film featuring three signature makeup looks"
-      : "The Glam by Ankita, Melbourne makeup artistry"],
+    ["og:image:alt", route === "celebrity-media"
+      ? "Ankita Awasthi and Uorfi Javed together at a Melbourne celebrity appearance"
+      : route === "allure-edit"
+        ? "The Allure Edit holiday campaign film featuring three signature makeup looks"
+        : "The Glam by Ankita, Melbourne makeup artistry"],
   ]) {
     html = replaceOnce(html, new RegExp(`<meta property="${property}" content="[^"]*">`), `<meta property="${property}" content="${escapeHtml(value)}">`, property);
   }
   html = replaceOnce(
     html,
     /<meta name="twitter:image:alt" content="[^"]*">/,
-    `<meta name="twitter:image:alt" content="${escapeHtml(route === "allure-edit"
-      ? "The Allure Edit holiday campaign film featuring three signature makeup looks"
-      : "The Glam by Ankita, Melbourne makeup artistry")}">`,
+    `<meta name="twitter:image:alt" content="${escapeHtml(route === "celebrity-media"
+      ? "Ankita Awasthi and Uorfi Javed together at a Melbourne celebrity appearance"
+      : route === "allure-edit"
+        ? "The Allure Edit holiday campaign film featuring three signature makeup looks"
+        : "The Glam by Ankita, Melbourne makeup artistry")}">`,
     "twitter:image:alt",
   );
-  const shareImage = route === "allure-edit"
-    ? `${siteOrigin}/allure-edit-poster.jpg`
-    : `${siteOrigin}/opengraph.jpg`;
+  const shareImage = route === "celebrity-media"
+    ? `${siteOrigin}/celebrity/uorfi-ankita-spotlight.webp`
+    : route === "allure-edit"
+      ? `${siteOrigin}/allure-edit-poster.jpg`
+      : `${siteOrigin}/opengraph.jpg`;
   for (const [selector, value] of [
     ['<meta property="og:image" content="', shareImage],
     ['<meta property="og:image:secure_url" content="', shareImage],
@@ -202,6 +208,19 @@ export function renderRouteHtml(html, route, metadata = getRouteSeo(html)) {
     const pageSchema = [breadcrumb, service]
       .map((schema) => `<script type="application/ld+json">${JSON.stringify(schema).replace(/</g, "\\u003c")}</script>`)
       .join("\n  ");
+    html = replaceOnce(html, /<\/head>/, `${pageSchema}\n</head>`, "head close");
+  }
+
+  if (route === "celebrity-media") {
+    const breadcrumb = {
+      "@context": "https://schema.org",
+      "@type": "BreadcrumbList",
+      "itemListElement": [
+        { "@type": "ListItem", "position": 1, "name": "Home", "item": `${siteOrigin}/` },
+        { "@type": "ListItem", "position": 2, "name": "Celebrity & Media", "item": url },
+      ],
+    };
+    const pageSchema = `<script type="application/ld+json">${JSON.stringify(breadcrumb).replace(/</g, "\\u003c")}</script>`;
     html = replaceOnce(html, /<\/head>/, `${pageSchema}\n</head>`, "head close");
   }
 

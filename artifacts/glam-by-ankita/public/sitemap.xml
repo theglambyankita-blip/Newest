@@ -44,6 +44,22 @@
     </image:image>
   </url>
   <url>
+    <loc>https://www.theglambyankita.com/celebrity-media</loc>
+    <lastmod>2026-11-09</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.9</priority>
+    <image:image>
+      <image:loc>https://www.theglambyankita.com/celebrity/uorfi-ankita-spotlight.webp</image:loc>
+      <image:title>Ankita Awasthi and Uorfi Javed in Melbourne — The Glam by Ankita</image:title>
+      <image:caption>Celebrity hair styling and media portfolio by The Glam by Ankita</image:caption>
+    </image:image>
+    <image:image>
+      <image:loc>https://www.theglambyankita.com/celebrity/uorfi-testimonial-poster.jpg</image:loc>
+      <image:title>Uorfi Javed testimonial — The Glam by Ankita</image:title>
+      <image:caption>Uorfi Javed shares her testimonial after her Melbourne appearance</image:caption>
+    </image:image>
+  </url>
+  <url>
     <loc>https://www.theglambyankita.com/services</loc>
     <lastmod>2026-09-29</lastmod>
     <changefreq>monthly</changefreq>
