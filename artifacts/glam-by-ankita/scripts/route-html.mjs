@@ -101,7 +101,7 @@ export function renderRouteHtml(html, route, metadata = getRouteSeo(html)) {
     ["og:description", description],
     ["og:url", url],
     ["og:image:alt", route === "celebrity-media"
-      ? "Ankita Awasthi and Uorfi Javed together at a Melbourne celebrity appearance"
+      ? "Uorfi Javed and Ankita Awasthi at a Melbourne celebrity glam appearance; makeup and hair by Ankita"
       : route === "allure-edit"
         ? "The Allure Edit holiday campaign film featuring three signature makeup looks"
         : "The Glam by Ankita, Melbourne makeup artistry"],
@@ -112,7 +112,7 @@ export function renderRouteHtml(html, route, metadata = getRouteSeo(html)) {
     html,
     /<meta name="twitter:image:alt" content="[^"]*">/,
     `<meta name="twitter:image:alt" content="${escapeHtml(route === "celebrity-media"
-      ? "Ankita Awasthi and Uorfi Javed together at a Melbourne celebrity appearance"
+      ? "Uorfi Javed and Ankita Awasthi at a Melbourne celebrity glam appearance; makeup and hair by Ankita"
       : route === "allure-edit"
         ? "The Allure Edit holiday campaign film featuring three signature makeup looks"
         : "The Glam by Ankita, Melbourne makeup artistry")}">`,
