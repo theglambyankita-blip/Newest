@@ -733,6 +733,8 @@
     .photo-overlay-txt { font-family: 'Playfair Display', serif; font-style: italic; font-size: 0.95rem; color: var(--white); text-align: left; transform: translateY(6px); transition: transform 0.32s; line-height: 1.3; }
     .photo-overlay-txt small { display: block; font-family: 'Nunito', sans-serif; font-style: normal; font-size: 0.68rem; letter-spacing: 0.06em; opacity: 0.82; margin-top: 0.2rem; text-transform: uppercase; }
     .photo-item:hover .photo-overlay-txt { transform: translateY(0); }
+    .photo-item[data-title="Uorfi Javed"] .photo-overlay { opacity: 1; }
+    .photo-item[data-title="Uorfi Javed"] .photo-overlay-txt { transform: translateY(0); }
 
     /* BTS GRID */
     .bts-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 0.8rem; }
@@ -1601,14 +1603,14 @@
     </p>
   </div>
 
-  <section class="section home-celebrity-section" aria-label="Celebrity &amp; Media">
+  <section class="section home-celebrity-section" id="home-celebrity-feature" aria-labelledby="home-celebrity-title">
     <a class="home-celebrity-card" href="/celebrity-media" onclick="event.preventDefault();showPage('celebrity-media',this)">
       <div class="home-celebrity-photo">
         <img src="/gallery/uorfi-javed-celebrity-glam.webp" alt="Uorfi Javed applying lipstick while holding The Glam by Ankita mirror" width="1350" height="1800" loading="lazy" decoding="async">
       </div>
       <div class="home-celebrity-copy">
         <p class="home-celebrity-eyebrow">Celebrity &amp; Media</p>
-        <h2 class="home-celebrity-title">A Moment in the Spotlight</h2>
+        <h2 class="home-celebrity-title" id="home-celebrity-title">A Moment in the Spotlight</h2>
         <p class="home-celebrity-description">Explore Ankita’s celebrity makeup and hair styling work, featuring Uorfi Javed’s Melbourne appearance.</p>
         <span class="home-celebrity-cta">Explore Celebrity &amp; Media <span aria-hidden="true">↗</span></span>
       </div>
