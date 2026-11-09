@@ -1337,11 +1337,11 @@
     .celebrity-hero { display:grid; grid-template-columns:minmax(0,1fr) minmax(280px,.9fr); min-height:590px; align-items:center; gap:clamp(2rem,6vw,6rem); padding:clamp(3rem,7vw,6.5rem) clamp(1.25rem,8vw,8rem); background:linear-gradient(115deg,#fbf6f1 0%,#f5e8e3 54%,#eee0d5 100%); }
     .celebrity-hero-copy { max-width:610px; }
     .celebrity-eyebrow { display:flex; align-items:center; gap:.7rem; margin:0 0 1.4rem; color:#98716a; font-size:.67rem; font-weight:800; letter-spacing:.2em; text-transform:uppercase; }
-    .celebrity-eyebrow::before { content:""; width:32px; height:1px; background:#cda9a0; }
+    .celebrity-eyebrow::before { content:""; width:32px; height:1px; background:#E8B7C8; }
     .celebrity-title { max-width:650px; margin:0; color:#402d27; font-family:'Playfair Display',serif; font-size:clamp(3.3rem,7vw,6.5rem); font-weight:500; line-height:.98; letter-spacing:-.055em; }
     .celebrity-lede { max-width:520px; margin:1.6rem 0 0; color:#735d53; font-size:.98rem; line-height:1.9; }
     .celebrity-date { display:flex; align-items:center; gap:.75rem; margin-top:1.6rem; color:#98716a; font-size:.68rem; font-weight:800; letter-spacing:.14em; text-transform:uppercase; }
-    .celebrity-date::before { content:""; width:24px; height:1px; background:#cda9a0; }
+    .celebrity-date::before { content:""; width:24px; height:1px; background:#E8B7C8; }
     .celebrity-hero-photo-wrap { position:relative; width:min(100%,510px); justify-self:center; padding:0 0 18px 18px; }
     .celebrity-hero-photo-wrap::before { content:""; position:absolute; inset:18px 0 0 0; border:1px solid rgba(152,113,106,.35); }
     .celebrity-hero-photo { position:relative; display:block; width:100%; aspect-ratio:1/1.02; object-fit:cover; object-position:center 39%; box-shadow:0 18px 45px rgba(69,43,35,.12); }
@@ -1360,9 +1360,9 @@
     .celebrity-video-play { position:absolute; inset:0; display:grid; place-items:center; width:100%; height:100%; border:0; background:linear-gradient(0deg,rgba(29,22,20,.35),rgba(29,22,20,.02) 55%); cursor:pointer; transition:opacity .25s ease; }
     .celebrity-video-play::before { content:""; width:74px; height:74px; border:1px solid rgba(255,255,255,.85); border-radius:50%; background:rgba(58,43,37,.42); }
     .celebrity-video-play::after { content:""; position:absolute; width:0; height:0; margin-left:5px; border-top:10px solid transparent; border-bottom:10px solid transparent; border-left:15px solid #fffaf6; }
-    .celebrity-video-play span { position:absolute; bottom:1.2rem; color:#fffaf6; font-size:.64rem; font-weight:800; letter-spacing:.16em; text-transform:uppercase; }
+    .celebrity-video-play span { position:absolute; top:1.2rem; right:0; left:0; color:#fffaf6; font-size:.64rem; font-weight:800; letter-spacing:.16em; text-align:center; text-transform:uppercase; }
     .celebrity-video-frame.is-playing .celebrity-video-play { opacity:0; pointer-events:none; }
-    .celebrity-quote-mark { color:#c49c91; font-family:'Playfair Display',serif; font-size:4.5rem; line-height:.65; }
+    .celebrity-quote-mark { color:#E8B7C8; font-family:'Playfair Display',serif; font-size:4.5rem; line-height:.65; }
     .celebrity-quote { margin:1.2rem 0; color:#4b342e; font-family:'Playfair Display',serif; font-size:clamp(1.35rem,2.5vw,2rem); line-height:1.58; }
     .celebrity-quote-credit { color:#8a6b62; font-size:.76rem; line-height:1.8; letter-spacing:.04em; }
     .celebrity-quote-credit strong { display:block; color:#533d36; font-size:.83rem; letter-spacing:.1em; text-transform:uppercase; }
@@ -1925,6 +1925,7 @@
         </button>
       </div>
       <div class="celebrity-quote-block">
+        <p class="celebrity-story-label">EXCLUSIVE VIDEO TESTIMONIAL</p>
         <span class="celebrity-quote-mark" aria-hidden="true">“</span>
         <blockquote class="celebrity-quote">I got my glam done by Ankita hair and makeup, and it’s looking really nice. Thank you Ankita, thank you so much. As you can see it’s perfect.</blockquote>
         <p class="celebrity-quote-credit"><strong>Uorfi Javed</strong><span>Indian Actress &amp; Television Personality</span></p>
@@ -3100,8 +3101,11 @@
     const ogImageAlt = document.querySelector('meta[property="og:image:alt"]');
     const twitterImage = document.querySelector('meta[name="twitter:image"]');
     const twitterImageAlt = document.querySelector('meta[name="twitter:image:alt"]');
+    const ogImageWidth = document.querySelector('meta[property="og:image:width"]');
+    const ogImageHeight = document.querySelector('meta[property="og:image:height"]');
+    const campaignImageDimensions = pageId === 'celebrity-media' ? { width: '1200', height: '1200' } : { width: '1080', height: '1920' };
     const campaignImage = pageId === 'celebrity-media'
-      ? '/celebrity/uorfi-ankita-spotlight.webp'
+      ? '/celebrity/uorfi-ankita-spotlight-og.jpg'
       : pageId === 'allure-edit'
         ? '/allure-edit-poster.jpg'
         : '/opengraph.jpg';
@@ -3119,6 +3123,8 @@
     if (twitterDescription) twitterDescription.setAttribute('content', seo.description);
     if (ogImage) ogImage.setAttribute('content', window.location.origin + campaignImage);
     if (ogImageSecure) ogImageSecure.setAttribute('content', window.location.origin + campaignImage);
+    if (ogImageWidth) ogImageWidth.setAttribute('content', campaignImageDimensions.width);
+    if (ogImageHeight) ogImageHeight.setAttribute('content', campaignImageDimensions.height);
     if (ogImageAlt) ogImageAlt.setAttribute('content', campaignAlt);
     if (twitterImage) twitterImage.setAttribute('content', window.location.origin + campaignImage);
     if (twitterImageAlt) twitterImageAlt.setAttribute('content', campaignAlt);
