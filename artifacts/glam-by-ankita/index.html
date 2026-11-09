@@ -1381,6 +1381,7 @@
     .celebrity-founder-name { color:#402d27; font-family:'Playfair Display',serif; font-size:clamp(1.65rem,3vw,2.5rem); }
     .celebrity-founder-role { margin-top:.45rem; color:#98716a; font-size:.74rem; letter-spacing:.08em; }
     .celebrity-credentials { color:#735d53; font-size:.79rem; line-height:1.8; text-align:right; }
+    .celebrity-search-copy { max-width:850px; margin:1.6rem auto 0; color:#735d53; font-size:.86rem; line-height:1.85; text-align:center; }
     .celebrity-cta { padding:clamp(3.6rem,8vw,6rem) 1.25rem; background:#eadbd3; text-align:center; }
     .celebrity-cta h2 { margin:0; font-size:clamp(2rem,4.6vw,3.8rem); }
     .celebrity-cta p { max-width:590px; margin:1rem auto 1.6rem; color:#735d53; font-size:.9rem; line-height:1.85; }
@@ -1965,6 +1966,7 @@
       </div>
       <p class="celebrity-credentials">Certified Makeup Artist | Celebrity &amp; Editorial Beauty | Bridal &amp; Special Occasion Glam</p>
     </div>
+    <p class="celebrity-search-copy">Melbourne makeup artist Ankita Awasthi has a growing celebrity and editorial portfolio. As a Celebrity MUA in Melbourne, she welcomes editorial, media, bridal and special-occasion enquiries. For Uorfi Javed’s 7 November 2026 appearance, Ankita provided hair styling.</p>
   </section>
 
   <section class="celebrity-cta" aria-labelledby="celebrity-cta-title">
@@ -3062,7 +3064,8 @@
     },
     'celebrity-media': {
       title: 'Celebrity Makeup Artist Melbourne | The Glam by Ankita',
-      description: 'Celebrity hair styling Melbourne and editorial makeup artist Melbourne by Ankita Awasthi. View Uorfi Javed’s appearance and original video testimonial.'
+      description: 'Meet Melbourne makeup artist Ankita Awasthi and explore her celebrity and editorial portfolio. See her hair styling for Uorfi Javed’s Melbourne appearance.',
+      keywords: 'Celebrity Makeup Artist, Celebrity Makeup Artist Melbourne, Celebrity MUA Melbourne, Celebrity MUA, Celebrity Hair Stylist Melbourne, Celebrity Hair Styling Melbourne, Celebrity Beauty Melbourne, Editorial Makeup Artist Melbourne, Melbourne Makeup Artist, Bridal Makeup Artist Melbourne, The Glam by Ankita'
     },
     contact: {
       title: 'Book The Glam by Ankita | Melbourne Makeup Appointment',
@@ -3090,6 +3093,17 @@
     const seo = pageSeo[pageId] || pageSeo.home;
     const pageUrl = window.location.origin + (pageId === 'home' ? '/' : '/' + pageId);
     document.title = seo.title;
+    let keywordsMeta = document.querySelector('meta[name="keywords"]');
+    if (seo.keywords) {
+      if (!keywordsMeta) {
+        keywordsMeta = document.createElement('meta');
+        keywordsMeta.name = 'keywords';
+        document.head.appendChild(keywordsMeta);
+      }
+      keywordsMeta.setAttribute('content', seo.keywords);
+    } else if (keywordsMeta) {
+      keywordsMeta.remove();
+    }
     const description = document.querySelector('meta[name="description"]');
     const ogTitle = document.querySelector('meta[property="og:title"]');
     const ogDescription = document.querySelector('meta[property="og:description"]');

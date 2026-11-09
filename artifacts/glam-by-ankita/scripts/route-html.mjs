@@ -65,16 +65,17 @@ export function getRouteSeo(html) {
   const metadata = {};
   for (const route of routes) {
     const key = /^[a-zA-Z_$][\w$]*$/.test(route) ? route : `'${route}'`;
-    const entry = seo[1].match(new RegExp(`(?:^|\\n)\\s*${key}:\\s*\\{\\s*title:\\s*'([^']+)',\\s*description:\\s*'([^']+)'\\s*\\}`, "u"));
+    const entry = seo[1].match(new RegExp(`(?:^|\\n)\\s*${key}:\\s*\\{\\s*title:\\s*'([^']+)',\\s*description:\\s*'([^']+)'(?:,\\s*keywords:\\s*'([^']+)')?\\s*\\}`, "u"));
     if (!entry) throw new Error(`Missing pageSeo metadata for ${route}`);
     metadata[route] = { title: entry[1], description: entry[2] };
+    if (entry[3]) metadata[route].keywords = entry[3];
   }
   return metadata;
 }
 
 export function renderRouteHtml(html, route, metadata = getRouteSeo(html)) {
   if (!metadata[route]) throw new Error(`Unknown public route: ${route}`);
-  const { title, description } = metadata[route];
+  const { title, description, keywords } = metadata[route];
   const url = siteOrigin + (route === "home" ? "/" : `/${route}`);
   const servicePageRoutes = new Set([
     "bridal-makeup-melbourne",
@@ -91,6 +92,9 @@ export function renderRouteHtml(html, route, metadata = getRouteSeo(html)) {
     ["twitter:description", description],
   ]) {
     html = replaceOnce(html, new RegExp(`<meta name="${name}" content="[^"]*">`), `<meta name="${name}" content="${escapeHtml(value)}">`, name);
+  }
+  if (keywords) {
+    html = replaceOnce(html, /<\/head>/, `<meta name="keywords" content="${escapeHtml(keywords)}">\n</head>`, "keywords meta");
   }
   for (const [property, value] of [
     ["og:title", title],
