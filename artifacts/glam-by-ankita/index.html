@@ -1890,11 +1890,11 @@
     <div class="celebrity-hero-copy">
       <p class="celebrity-eyebrow">The Glam by Ankita · Celebrity &amp; Media</p>
       <h1 class="celebrity-title" id="celebrity-title">A MOMENT IN THE SPOTLIGHT</h1>
-      <p class="celebrity-lede">On 7 November 2026, Melbourne welcomed Indian actress and television personality Uorfi Javed for a special appearance. Ankita Awasthi was honoured to provide hair styling for the occasion, sharing a memorable moment together in the city.</p>
+      <p class="celebrity-lede">An unforgettable celebrity experience in Melbourne.<br><br>A special opportunity to work alongside Uorfi Javed for her Australian appearance on 7 November 2026, bringing The Glam by Ankita into the world of celebrity styling and high-profile events.</p>
       <p class="celebrity-date">Melbourne · 7 November 2026</p>
     </div>
     <div class="celebrity-hero-photo-wrap">
-      <img class="celebrity-hero-photo" src="/celebrity/uorfi-ankita-spotlight.webp" alt="Uorfi Javed and Melbourne hair stylist Ankita Awasthi together at Uorfi's Melbourne appearance" width="1024" height="1024" fetchpriority="high">
+      <img class="celebrity-hero-photo" src="/celebrity/uorfi-ankita-spotlight.webp" alt="Uorfi Javed and Melbourne hair stylist Ankita Awasthi together at Uorfi's Melbourne appearance" width="1800" height="1800" fetchpriority="high">
       <span class="celebrity-photo-note">A shared moment in Melbourne</span>
     </div>
   </section>
@@ -1926,8 +1926,8 @@
       </div>
       <div class="celebrity-quote-block">
         <span class="celebrity-quote-mark" aria-hidden="true">“</span>
-        <blockquote class="celebrity-quote">“I got my glam done by Ankita hair and makeup, and it’s looking really nice. Thank you Ankita, thank you so much. As you can see it’s perfect.”</blockquote>
-        <p class="celebrity-quote-credit"><strong>Uorfi Javed</strong>Indian Actress &amp; Television Personality</p>
+        <blockquote class="celebrity-quote">I got my glam done by Ankita hair and makeup, and it’s looking really nice. Thank you Ankita, thank you so much. As you can see it’s perfect.</blockquote>
+        <p class="celebrity-quote-credit"><strong>Uorfi Javed</strong><span>Indian Actress &amp; Television Personality</span></p>
       </div>
     </div>
   </section>
@@ -1946,11 +1946,11 @@
         <span class="celebrity-gallery-caption">Together in the spotlight</span>
       </button>
       <button class="celebrity-gallery-item" type="button" onclick="openCelebrityLightbox(this)" data-src="/celebrity/uorfi-ankita-event.webp" data-alt="Ankita Awasthi and Uorfi Javed together at the Melbourne appearance" aria-label="Expand photograph: Ankita Awasthi and Uorfi Javed at the event">
-        <img src="/celebrity/uorfi-ankita-event.webp" alt="Ankita Awasthi and Uorfi Javed together at the Melbourne appearance" width="576" height="1024" loading="lazy">
+        <img src="/celebrity/uorfi-ankita-event.webp" alt="Ankita Awasthi and Uorfi Javed together at the Melbourne appearance" width="1012" height="1800" loading="lazy">
         <span class="celebrity-gallery-caption">The evening, together</span>
       </button>
-      <button class="celebrity-gallery-item" type="button" onclick="openCelebrityLightbox(this)" data-src="/celebrity/uorfi-event-glam.webp" data-alt="Uorfi Javed holding a The Glam by Ankita mirror during her event glam preparation" aria-label="Expand photograph: Uorfi Javed during her event glam preparation">
-        <img src="/celebrity/uorfi-event-glam.webp" alt="Uorfi Javed holding a The Glam by Ankita mirror during her event glam preparation" width="768" height="1024" loading="lazy">
+      <button class="celebrity-gallery-item" type="button" onclick="openCelebrityLightbox(this)" data-src="/celebrity/uorfi-event-glam.webp" data-alt="Uorfi Javed applying lipstick while holding The Glam by Ankita hand mirror before the Melbourne appearance" aria-label="Expand photograph: Uorfi Javed during her event glam preparation">
+        <img src="/celebrity/uorfi-event-glam.webp" alt="Uorfi Javed applying lipstick while holding The Glam by Ankita hand mirror before the Melbourne appearance" width="1350" height="1800" loading="lazy">
         <span class="celebrity-gallery-caption">A detail from event preparation</span>
       </button>
     </div>
@@ -1968,7 +1968,7 @@
 
   <section class="celebrity-cta" aria-labelledby="celebrity-cta-title">
     <h2 id="celebrity-cta-title">YOUR NEXT SPECIAL MOMENT STARTS HERE</h2>
-    <p>From a milestone celebration to a media appearance or editorial shoot, let’s plan a considered look for your moment. Share your date, vision and occasion with Ankita.</p>
+    <p>From bridal celebrations and editorial shoots to special appearances and unforgettable occasions, let’s create something extraordinary.</p>
     <a class="celebrity-cta-link" href="/contact" onclick="event.preventDefault();showPage('contact',null)">ENQUIRE NOW</a>
   </section>
 </div>
@@ -3036,7 +3036,7 @@
     if (typeof updatePriceSummary === 'function') updatePriceSummary();
     setTimeout(() => document.getElementById('form-container')?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 180);
   }
-  const validPages = ['home','allure-edit','about','services','gallery','contact','bridal-makeup-melbourne','glam-makeup-melbourne','editorial-makeup-melbourne','destination-weddings'];
+  const validPages = ['home','allure-edit','about','services','gallery','celebrity-media','contact','bridal-makeup-melbourne','glam-makeup-melbourne','editorial-makeup-melbourne','destination-weddings'];
   const servicePageRoutes = ['bridal-makeup-melbourne','glam-makeup-melbourne','editorial-makeup-melbourne','destination-weddings'];
   const pageSeo = {
     home: {
@@ -3058,6 +3058,10 @@
     gallery: {
       title: 'The Glam by Ankita | Makeup Portfolio & Gallery',
       description: 'Explore the official makeup portfolio of The Glam by Ankita. View our real client transformations, bridal trials, soft glam, and editorial looks in Melbourne.'
+    },
+    'celebrity-media': {
+      title: 'Celebrity Makeup Artist Melbourne | The Glam by Ankita',
+      description: 'Celebrity hair styling Melbourne and editorial makeup artist Melbourne by Ankita Awasthi. View Uorfi Javed’s appearance and original video testimonial.'
     },
     contact: {
       title: 'Book The Glam by Ankita | Melbourne Makeup Appointment',
@@ -3096,10 +3100,16 @@
     const ogImageAlt = document.querySelector('meta[property="og:image:alt"]');
     const twitterImage = document.querySelector('meta[name="twitter:image"]');
     const twitterImageAlt = document.querySelector('meta[name="twitter:image:alt"]');
-    const campaignImage = pageId === 'allure-edit' ? '/allure-edit-poster.jpg' : '/opengraph.jpg';
-    const campaignAlt = pageId === 'allure-edit'
-      ? 'The Allure Edit holiday campaign film featuring three signature makeup looks'
-      : 'The Glam by Ankita, Melbourne makeup artistry';
+    const campaignImage = pageId === 'celebrity-media'
+      ? '/celebrity/uorfi-ankita-spotlight.webp'
+      : pageId === 'allure-edit'
+        ? '/allure-edit-poster.jpg'
+        : '/opengraph.jpg';
+    const campaignAlt = pageId === 'celebrity-media'
+      ? 'Ankita Awasthi and Uorfi Javed together at a Melbourne celebrity appearance'
+      : pageId === 'allure-edit'
+        ? 'The Allure Edit holiday campaign film featuring three signature makeup looks'
+        : 'The Glam by Ankita, Melbourne makeup artistry';
     const canonical = document.querySelector('link[rel="canonical"]');
     if (description) description.setAttribute('content', seo.description);
     if (ogTitle) ogTitle.setAttribute('content', seo.title);
@@ -3313,7 +3323,7 @@
     document.querySelectorAll('.sitenav-tabs a').forEach(b => b.classList.remove('active'));
     if (btn) { btn.classList.add('active'); }
     else {
-      const map = {home:0,'allure-edit':1,about:2,services:3,gallery:4,contact:5};
+      const map = {home:0,'allure-edit':1,about:2,services:3,gallery:4,'celebrity-media':5,contact:6};
       if (servicePageRoutes.includes(pageId)) map[pageId] = map.services;
       const btns = document.querySelectorAll('.sitenav-tabs a');
       if (btns[map[pageId]]) btns[map[pageId]].classList.add('active');
