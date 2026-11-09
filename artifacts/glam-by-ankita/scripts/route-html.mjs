@@ -115,7 +115,7 @@ export function renderRouteHtml(html, route, metadata = getRouteSeo(html)) {
     "twitter:image:alt",
   );
   const shareImage = route === "celebrity-media"
-    ? `${siteOrigin}/celebrity/uorfi-ankita-spotlight.webp`
+    ? `${siteOrigin}/celebrity/uorfi-ankita-spotlight-og.jpg`
     : route === "allure-edit"
       ? `${siteOrigin}/allure-edit-poster.jpg`
       : `${siteOrigin}/opengraph.jpg`;
@@ -125,6 +125,10 @@ export function renderRouteHtml(html, route, metadata = getRouteSeo(html)) {
     ['<meta name="twitter:image" content="', shareImage],
   ]) {
     html = replaceOnce(html, new RegExp(`${selector.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}[^"]*">`), `${selector}${escapeHtml(value)}">`, selector);
+  }
+  if (route === "celebrity-media") {
+    html = replaceOnce(html, /<meta property="og:image:width" content="[^"]*">/, '<meta property="og:image:width" content="1200">', "og:image:width");
+    html = replaceOnce(html, /<meta property="og:image:height" content="[^"]*">/, '<meta property="og:image:height" content="1200">', "og:image:height");
   }
   for (const [rel, extra] of [
     ["canonical", ""],
@@ -138,7 +142,7 @@ export function renderRouteHtml(html, route, metadata = getRouteSeo(html)) {
   // Set the initially visible page even for crawlers/browsers without JavaScript.
   html = replaceOnce(html, /(<div class="page) active(" id="page-home")/, "$1$2", "home active page");
   if (route !== "home") {
-    html = replaceOnce(html, new RegExp(`(<div class="page)(" id="page-${route}")`), "$1 active$2", `${route} active page`);
+    html = replaceOnce(html, new RegExp(`(<div class="[^"]*\\bpage\\b[^"]*)(" id="page-${route}")`), "$1 active$2", `${route} active page`);
     html = replaceOnce(html, /(<a class=")active(" href="\/" onclick="event\.preventDefault\(\);showPage\('home',this\);closeMobileNav\(\)">)/, "$1$2", "home active navigation");
     if (route === "allure-edit") {
       html = replaceOnce(html, /(<a class="allure-nav-link)(" href="\/allure-edit" onclick="event\.preventDefault\(\);showPage\('allure-edit',this\);closeMobileNav\(\)">)/, "$1 active$2", "allure-edit active navigation");
