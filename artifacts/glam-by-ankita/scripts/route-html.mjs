@@ -104,7 +104,7 @@ export function renderRouteHtml(html, route, metadata = getRouteSeo(html)) {
       ? "Uorfi Javed and Ankita Awasthi at a Melbourne celebrity glam appearance; makeup and hair by Ankita"
       : route === "allure-edit"
         ? "The Allure Edit holiday campaign film featuring three signature makeup looks"
-        : "The Glam by Ankita, Melbourne makeup artistry"],
+        : "The Glam by Ankita, Melbourne celebrity makeup artist"],
   ]) {
     html = replaceOnce(html, new RegExp(`<meta property="${property}" content="[^"]*">`), `<meta property="${property}" content="${escapeHtml(value)}">`, property);
   }
@@ -115,7 +115,7 @@ export function renderRouteHtml(html, route, metadata = getRouteSeo(html)) {
       ? "Uorfi Javed and Ankita Awasthi at a Melbourne celebrity glam appearance; makeup and hair by Ankita"
       : route === "allure-edit"
         ? "The Allure Edit holiday campaign film featuring three signature makeup looks"
-        : "The Glam by Ankita, Melbourne makeup artistry")}">`,
+      : "The Glam by Ankita, Melbourne celebrity makeup artist")}">`,
     "twitter:image:alt",
   );
   const shareImage = route === "celebrity-media"
